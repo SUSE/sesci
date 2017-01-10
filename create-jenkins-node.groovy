@@ -18,7 +18,7 @@ if (node) {
     print 'Node "' + nodeName + '" exists. Disconnect at first... '
     def c = node.toComputer()
     c.disconnect()
-    def imeout = 5 * 60
+    def timeout = 5 * 60
     def wait = 10
     while (c.online) {
         println "Node [" + node.nodeName + "] is online. Waiting " + wait + " seconds"
