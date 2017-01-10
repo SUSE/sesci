@@ -4,8 +4,10 @@ print "Delete jenkins node"
 import jenkins.model.Jenkins
 import hudson.model.Node
 
-import hudson.slaves.DumbSlave
 import hudson.plugins.sshslaves.SSHLauncher
+
+import hudson.slaves.OfflineCause
+import hudson.slaves.DumbSlave
 import hudson.slaves.RetentionStrategy
 
 def env = [:]
@@ -24,10 +26,10 @@ Node node = Jenkins.instance.nodes.find { it.nodeName == nodeName }
 if (node) {
     print 'Node "' + nodeName + '" exists. Disconnect at first... '
     def c = node.toComputer()
-    c.disconnect()
     def timeout = 10 * 60
     def wait = 10
     while (c.online) {
+	c.disconnect(new OfflineCause.SimpleOfflineCause('Removing node"))
         println "Node [" + node.nodeName + "] is online. Waiting " + wait + " seconds"
         if (timeout > 0) {
             timeout -=  wait
