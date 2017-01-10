@@ -17,6 +17,7 @@ def credName = 'storage-automation'
 def nodeName = env.get('TARGET_NAME', 'undefined')
 def nodeHost = env.get('TARGET_IP', 'undefined')
 def destroy  = env.get('DESTROY_ENVIRONMENT')
+def jobName  = env.get('JOB_NAME')
 
 if (destroy != 'true') {
     print "Skipping jenkins node cleanup as requested DESTROY_ENVIRONMENT"
@@ -29,7 +30,7 @@ if (node) {
     def timeout = 10 * 60
     def wait = 10
     while (c.online) {
-	c.disconnect(new OfflineCause.SimpleOfflineCause('Removing node"))
+	c.disconnect(new OfflineCause.UserCause(User.current(), 'Removing node by job ' + jobName))
         println "Node [" + node.nodeName + "] is online. Waiting " + wait + " seconds"
         if (timeout > 0) {
             timeout -=  wait
