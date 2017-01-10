@@ -3,6 +3,7 @@ print "Delete jenkins node"
 
 import jenkins.model.Jenkins
 import hudson.model.Node
+import hudson.model.User
 
 import hudson.plugins.sshslaves.SSHLauncher
 
