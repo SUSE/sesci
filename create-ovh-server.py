@@ -21,7 +21,7 @@ from novaclient.client import Client
 
 target_file   = os.environ.get('TARGET_FILE', 'target.properties')
 target_name   = os.environ.get('TARGET_NAME', 'mkck%02d')
-target_flavor = os.environ.get('TARGET_FLAVOR', 'hg-30-ssd-flex')
+target_flavor = os.environ.get('TARGET_FLAVOR', 'hg-15-ssd-flex')
 target_max    = os.environ.get('TARGET_MAX', 16)
 target_image  = os.environ.get('TARGET_IMAGE', 'opensuse-42.2-x86_64')
 
@@ -121,7 +121,7 @@ while True:
                 else:
                         raise SystemExit('Unable to obtain file lock: %s' % lockfile)
 
-timeout = 2 * 60
+timeout = 8 * 60
 wait = 10
 target_id = res.id
 while res.status != 'ACTIVE':
