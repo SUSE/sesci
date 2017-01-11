@@ -6,13 +6,23 @@ import os
 from xml.etree.ElementTree import Element, SubElement, Comment, tostring
 
 LogFilePath = 'build/Testing/Temporary/LastTest.log'
+
 if (len(sys.argv) > 1):
 	LogFilePath = sys.argv[1]
 OutputDirPath = 'res'
 if (len(sys.argv) > 2):
 	OutputDirPath = sys.argv[2]
+try:
+	os.stat(OutputDirPath)
+except:
+	os.mkdir(OutputDirPath)
 
-print len(sys.argv)
+try:
+	os.stat(LogFilePath)
+except:
+	print "Log file [" + LogFilePath + "] does not exists. Nothing to do"
+	sys.exit(0)
+
 
 state = 'start'
 
@@ -25,11 +35,6 @@ output_length = 0
 output_filename = ''
 outputfile = 0
 test_class = 'make-check'
-try:
-	os.stat(OutputDirPath)
-except:
-	os.mkdir(OutputDirPath)
-
 with open(LogFilePath, 'r') as logfile:
 	for l in logfile:
 		if   state is 'start':
