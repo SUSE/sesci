@@ -177,11 +177,15 @@ while True:
                         time.sleep(wait)
 target_fqdn = target + ".suse.de"
 
-for command in [
+command_list = [
   'zypper install -y %s 2>&1' % dependencies,
   'echo "' + target_ip + '\t' + target_fqdn + '" >> /etc/hosts',
   'hostname ' + target_fqdn
-  ]: 
+  ]
+if (ceph_ref == 'jewel'):
+  command_list.append('zypper remove -y zypper-aptitude 2>&1')
+
+for command in command_list:
   stdin, stdout, stderr = client.exec_command(command)
   while True:
     l = stdout.readline()
