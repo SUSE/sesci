@@ -59,7 +59,10 @@ image_dict = {
 ceph_ref      = os.environ.get('CEPH_REF')
 if (ceph_ref == None or ceph_ref == ''):
   ceph_ref    = ceph_ref_dict[ceph_ver]
-ceph_repo_url = repo_url_dict[ceph_ver]
+ceph_repo_url = os.environ.get('CEPH_REPO_URL')
+if (ceph_repo_url == None or ceph_repo_url == '')
+  ceph_repo_url = repo_url_dict[ceph_ver]
+
 target_image  = image_dict[suse_ver]
 
 if os.path.isfile(target_file):
