@@ -47,7 +47,7 @@ for root, dirs, files in os.walk(TargetPath):
 					passed +=1
 			result.append(t)
 
-test_class = "make_check"
+test_class = "make-check"
 top = Element('testsuite', { 'name': 'make-check'})
 for t in result:
         c  = SubElement(top, 'testcase', {
