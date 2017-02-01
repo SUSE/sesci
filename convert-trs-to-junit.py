@@ -33,8 +33,11 @@ for root, dirs, files in os.walk(TargetPath):
 			p = root + "/" + f
 			#print p
 			amount += 1
+			prefix = root[len(TargetPath) + 1:]
+			if prefix != "":
+				prefix += "/"
 			t = {
-				"test": f[:-len(".trs")],
+				"test": prefix + f[:-len(".trs")],
 				"output": root + "/" + f[:-len(".trs")] + ".log"
 			}
 
@@ -47,10 +50,12 @@ for root, dirs, files in os.walk(TargetPath):
 					passed +=1
 			result.append(t)
 
+test_suites = "ceph"
 test_class = "make-check"
-top = Element('testsuite', { 'name': 'make-check'})
+top = Element('testsuites', { 'name': "ceph" })
+subtop = SubElement( top, 'testsuite', { 'name': 'make-check'})
 for t in result:
-        c  = SubElement(top, 'testcase', {
+        c  = SubElement(subtop, 'testcase', {
                 'name': t['test'],
                 'classname': test_class,
                 #'time': ''
