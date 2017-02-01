@@ -19,51 +19,19 @@ def get_nova_credentials_v2():
 
 from novaclient.client import Client
 
-target_file   = os.environ.get('TARGET_FILE', 'target.properties')
-target_name   = os.environ.get('TARGET_NAME', 'mkck%02d')
-target_flavor = os.environ.get('TARGET_FLAVOR', 'hg-15-ssd-flex')
-target_max    = os.environ.get('TARGET_MAX', 16)
-target_image  = os.environ.get('TARGET_IMAGE', 'opensuse-42.2-x86_64')
-
 suse_ver   = os.environ.get('SUSE_VER', 'undefined')
 ceph_ver   = os.environ.get('CEPH_VER', 'undefined')
 
 print "SUSE_VER: " + suse_ver
 print "CEPH_VER: " + ceph_ver
 
-repo_url_dict = {
-  'ceph': 'https://github.com/ceph/ceph.git',
-  'suse': 'https://github.com/suse/ceph.git',
-  'ses3': 'https://github.com/suse/ceph.git',
-  'ses4': 'https://github.com/suse/ceph.git',
-  'ses5': 'https://github.com/suse/ceph.git',
-  'jewel': 'https://github.com/ceph/ceph.git'
-  }
-
-ceph_ref_dict = {
-  'ceph': 'master',
-  'suse': 'master',
-  'ses3': 'ses3',
-  'ses4': 'ses4',
-  'ses5': 'ses5',
-  'jewel': 'jewel'
-  }
-
-
-image_dict = {
-  'leap-42.2': 'opensuse-42.2-x86_64',
-  'sle12-sp1': 'teuthology-sle-12.1-x86_64',
-  'sle12-sp2': 'teuthology-sle-12.2-x86_64'
-  }
-
+target_file   = os.environ.get('TARGET_FILE', 'target.properties')
+target_name   = os.environ.get('TARGET_NAME', 'mkck%02d')
+target_flavor = os.environ.get('TARGET_FLAVOR', 'hg-15-ssd-flex')
+target_max    = os.environ.get('TARGET_MAX', 16)
+target_image  = os.environ.get('TARGET_IMAGE', 'opensuse-42.2-x86_64')
 ceph_ref      = os.environ.get('CEPH_REF')
-if (ceph_ref == None or ceph_ref == ''):
-  ceph_ref    = ceph_ref_dict[ceph_ver]
 ceph_repo_url = os.environ.get('CEPH_REPO_URL')
-if (ceph_repo_url == None or ceph_repo_url == ''):
-  ceph_repo_url = repo_url_dict[ceph_ver]
-
-target_image  = image_dict[suse_ver]
 
 if os.path.isfile(target_file):
     print "Cleanup properties file: [" + target_file + "]"
