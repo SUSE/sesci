@@ -4,8 +4,8 @@ def env = binding.variables
 
 // println env
 
-def ceph_ver = env['CEPH_VER']
 def suse_ver = env['SUSE_VER']
+def ceph_ver = env.get('CEPH_VER', 'suse')
 def flavor   = env.get('TARGET_FLAVOR', 'hg-15-ssd')
 
 def ceph_repo_url_map = [
@@ -33,7 +33,11 @@ def suse_image_map = [
   'sle12-sp2': 'teuthology-sle-12.2-x86_64'
   ]
 
-def ceph_ref      = ceph_ref_map[ceph_ver]
+def ceph_ref      = env['CEPH_REF']
+if (ceph_ref == null || ceph_ref == '') {
+  ceph_ref        = ceph_ref_map[ceph_ver]
+}
+
 def ceph_repo_url = ceph_repo_url_map[ceph_ver]
 def suse_image    = suse_image_map[suse_ver]
 
