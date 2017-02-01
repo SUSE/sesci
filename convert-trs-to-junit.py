@@ -1,4 +1,5 @@
 import os
+import shutil
 import yaml
 import sys
 
@@ -34,11 +35,15 @@ for root, dirs, files in os.walk(TargetPath):
 			#print p
 			amount += 1
 			prefix = root[len(TargetPath) + 1:]
+			output_prefix = "" if OutputDirPath == None else OutputDirPath + "/output/"
 			if prefix != "":
 				prefix += "/"
+			test_name = prefix + f[:-len(".trs")]
+
 			t = {
-				"test": prefix + f[:-len(".trs")],
-				"output": root + "/" + f[:-len(".trs")] + ".log"
+				"test": test_name,
+				"log": root + "/" + f[:-len(".trs")] + ".log",
+				"output": output_prefix + test_name.replace("/",".") + ".log"
 			}
 
 			with open(p, "r") as x:
@@ -55,6 +60,15 @@ test_class = "make-check"
 top = Element('testsuites', { 'name': "ceph" })
 subtop = SubElement( top, 'testsuite', { 'name': 'make-check'})
 for t in result:
+	if OutputDirPath != None:
+		basedir = os.path.dirname(t['output'])
+		try:
+			os.stat(basedir)
+		except:
+			os.makedirs(basedir)
+		print "Copy: " + t['log']
+		print "  to: " + t['output']
+		shutil.copyfile(t['log'], t['output'])
         c  = SubElement(subtop, 'testcase', {
                 'name': t['test'],
                 'classname': test_class,

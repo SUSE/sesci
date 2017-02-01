@@ -8,22 +8,13 @@ def suse_ver = env['SUSE_VER']
 def ceph_ver = env.get('CEPH_VER', 'suse')
 def flavor   = env.get('TARGET_FLAVOR', 'hg-15-ssd')
 
-def ceph_repo_url_map = [
-  'ceph': 'https://github.com/ceph/ceph.git',
-  'suse': 'https://github.com/suse/ceph.git',
-  'ses3': 'https://github.com/suse/ceph.git',
-  'ses4': 'https://github.com/suse/ceph.git',
-  'ses5': 'https://github.com/suse/ceph.git',
-  'jewel': 'https://github.com/ceph/ceph.git'
-  ]
-
-def ceph_ref_map = [
-  'ceph': 'master',
-  'suse': 'master',
-  'ses3': 'ses3',
-  'ses4': 'ses4',
-  'ses5': 'ses5',
-  'jewel': 'jewel'
+def ceph_map = [
+  'ceph':  ['ceph/ceph', 'master'],
+  'suse':  ['suse/ceph', 'master'],
+  'ses3':  ['suse/ceph', 'ses3'],
+  'ses4':  ['suse/ceph', 'ses4'],
+  'ses5':  ['suse/ceph', 'ses5'],
+  'jewel': ['ceph/ceph', 'jewel']
   ]
 
 
@@ -33,14 +24,16 @@ def suse_image_map = [
   'sle12-sp2': 'teuthology-sle-12.2-x86_64'
   ]
 
+def ceph_repo_url = env.get('ghprbAuthorRepoGitUrl', 
+  "https://github.com/" + ceph_map[ceph_ver][0] + ".git")
+def ceph_branch   = env.get('ghprbTargetBranch', ceph_map[ceph_ver][1])
+
 def ceph_ref      = env['CEPH_REF']
 if (ceph_ref == null || ceph_ref == '') {
-  ceph_ref        = ceph_ref_map[ceph_ver]
+  ceph_ref        = ceph_branch
 }
 
-def ceph_repo_url = ceph_repo_url_map[ceph_ver]
 def suse_image    = suse_image_map[suse_ver]
-
 
 def mkck = "run-mkck-${ceph_ver}-${suse_ver}"
 
@@ -101,7 +94,7 @@ multiJob("mkck-${ceph_ver}-${suse_ver}") {
         multiJobBuild()
       }
     }
-    if (ceph_ver == "ses4" || ceph_ver == "jewel") {
+    if (ceph_branch == "ses4" || ceph_branch == "jewel") {
 		shell ('python convert-trs-to-junit.py src res')
     } else {
 		shell ('python convert-ctest-to-junit.py')
@@ -164,7 +157,7 @@ job(mkck) {
     """cat /etc/os-release"""
   ]
   steps {
-    if (['ses4', 'jewel'].contains(ceph_ver)) {
+    if (['ses4', 'jewel'].contains(ceph_branch)) {
       if (['leap-42.2'].contains(suse_ver) {
         cmds.add("ulimit -u 10240")
       }
