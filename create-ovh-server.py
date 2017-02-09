@@ -26,9 +26,9 @@ print "SUSE_VER: " + suse_ver
 print "CEPH_VER: " + ceph_ver
 
 target_file   = os.environ.get('TARGET_FILE', 'target.properties')
-target_name   = os.environ.get('TARGET_NAME', 'mkck%02d')
+target_mask   = os.environ.get('TARGET_MASK', 'mkck%02d')
 target_flavor = os.environ.get('TARGET_FLAVOR', 'hg-15-ssd-flex')
-target_max    = os.environ.get('TARGET_MAX', 16)
+target_limit  = os.environ.get('TARGET_LIMIT', 16)
 target_image  = os.environ.get('TARGET_IMAGE', 'opensuse-42.2-x86_64')
 ceph_ref      = os.environ.get('CEPH_REF')
 ceph_repo_url = os.environ.get('CEPH_REPO_URL')
@@ -51,16 +51,16 @@ def create_target():
   srvs = nova_client.servers.list()
 
   existing_servers = [s.name for s in srvs]
-  print range(target_max)
-  for n in range(target_max):
-          target = target_name % n
+  print range(target_limit)
+  for n in range(target_limit):
+          target = target_mask % n
           if target in existing_servers:
                   print "Server [" + target + "] already exists."
           else:
                   print "Creating server [" + target + "]"
                   res = nova_client.servers.create(target, image, flavor, key_name='storage-automation')
                   return res
-  raise SystemExit('Unable to aquire server resource: Maximum number (' + str(target_max) + ') of servers reached')
+  raise SystemExit('Unable to aquire server resource: Maximum number (' + str(target_limit) + ') of servers reached')
 
 
 

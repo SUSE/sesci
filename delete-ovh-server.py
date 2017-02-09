@@ -20,7 +20,7 @@ def get_nova_credentials_v2():
 from novaclient.client import Client
 
 destroy_env   = os.environ.get('DESTROY_ENVIRONMENT')
-target_name   = os.environ.get('TARGET_NAME', 'mkck%02d')
+target_name   = os.environ.get('TARGET_NAME')
 
 if (destroy_env == 'true') :
   credentials = get_nova_credentials_v2()

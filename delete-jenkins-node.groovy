@@ -21,7 +21,7 @@ def destroy  = env.get('DESTROY_ENVIRONMENT')
 def jobName  = env.get('JOB_NAME')
 
 if (destroy != 'true') {
-    print "Skipping jenkins node cleanup as requested DESTROY_ENVIRONMENT"
+    println "Skipping jenkins node cleanup as requested DESTROY_ENVIRONMENT"
 	return 0
 }
 Node node = Jenkins.instance.nodes.find { it.nodeName == nodeName }
