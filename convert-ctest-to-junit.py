@@ -39,7 +39,7 @@ with open(LogFilePath, 'r') as logfile:
 	for l in logfile:
 		if   state is 'start':
 			if l.find('Start testing:') == 0:
-				print "Hurra"
+				print "Found start of testing"
 				state = 'test'
 			else: 
 				break
