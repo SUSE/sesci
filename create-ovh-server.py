@@ -3,10 +3,9 @@ import os
 import yaml
 import time
 
-def get_nova_credentials_v2():
+def get_nova_credentials_v2(yaml_file):
     d = {}
-    ovh_conf = os.environ.get('OVH_CONF', 'ovh.yaml')
-    with open(ovh_conf) as y:
+    with open(yaml_file) as y:
         c = yaml.load(y)
         d['username']    = c.get('OS_USERNAME')
         d['api_key']     = c.get('OS_PASSWORD')
@@ -19,17 +18,13 @@ def get_nova_credentials_v2():
 
 from novaclient.client import Client
 
-suse_ver   = os.environ.get('SUSE_VER', 'undefined')
-ceph_ver   = os.environ.get('CEPH_VER', 'undefined')
-
-print "SUSE_VER: " + suse_ver
-print "CEPH_VER: " + ceph_ver
-
 target_file   = os.environ.get('TARGET_FILE', 'target.properties')
 target_mask   = os.environ.get('TARGET_MASK', 'mkck%02d')
-target_flavor = os.environ.get('TARGET_FLAVOR', 'hg-15-ssd-flex')
 target_limit  = os.environ.get('TARGET_LIMIT', 16)
 target_image  = os.environ.get('TARGET_IMAGE', 'opensuse-42.2-x86_64')
+target_flavor = os.environ.get('TARGET_FLAVOR', 'hg-15-ssd')
+ovh_key       = os.environ.get('OVH_KEY', 'storage-automation')
+ovh_conf      = os.environ.get('OVH_CONF', 'ovh.yaml')
 ceph_ref      = os.environ.get('CEPH_REF')
 ceph_repo_url = os.environ.get('CEPH_REPO_URL')
 
@@ -37,7 +32,7 @@ if os.path.isfile(target_file):
     print "Cleanup properties file: [" + target_file + "]"
     os.remove(target_file)
 
-credentials = get_nova_credentials_v2()
+credentials = get_nova_credentials_v2(ovh_conf)
 
 nova_client = Client(**credentials)
 print(nova_client.api_version)
@@ -58,7 +53,7 @@ def create_target():
                   print "Server [" + target + "] already exists."
           else:
                   print "Creating server [" + target + "]"
-                  res = nova_client.servers.create(target, image, flavor, key_name='storage-automation')
+                  res = nova_client.servers.create(target, image, flavor, key_name=ovh_key)
                   return res
   raise SystemExit('Unable to aquire server resource: Maximum number (' + str(target_limit) + ') of servers reached')
 
