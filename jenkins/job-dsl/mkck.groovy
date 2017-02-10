@@ -69,7 +69,7 @@ multiJob("mkck-${ceph_ver}-${suse_ver}") {
   }
   steps {
     shell ('git clone https://github.com/kshtsk/sesci .')
-	shell ('python create-ovh-server.py')
+    shell ('python -u create-ovh-server.py')
     shell ('cat ${TARGET_FILE}')
     environmentVariables {
       propertiesFile('${TARGET_FILE}')
@@ -86,7 +86,7 @@ multiJob("mkck-${ceph_ver}-${suse_ver}") {
       }
     }
     systemGroovyCommand(readFileFromWorkspace('delete-jenkins-node.groovy'))
-	shell ('python delete-ovh-server.py')
+	shell ('python -u delete-ovh-server.py')
     copyArtifacts(mkck) {
       includePatterns('build/**', 'src/**/*.log', 'src/**/*.trs')
       optional()
@@ -95,9 +95,9 @@ multiJob("mkck-${ceph_ver}-${suse_ver}") {
       }
     }
     if (ceph_branch == "ses4" || ceph_branch == "jewel") {
-		shell ('python convert-trs-to-junit.py src res')
+        shell ('python convert-trs-to-junit.py src res')
     } else {
-		shell ('python convert-ctest-to-junit.py')
+        shell ('python convert-ctest-to-junit.py')
     }
   }
   publishers {

@@ -1,0 +1,232 @@
+- job:
+    name: 'mkck-trigger'
+    concurrent: true
+    project-type: matrix
+    node: master
+    axes:
+        - axis:
+            name: DIST
+            type: user-defined
+            values:
+                - sle12_sp2
+                - leap42_2
+    parameters:
+        - string:
+            name: TARGET_FLAVOR
+            default: hg-30-ssd
+            description: "OVH flavor"
+        - string:
+            name: sha1
+        - string:
+            name: leap42_2
+            default: 'teuthology-opensuse-42.2-x86_64'
+        - string:
+            name: sle12_sp2
+            default: 'teuthology-sle-12.2-x86_64'
+    properties:
+        - github:
+            url: 'https://github.com/suse/ceph/'
+            display-name: ceph
+        - build-discarder:
+            num-to-keep: 5
+        - authorization:
+            anonymous:
+                - job-read
+                - job-status
+    wrappers:
+        - workspace-cleanup
+    triggers:
+        - github-pull-request:
+            #admin-list:
+            #white-list:
+            org-list: ['suse']
+            cron: 'H/5 * * * *'
+            #build-desc-template: "Ceph Pull Request"
+            trigger-phrase: 'ok to test'
+            #only-trigger-phrase: false
+            permit-all: true
+            allow-whitelist-orgs-as-admins: true
+            #auto-close-on-faile: false
+            white-list-target-branches:
+                - ses3
+                - ses4
+                - ses5
+                - jewel
+            auth-id: 'susebot'
+            status-add-test-results: true
+            status-context: "Ceph make check"
+            triggered-status: "make check triggered"
+            started-status: "make check started"
+            error-status: "Unexpected error in the make check"
+            success-status: "The make check passed"
+            failure-status: "The make check failed"
+            #error-comment: "Unexpected error in the make check"
+            #success-comment: "The make check passed"
+            #failure-comment: "The make check failed"
+            # don't cancel build, because it aborts the top level job
+            # and that does not allow cleanup ovh resources
+            #cancel-builds-on-update: true
+    builders:
+        - shell: |
+            #!/bin/bash
+            echo TARGET_IMAGE=${!DIST} > target.properties
+        - inject:
+            properties-file: 'target.properties'
+        - trigger-builds:
+            - project: 'mkck'
+              predefined-parameters: |
+                  TARGET_FILE=mkck_${DIST}.properties
+                  TARGET_IMAGE=${TARGET_IMAGE}
+                  CEPH_REPO_URL=https://github.com/suse/ceph.git
+                  CEPH_BRANCH=${ghprbTargetBranch}
+                  CEPH_REF=${sha1}
+                  DIST=$DIST
+
+              block: true
+- job:
+    name: mkck
+    node: master
+    project-type: multijob
+    concurrent: true
+    properties:
+        - build-discarder:
+            num-to-keep: 10
+        - authorization:
+            anonymous:
+                - job-read
+                - job-status
+    builders:
+        - shell: "git clone https://github.com/kshtsk/sesci ."
+        - shell: "python -u create-ovh-server.py"
+        - shell: "cat ${TARGET_FILE}"
+        - inject:
+            properties-file: ${TARGET_FILE}
+        - system-groovy:
+            command: !include-raw: create-jenkins-node.groovy
+        - multijob:
+            name: Ceph run-make-check
+            condition: ALWAYS
+            projects:
+                - name: mkck-run
+                  current-parameters: true
+                  abort-all-job: true
+                  property-file: '${TARGET_FILE}'
+        - system-groovy:
+            command: !include-raw: delete-jenkins-node.groovy
+        - shell: "python -u delete-ovh-server.py"
+        - copyartifact:
+            project: mkck-run
+            filter: 'build/**, src/**/*.log, src/**/*.trs'
+            optional: true
+            which-build: multijob-build
+        - shell: |
+            case $CEPH_BRANCH in
+            ses4|jewel)
+                python convert-trs-to-junit.py src res
+                ;;
+            *)
+                python convert-ctest-to-junit.py
+                ;;
+            esac
+
+    wrappers:
+        - workspace-cleanup
+        - workspace-cleanup
+        - credentials-binding:
+            - file:
+                credential-id: 'ovh-conf'
+                variable: OVH_CONF
+            - file:
+                credential-id: 'sa'
+                variable: SECRET_FILE
+    publishers:
+        - junit:
+            results: 'res/make-check.xml'
+            allow-empty-results: true
+            junit-attachments: true
+
+    parameters:
+        - string:
+            name: DIST
+        - string:
+            name: CEPH_REF
+        - string:
+            name: CEPH_BRANCH
+        - string:
+            name: TARGET_FILE
+            default: mkck.properties
+        - string:
+            name: TARGET_FLAVOR
+            default: hg-15-ssd
+        - string:
+            name: TARGET_IMAGE
+        - string:
+            name: CEPH_REPO_URL
+            default: 'https://github.com/suse/ceph.git'
+        - bool:
+            name: DESTROY_ENVIRONMENT
+            default: true
+
+
+- job:
+    name: mkck-run
+    workspace: 'ws/mkck'        
+    concurrent: true
+    properties:
+        - build-discarder:
+            num-to-keep: 10
+        - authorization:
+            anonymous:
+                - job-read
+                - job-status
+        - groovy-label:
+            script: 'binding.getVariables().get("TARGET_NAME")'
+    wrappers:
+        - workspace-cleanup
+        - timeout:
+            timeout: 150
+    scm:
+        - git:
+            url: '$CEPH_REPO_URL'
+            refspec: '+refs/pull/*:refs/remotes/origin/pr/*'
+            branches:
+                - '$CEPH_REF'
+    builders:
+        - shell: |
+            echo $(hostname -i) $(hostname -f)
+            cat /etc/os-release
+
+            case $CEPH_BRANCH in
+            ses4|jewel)
+                case $DIST in
+                leap42_2)
+                    ulimit -u 10240
+                    ;;
+                *)
+                    ;;
+                esac
+                ./run-make-check.sh
+                ;;
+            *)
+                ./run-make-check.sh -DWITH_LTTNG=false
+                ;;
+            esac
+
+    publishers:
+        - archive:
+            artifacts: "build/Testing/**,build/**/*.log,src/**/*.trs,src/**/*.log,test-suite.log"
+            allow-empty: true
+            default-excludes: true
+    parameters:
+        - string:
+            name: CEPH_REPO_URL
+        - string:
+            name: CEPH_BRANCH
+        - string:
+            name: CEPH_REF
+        - string:
+            name: TARGET_NAME
+        - string:
+            name: DIST
+
+
