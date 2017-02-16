@@ -131,13 +131,12 @@
 
     wrappers:
         - workspace-cleanup
-        - workspace-cleanup
         - credentials-binding:
             - file:
-                credential-id: 'ovh-conf'
+                credential-id: 'storage-os-conf'
                 variable: OVH_CONF
             - file:
-                credential-id: 'sa'
+                credential-id: 'storage-automation-secret-file'
                 variable: SECRET_FILE
     publishers:
         - junit:
