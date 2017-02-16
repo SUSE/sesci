@@ -122,7 +122,7 @@ client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
 hostname = target_ip
 dependencies = 'git java'
-timeout = 120 
+timeout = 300 
 wait = 10
 home = os.environ.get('HOME')
 secret_file = os.environ.get('SECRET_FILE', home + '/.ssh/id_rsa')

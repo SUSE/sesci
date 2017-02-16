@@ -63,8 +63,8 @@ multiJob("mkck-${ceph_ver}-${suse_ver}") {
   wrappers {
     preBuildCleanup()
     credentialsBinding {
-      file('OVH_CONF', 'ovh-conf')
-      file('SECRET_FILE', 'sa')
+      file('OVH_CONF', 'storage-os-conf')
+      file('SECRET_FILE', 'storage-automation-secret-file')
     }
   }
   steps {
@@ -158,7 +158,7 @@ job(mkck) {
   ]
   steps {
     if (['ses4', 'jewel'].contains(ceph_branch)) {
-      if (['leap-42.2'].contains(suse_ver) {
+      if (['leap-42.2'].contains(suse_ver)) {
         cmds.add("ulimit -u 10240")
       }
       cmds.add("""./run-make-check.sh""")
