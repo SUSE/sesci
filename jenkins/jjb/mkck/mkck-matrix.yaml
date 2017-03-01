@@ -1,0 +1,48 @@
+- job:
+    name: 'mkck-matrix'
+    concurrent: true
+    project-type: matrix
+    node: 'storage-compute'
+    axes:
+        - axis:
+            name: SUSE_VER
+            type: user-defined
+            values:
+                - 'leap-42.2'
+                - 'sle12-sp2'
+        - axis:
+            name: CEPH_VER
+            type: user-defined
+            values:
+                - 'ceph'
+                - 'ses5'
+                - 'ses4'
+                - 'jewel'
+    wrappers:
+        - workspace-cleanup
+    triggers:
+        - timed: "@midnight"
+    properties:
+        - build-discarder:
+            num-to-keep: 5
+        - authorization:
+            anonymous:
+                - job-read
+                - job-status
+    builders:
+        - shell: |
+            git clone https://github.com/kshtsk/sesci .
+        - dsl:
+            script-text: !include-raw: 'jenkins/job-dsl/mkck.groovy'
+        - trigger-builds:
+            - project: 'mkck-${CEPH_VER}-${SUSE_VER}'
+              predefined-parameters: |
+                  TARGET_FILE=mkck_${CEPH_VER}_${SUSE_VER}.properties
+                  CEPH_VER=${CEPH_VER}
+                  SUSE_VER=${SUSE_VER}
+
+              block: true
+    publishers:
+        - aggregate-tests:
+            include-failed-builds: true
+
