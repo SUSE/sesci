@@ -25,7 +25,7 @@ target_image  = os.environ.get('TARGET_IMAGE', 'opensuse-42.2-x86_64')
 target_flavor = os.environ.get('TARGET_FLAVOR', 'hg-15-ssd')
 ovh_key       = os.environ.get('OVH_KEY', 'storage-automation')
 ovh_conf      = os.environ.get('OVH_CONF', 'ovh.yaml')
-ceph_ref      = os.environ.get('CEPH_REF')
+ceph_ref      = os.environ.get('CEPH_REF', '')
 ceph_repo_url = os.environ.get('CEPH_REPO_URL')
 
 if os.path.isfile(target_file):
