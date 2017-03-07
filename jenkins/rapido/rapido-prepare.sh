@@ -50,13 +50,21 @@ fi
 test -d ${HOME_PATH} && echo "$HOME_PATH exists" || mkdir -p ${HOME_PATH}
 pushd ${HOME_PATH}
 
-SSH=ssh
-RSYNC=rsync
-
+function RSYNC {
 if [ "_${SECRET_FILE}" != "_" ] ; then
-	SSH="ssh -i ${SECRET_FILE} -o StrictHostKeyChecking=no -l root"
-	RSYNC="rsync -e \"ssh -i ${SECRET_FILE} -o StrictHostKeyChecking=no -l root\""
+	rsync -e "ssh -i ${SECRET_FILE} -o StrictHostKeyChecking=no -l root" $@
+else
+	rsync $@
 fi
+}
+function SSH {
+if [ "_${SECRET_FILE}" != "_" ] ; then
+	ssh -i ${SECRET_FILE} -o StrictHostKeyChecking=no -l root $@
+else
+	ssh $@
+fi
+}
+
 
 # check repo rapido master
 function git_clone() {
@@ -85,10 +93,10 @@ function git_clone() {
 	#git archive -o ${HOME_PATH}/${REPO_NAME}.tar.gz $REPO_BRANCH
 	tar czf ${HOME_PATH}/${REPO_NAME}.tar.gz --owner=0 --group=0 --exclude=.git .
 	echo "Copying repo [${REPO_NAME}] to host [${KVM_HOST}] to [${DEST_PATH}] directory"
-	eval $SSH ${KVM_HOST} rm -rf ${DEST_PATH}/${REPO_NAME}
-	eval $SSH ${KVM_HOST} mkdir -p ${DEST_PATH}/${REPO_NAME}
-	eval $RSYNC ${HOME_PATH}/${REPO_NAME}.tar.gz ${KVM_HOST}:${DEST_PATH}/
-	eval $SSH $KVM_HOST "(cd $DEST_PATH/${REPO_NAME}; tar xf ../${REPO_NAME}.tar.gz)"
+	SSH ${KVM_HOST} rm -rf ${DEST_PATH}/${REPO_NAME}
+	SSH ${KVM_HOST} mkdir -p ${DEST_PATH}/${REPO_NAME}
+	RSYNC ${HOME_PATH}/${REPO_NAME}.tar.gz ${KVM_HOST}:${DEST_PATH}/
+	SSH $KVM_HOST "(cd $DEST_PATH/${REPO_NAME}; tar xf ../${REPO_NAME}.tar.gz)"
 	popd
 }
 
