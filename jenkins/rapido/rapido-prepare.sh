@@ -54,8 +54,8 @@ SSH=ssh
 RSYNC=rsync
 
 if [ "_${SECRET_FILE}" != "_" ] ; then
-	SSH="ssh -i ${SECRET_FILE}"
-	RSYNC="rsync -e 'ssh -i ${SECRET_FILE}'"
+	SSH="ssh -i ${SECRET_FILE} -o \"StrictHostKeyChecking no\""
+	RSYNC="rsync -e 'ssh -i ${SECRET_FILE} -o \"StrictHostKeyChecking no\"'"
 fi
 
 # check repo rapido master
