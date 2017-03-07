@@ -54,7 +54,7 @@ SSH=ssh
 RSYNC=rsync
 
 if [ "_${SECRET_FILE}" != "_" ] ; then
-	SSH="ssh -i ${SECRET_FILE} -o \"StrictHostKeyChecking no\""
+	SSH="ssh -i ${SECRET_FILE} -o 'StrictHostKeyChecking no'"
 	RSYNC="rsync -e 'ssh -i ${SECRET_FILE} -o \"StrictHostKeyChecking no\"'"
 fi
 
