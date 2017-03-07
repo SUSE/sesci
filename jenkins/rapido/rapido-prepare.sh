@@ -85,10 +85,10 @@ function git_clone() {
 	#git archive -o ${HOME_PATH}/${REPO_NAME}.tar.gz $REPO_BRANCH
 	tar czf ${HOME_PATH}/${REPO_NAME}.tar.gz --owner=0 --group=0 --exclude=.git .
 	echo "Copying repo [${REPO_NAME}] to host [${KVM_HOST}] to [${DEST_PATH}] directory"
-	$SSH ${KVM_HOST} rm -rf ${DEST_PATH}/${REPO_NAME}
-	$SSH ${KVM_HOST} mkdir -p ${DEST_PATH}/${REPO_NAME}
-	$RSYNC ${HOME_PATH}/${REPO_NAME}.tar.gz ${KVM_HOST}:${DEST_PATH}/
-	$SSH $KVM_HOST "(cd $DEST_PATH/${REPO_NAME}; tar xf ../${REPO_NAME}.tar.gz)"
+	eval $SSH ${KVM_HOST} rm -rf ${DEST_PATH}/${REPO_NAME}
+	eval $SSH ${KVM_HOST} mkdir -p ${DEST_PATH}/${REPO_NAME}
+	eval $RSYNC ${HOME_PATH}/${REPO_NAME}.tar.gz ${KVM_HOST}:${DEST_PATH}/
+	eval $SSH $KVM_HOST "(cd $DEST_PATH/${REPO_NAME}; tar xf ../${REPO_NAME}.tar.gz)"
 	popd
 }
 
