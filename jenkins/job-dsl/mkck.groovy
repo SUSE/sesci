@@ -174,6 +174,7 @@ job(mkck) {
       pattern('src/**/*.trs')
       pattern('src/**/*.log')
       pattern('test-suite.log')
+      pattern('/var/lib/systemd/coredump/*.xz')
       allowEmpty()
     }
   }
