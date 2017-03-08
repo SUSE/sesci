@@ -7,7 +7,10 @@ HOST_IMAGE=${HOST_IMAGE:-"opensuse-42.2-x86_64"}
 HOST_FLAVOR=${HOST_FLAVOR:-"hg-30-ssd-flex"}
 HOST_NAME=${HOST_NAME:-"iscsi"}
 SOURCEDIR=$(dirname ${BASH_SOURCE[0]})
-TEST_CONF=${TEST_CONF:-"${SOURCEDIR}/conf/default"}
+#TEST_CONF=${TEST_CONF:-"${SOURCEDIR}/conf/default"}
+if [ "_${TEST_CONF}" != "_" ]  ; then
+	source ${TEST_CONF}
+fi
 
 #RAPIDO_REPO=https://gitlab.suse.de/dmdiss/rapido.git
 RAPIDO_REPO=https://github.com/ddiss/rapido.git
@@ -22,7 +25,6 @@ CEPH_REPO=${CEPH_REPO:-"https://github.com/SUSE/ceph.git"}
 TAP_USER=${USER}
 echo ${BASH_SOURCE[0]}
 
-source ${TEST_CONF}
 
 # Cleanup before each round
 CPU_THREADS=$(grep -c ^processor /proc/cpuinfo)
