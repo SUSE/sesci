@@ -46,13 +46,10 @@ DEPS="libvirt
 tunctl
 qemu-kvm
 bridge-utils-devel
-cunit-devel
-dbench
 fio
 git-core
 libacl-devel
 libattr-devel
-libcryptopp-devel
 libedit-devel
 lttng-modules
 lttng-modules-kmp-default
@@ -60,7 +57,15 @@ nss_ldap
 python3
 python3-Cython"
 
+DEPS_LEAP42_2="cunit-devel dbench libcryptopp-devel"
+
 zypper install -y $DEPS
+if [ "${os_version}" == "openSUSE-42.2" ]; then
+	zypper install -y $DEPS_LEAP42_2
+fi
+pushd ${HOME_PATH}/ceph
+	./install-deps.sh
+popd
 
 echo ==== Setup rapido ====
 pushd ${HOME_PATH}/rapido
@@ -87,10 +92,6 @@ fi
 
 sudo tools/br_setup.sh || echo "Failed to configure bridges"
 
-popd
-
-pushd ${HOME_PATH}/ceph
-	./install-deps.sh
 popd
 
 pushd ${HOME_PATH}/kernel
