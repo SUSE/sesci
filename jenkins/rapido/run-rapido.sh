@@ -31,7 +31,7 @@ function finish {
 	#    btrfs subvolume delete $i
 	#done
 	#rm -rf ${HOME_PATH}/ceph/src/dev || true
-	exit ${TEST_RESULT}
+	exit ${TEST_RESULTS}
 }
 
 
@@ -232,20 +232,24 @@ ALL.ExtendedCopy.ValidTgtDescr
 #ALL.ReceiveCopyResults.CopyStatus - Not supported by LIO
 ALL.ReceiveCopyResults.OpParams
 EOF
+	TEST_RESULTS=0
 	for i in `cat tests.txt | grep -v "^#"`; do
 		./iscsi-test-cu -V --test="$i" --dataloss \
 			iscsi://192.168.155.102:3260/iqn.1996-04.de.suse:rapido/0 \
-			iscsi://192.168.155.101:3260/iqn.1996-04.de.suse:rapido/0 2>&1 > ${HOME_PATH}/logs/$i.log || break
+			iscsi://192.168.155.101:3260/iqn.1996-04.de.suse:rapido/0 \
+			2>&1 > ${HOME_PATH}/logs/$i.log || {
+			TEST_RESULTS=$?
+			break
+		}
 		#&> ${HOME}/workspace/storage-cephfs-kernel/$tests.mp.log
 
 	done
-	TEST_RESULTS=$?
 	# finish cleans up daemonized VMs, etc.
 	popd
 
 	;;
 *)
-	echo "Error.."
+	echo "ERROR: Unknown tests: $tests"
 	trap finish EXIT
 esac
 
