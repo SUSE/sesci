@@ -42,7 +42,8 @@ if  [ "${ses_version}" = "ses2" ]; then
 	fi
 fi
 
-DEPS="libvirt
+DEPS="bc
+libvirt
 tunctl
 qemu-kvm
 bridge-utils-devel
