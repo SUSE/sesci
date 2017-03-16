@@ -121,7 +121,7 @@
             which-build: multijob-build
         - shell: |
             case $CEPH_BRANCH in
-            ses4|jewel)
+            ses3|ses4|jewel)
                 python convert-trs-to-junit.py src res
                 ;;
             *)
@@ -196,7 +196,7 @@
             cat /etc/os-release
 
             case $CEPH_BRANCH in
-            ses4|jewel)
+            ses3|ses4|jewel)
                 case $DIST in
                 leap42_2)
                     ulimit -u 10240

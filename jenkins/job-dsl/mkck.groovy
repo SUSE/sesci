@@ -94,7 +94,7 @@ multiJob("mkck-${ceph_ver}-${suse_ver}") {
         multiJobBuild()
       }
     }
-    if (ceph_branch == "ses4" || ceph_branch == "jewel") {
+    if (ceph_branch == "ses3" || ceph_branch == "ses4" || ceph_branch == "jewel") {
         shell ('python convert-trs-to-junit.py src res')
     } else {
         shell ('python convert-ctest-to-junit.py')
@@ -157,7 +157,7 @@ job(mkck) {
     """cat /etc/os-release"""
   ]
   steps {
-    if (['ses4', 'jewel'].contains(ceph_branch)) {
+    if (['ses3', 'ses4', 'jewel'].contains(ceph_branch)) {
       if (['leap-42.2'].contains(suse_ver)) {
         cmds.add("ulimit -u 10240")
       }
