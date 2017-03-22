@@ -106,17 +106,17 @@ http://download.opensuse.org/repositories/benchmark/SLE_12_SP2_Backports/x86_64/
 
 step_setup_rapido() {
 	pushd ${HOME_PATH}/rapido
-	sed -i "s:^[# ]*KERNEL_SRC=.*:KERNEL_SRC=\"${HOME_PATH}/kernel\":g; \
-		s:^[# ]*CEPH_SRC=.*:CEPH_SRC=\"${HOME_PATH}/ceph/src\":g; \
-		s:^[# ]*TAP_USER=.*:TAP_USER=\"${TAP_USER}\":g; \
-		s/^[# ]*MAC_ADDR1=.*/MAC_ADDR1=\"b8:ac:24:45:c6:01\"/g; \
-		s/^[# ]*MAC_ADDR2=.*/MAC_ADDR2=\"b8:ac:24:45:c6:02\"/g; \
-		s/^[# ]*TARGET_IQN=.*/TARGET_IQN=\"iqn.1996-04.de.suse:rapido\"/g; \
-		s:^[# ]*CEPH_RBD_POOL=.*:CEPH_RBD_POOL=\"rbd\":g; \
-		s:^[# ]*CEPH_RBD_IMAGE=.*:CEPH_RBD_IMAGE=\"iscsi_test\":g; \
-		s:^[# ]*FSTESTS_AUTORUN_CMD=.*:FSTESTS_AUTORUN_CMD=\"./check -g auto; shutdown\":g; \
-		s:^[# ]*FSTESTS_DIR=.*:FSTESTS_DIR=\"${HOME_PATH}/xfstests\":g" \
-		rapido.conf
+	sed "s:^[# ]*KERNEL_SRC=.*:KERNEL_SRC=\"${HOME_PATH}/kernel\":g; \
+	     s:^[# ]*CEPH_SRC=.*:CEPH_SRC=\"${HOME_PATH}/ceph/src\":g; \
+	     s:^[# ]*TAP_USER=.*:TAP_USER=\"${TAP_USER}\":g; \
+	     s/^[# ]*MAC_ADDR1=.*/MAC_ADDR1=\"b8:ac:24:45:c6:01\"/g; \
+	     s/^[# ]*MAC_ADDR2=.*/MAC_ADDR2=\"b8:ac:24:45:c6:02\"/g; \
+	     s/^[# ]*TARGET_IQN=.*/TARGET_IQN=\"iqn.1996-04.de.suse:rapido\"/g; \
+	     s:^[# ]*CEPH_RBD_POOL=.*:CEPH_RBD_POOL=\"rbd\":g; \
+	     s:^[# ]*CEPH_RBD_IMAGE=.*:CEPH_RBD_IMAGE=\"iscsi_test\":g; \
+	     s:^[# ]*FSTESTS_AUTORUN_CMD=.*:FSTESTS_AUTORUN_CMD=\"./check -g auto; shutdown\":g; \
+	     s:^[# ]*FSTESTS_DIR=.*:FSTESTS_DIR=\"${HOME_PATH}/xfstests\":g" \
+	    rapido.conf.example > rapido.conf
 	if  [ "${os_version}" = "SLE12-SP1" ]; then
 		cp kernel/sle12sp1_config ${HOME_PATH}/kernel/.config
 	elif  [ "${os_version}" = "SLE12-SP2" ]; then
@@ -215,6 +215,7 @@ step_run_rapido_for_cephfs() {
 
 step_run_rapido_for_iscsi() {
 	pushd ${HOME_PATH}/rapido
+	# assume step_setup_rapido() has already run, to provision rapido.conf
 	sed -i "s:QEMU_EXTRA_ARGS=.*:QEMU_EXTRA_ARGS=\"-display none -daemonize\":g" rapido.conf
 	./cut_lio_rbd.sh
 	./vm.sh
