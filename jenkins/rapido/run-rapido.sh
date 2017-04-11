@@ -29,6 +29,7 @@ mkdir -p ${HOME_PATH}/logs
 
 sudo pkill qemu-system-x86 || true
 
+
 step() {
 	local name=$1
 	local title=$2
@@ -36,11 +37,15 @@ step() {
 	[[ "$(type -t pre_${name})" == "function" ]] &&
 		pre_${name}
 	(step_${name}) || {
-		echo ERROR: Step "$name" failed with $?
+		export EXIT=$?
+		echo ERROR: Step "$name" failed with $EXIT
 	}
 	[[ "$(type -t post_${name})" == "function" ]] &&
 		post_${name}
 	echo "=== $title step finished ==="
+	if [ "$EXIT" != "0" ] ; then
+		exit $EXIT
+	fi
 }
 
 function finish {
@@ -61,7 +66,6 @@ cleanup_vstart() {
 	sh stop.sh  || true
 	popd
 	rm -rf ${HOME_PATH}/ceph/src/dev || true
-	exit ${TEST_RESULT}
 }
 
 cleanup_btrfs() {
@@ -292,7 +296,7 @@ EOF
 			iscsi://192.168.155.102:3260/iqn.1996-04.de.suse:rapido/0 \
 			iscsi://192.168.155.101:3260/iqn.1996-04.de.suse:rapido/0 \
 			2>&1 > $TEST_LOG || {
-			TEST_RESULT=$?
+			export TEST_RESULT=$?
 			echo ERROR: Test [$i] failed with exit code $TEST_RESULT
 			echo === cut ===
 			cat $TEST_LOG
@@ -302,6 +306,7 @@ EOF
 	done
 	# finish cleans up daemonized VMs, etc.
 	popd
+	return $TEST_RESULT
 }
 
 post_run_rapido_for_cephfs() {
@@ -329,10 +334,8 @@ iscsi)
 	;;
 *)
 	echo "ERROR: Unknown tests: $tests"
-	trap finish EXIT
 esac
 
 
-trap finish EXIT
-
+return $EXIT
 
