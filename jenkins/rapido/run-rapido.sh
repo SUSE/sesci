@@ -33,11 +33,12 @@ sudo pkill qemu-system-x86 || true
 step() {
 	local name=$1
 	local title=$2
+	EXIT=0
 	echo "=== $title step starting ==="
 	[[ "$(type -t pre_${name})" == "function" ]] &&
 		pre_${name}
 	(step_${name}) || {
-		export EXIT=$?
+		EXIT=$?
 		echo ERROR: Step "$name" failed with $EXIT
 	}
 	[[ "$(type -t post_${name})" == "function" ]] &&
