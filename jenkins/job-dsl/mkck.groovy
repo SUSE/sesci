@@ -85,7 +85,7 @@ multiJob("mkck-${ceph_ver}-${suse_ver}") {
         }
       }
     }
-    shell ('ssh -i ${SECRET_FILE} root@${TARGET_IP} coredumpctl')
+    shell ('ssh -i ${SECRET_FILE} -o StrictHostKeyChecking=no root@${TARGET_IP} coredumpctl')
     systemGroovyCommand(readFileFromWorkspace('delete-jenkins-node.groovy'))
 	shell ('python -u delete-ovh-server.py')
     copyArtifacts(mkck) {

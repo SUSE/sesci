@@ -120,8 +120,9 @@ step_setup_rapido() {
 	     s:^[# ]*CEPH_RBD_POOL=.*:CEPH_RBD_POOL=\"rbd\":g; \
 	     s:^[# ]*CEPH_RBD_IMAGE=.*:CEPH_RBD_IMAGE=\"iscsi_test\":g; \
 	     s:^[# ]*FSTESTS_AUTORUN_CMD=.*:FSTESTS_AUTORUN_CMD=\"./check -g auto; shutdown\":g; \
-	     s:^[# ]*FSTESTS_DIR=.*:FSTESTS_DIR=\"${HOME_PATH}/xfstests\":g" \
-	    rapido.conf.example > rapido.conf
+	     s:^[# ]*FSTESTS_DIR=.*:FSTESTS_DIR=\"${HOME_PATH}/xfstests\":g \
+	     s:^[# ]*QEMU_EXTRA_ARGS=.*:QEMU_EXTRA_ARGS=\${QEMU_EXTRA_ARGS:-\"-display none -daemonize\"}:g \
+         " rapido.conf.example > rapido.conf
 	if  [ "${os_version}" = "SLE12-SP1" ]; then
 		cp kernel/sle12sp1_config ${HOME_PATH}/kernel/.config
 	elif  [ "${os_version}" = "SLE12-SP2" ]; then
@@ -213,7 +214,7 @@ step_build_libiscsi() {
 step_run_rapido_for_cephfs() {
 	pushd ${HOME_PATH}/rapido
 	./cut_fstests_cephfs.sh
-	./vm.sh # add a timeout
+	QEMU_EXTRA_ARGS="-display none -daemonize -serial file:${HOME_PATH}/logs/vm.console" ./vm.sh # add a timeout
 	TEST_RESULT=$?
 	popd
 }
@@ -221,10 +222,9 @@ step_run_rapido_for_cephfs() {
 step_run_rapido_for_iscsi() {
 	pushd ${HOME_PATH}/rapido
 	# assume step_setup_rapido() has already run, to provision rapido.conf
-	sed -i "s:QEMU_EXTRA_ARGS=.*:QEMU_EXTRA_ARGS=\"-display none -daemonize\":g" rapido.conf
 	./cut_lio_rbd.sh
-	./vm.sh
-	./vm.sh
+	QEMU_EXTRA_ARGS="-display none -daemonize -serial file:${HOME_PATH}/logs/vm.1.console" ./vm.sh
+	QEMU_EXTRA_ARGS="-display none -daemonize -serial file:${HOME_PATH}/logs/vm.2.console" ./vm.sh
 	sleep 60
 	pushd ${HOME_PATH}/libiscsi/test-tool/
 	# libiscsi test list. CompareAndWrite.Unwritten *must* remain first:
