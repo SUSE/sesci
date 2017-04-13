@@ -214,7 +214,7 @@ step_build_libiscsi() {
 step_run_rapido_for_cephfs() {
 	pushd ${HOME_PATH}/rapido
 	./cut_fstests_cephfs.sh
-	QEMU_EXTRA_ARGS="-display none -daemonize -serial file:${HOME_PATH}/logs/vm.console" ./vm.sh # add a timeout
+	QEMU_EXTRA_ARGS="-display none -daemonize -serial file:${HOME_PATH}/logs/vm.console.log" ./vm.sh # add a timeout
 	TEST_RESULT=$?
 	popd
 }
@@ -223,8 +223,8 @@ step_run_rapido_for_iscsi() {
 	pushd ${HOME_PATH}/rapido
 	# assume step_setup_rapido() has already run, to provision rapido.conf
 	./cut_lio_rbd.sh
-	QEMU_EXTRA_ARGS="-display none -daemonize -serial file:${HOME_PATH}/logs/vm.1.console" ./vm.sh
-	QEMU_EXTRA_ARGS="-display none -daemonize -serial file:${HOME_PATH}/logs/vm.2.console" ./vm.sh
+	QEMU_EXTRA_ARGS="-display none -daemonize -serial file:${HOME_PATH}/logs/vm.1.console.log" ./vm.sh
+	QEMU_EXTRA_ARGS="-display none -daemonize -serial file:${HOME_PATH}/logs/vm.2.console.log" ./vm.sh
 	sleep 60
 	pushd ${HOME_PATH}/libiscsi/test-tool/
 	# libiscsi test list. CompareAndWrite.Unwritten *must* remain first:
