@@ -120,8 +120,8 @@ step_setup_rapido() {
 	     s:^[# ]*CEPH_RBD_POOL=.*:CEPH_RBD_POOL=\"rbd\":g; \
 	     s:^[# ]*CEPH_RBD_IMAGE=.*:CEPH_RBD_IMAGE=\"iscsi_test\":g; \
 	     s:^[# ]*FSTESTS_AUTORUN_CMD=.*:FSTESTS_AUTORUN_CMD=\"./check -g auto; shutdown\":g; \
-	     s:^[# ]*FSTESTS_DIR=.*:FSTESTS_DIR=\"${HOME_PATH}/xfstests\":g \
-	     s:^[# ]*QEMU_EXTRA_ARGS=.*:QEMU_EXTRA_ARGS=\${QEMU_EXTRA_ARGS:-\"-display none -daemonize\"}:g \
+	     s:^[# ]*FSTESTS_DIR=.*:FSTESTS_DIR=\"${HOME_PATH}/xfstests\":g; \
+	     s/^[# ]*QEMU_EXTRA_ARGS=.*/QEMU_EXTRA_ARGS=\${QEMU_EXTRA_ARGS:-\"-display none -daemonize\"}/g; \
          " rapido.conf.example > rapido.conf
 	if  [ "${os_version}" = "SLE12-SP1" ]; then
 		cp kernel/sle12sp1_config ${HOME_PATH}/kernel/.config
