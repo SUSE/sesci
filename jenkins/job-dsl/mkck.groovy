@@ -86,6 +86,7 @@ multiJob("mkck-${ceph_ver}-${suse_ver}") {
       }
     }
     shell ('ssh -i ${SECRET_FILE} -o StrictHostKeyChecking=no root@${TARGET_IP} coredumpctl')
+    shell ('scp -i ${SECRET_FILE} -o StrictHostKeyChecking=no root@${TARGET_IP}:/var/lib/systemd/coredump .')
     systemGroovyCommand(readFileFromWorkspace('delete-jenkins-node.groovy'))
 	shell ('python -u delete-ovh-server.py')
     copyArtifacts(mkck) {
@@ -107,6 +108,10 @@ multiJob("mkck-${ceph_ver}-${suse_ver}") {
             testDataPublishers {
                 publishTestAttachments()
             }
+        }
+        archiveArtifacts {
+          pattern('coredump/**')
+          allowEmpty()
         }
     }
 
