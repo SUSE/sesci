@@ -42,7 +42,7 @@ println 'Created node "' + nodeName + '". Connecting...'
 
 def c = node.computer
 c.connect(true)
-def timeout = 1 * 60
+def timeout = 3 * 60
 def wait = 10
 while (c.offline) {
     if (timeout > 0) {
