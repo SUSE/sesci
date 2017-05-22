@@ -11,6 +11,7 @@ def flavor   = env.get('TARGET_FLAVOR', 'hg-15-ssd')
 def ceph_map = [
   'ceph':  ['ceph/ceph', 'master'],
   'suse':  ['suse/ceph', 'master'],
+  'ses2':  ['suse/ceph', 'ses2'],
   'ses3':  ['suse/ceph', 'ses3'],
   'ses4':  ['suse/ceph', 'ses4'],
   'ses5':  ['suse/ceph', 'ses5'],
@@ -98,7 +99,7 @@ multiJob("mkck-${ceph_ver}-${suse_ver}") {
         multiJobBuild()
       }
     }
-    if (['ses3', 'ses4', 'jewel'].contains(ceph_branch)) {
+    if (['ses2', 'ses3', 'ses4', 'jewel'].contains(ceph_branch)) {
         shell ('python convert-trs-to-junit.py src res')
     } else {
         shell ('python convert-ctest-to-junit.py')
@@ -165,7 +166,7 @@ job(mkck) {
     """cat /etc/os-release"""
   ]
   steps {
-    if (['ses3', 'ses4', 'jewel'].contains(ceph_branch)) {
+    if (['ses2', 'ses3', 'ses4', 'jewel'].contains(ceph_branch)) {
       if (['leap-42.2', 'leap-42.3'].contains(suse_ver)) {
         cmds.add("ulimit -u 10240")
       }
