@@ -20,7 +20,7 @@ from novaclient.client import Client
 
 target_file   = os.environ.get('TARGET_FILE', 'target.properties')
 target_mask   = os.environ.get('TARGET_MASK', 'mkck%02d')
-target_limit  = os.environ.get('TARGET_LIMIT', 16)
+target_limit  = os.environ.get('TARGET_LIMIT', 24)
 target_image  = os.environ.get('TARGET_IMAGE', 'opensuse-42.2-x86_64')
 target_flavor = os.environ.get('TARGET_FLAVOR', 'hg-15-ssd')
 ovh_key       = os.environ.get('OVH_KEY', 'storage-automation')
