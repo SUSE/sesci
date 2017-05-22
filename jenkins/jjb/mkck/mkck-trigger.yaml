@@ -207,7 +207,7 @@
                 ./run-make-check.sh
                 ;;
             *)
-                ./run-make-check.sh -DWITH_LTTNG=false
+                ./run-make-check.sh -DWITH_LTTNG=false -DHAVE_BABELTRACE=false
                 ;;
             esac
 

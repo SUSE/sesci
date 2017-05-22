@@ -170,7 +170,7 @@ job(mkck) {
       cmds.add("""./run-make-check.sh""")
     }
     else {
-      cmds.add("""./run-make-check.sh -DWITH_LTTNG=false""")
+      cmds.add("""./run-make-check.sh -DWITH_LTTNG=false -DHAVE_BABELTRACE=false""")
     }
     shell(cmds.join("\n"))
   }
