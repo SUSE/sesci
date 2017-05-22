@@ -20,8 +20,10 @@ def ceph_map = [
 
 def suse_image_map = [
   'leap-42.2': 'teuthology-opensuse-42.2-x86_64',
+  'leap-42.3': 'teuthology-opensuse-42.3-x86_64',
   'sle12-sp1': 'teuthology-sle-12.1-x86_64',
   'sle12-sp2': 'teuthology-sle-12.2-x86_64'
+  'sle12-sp3': 'teuthology-sle-12.3-x86_64'
   ]
 
 def ceph_repo_url = env.get('ghprbAuthorRepoGitUrl', 
@@ -96,7 +98,7 @@ multiJob("mkck-${ceph_ver}-${suse_ver}") {
         multiJobBuild()
       }
     }
-    if (ceph_branch == "ses3" || ceph_branch == "ses4" || ceph_branch == "jewel") {
+    if (['ses3', 'ses4', 'jewel'].contains(ceph_branch)) {
         shell ('python convert-trs-to-junit.py src res')
     } else {
         shell ('python convert-ctest-to-junit.py')
@@ -164,7 +166,7 @@ job(mkck) {
   ]
   steps {
     if (['ses3', 'ses4', 'jewel'].contains(ceph_branch)) {
-      if (['leap-42.2'].contains(suse_ver)) {
+      if (['leap-42.2', 'leap-42.3'].contains(suse_ver)) {
         cmds.add("ulimit -u 10240")
       }
       cmds.add("""./run-make-check.sh""")

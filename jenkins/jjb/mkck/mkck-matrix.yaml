@@ -9,7 +9,9 @@
             type: user-defined
             values:
                 - 'leap-42.2'
+                - 'sle12-sp3'
                 - 'sle12-sp2'
+                - 'sle12-sp1'
         - axis:
             name: CEPH_VER
             type: user-defined
@@ -17,7 +19,14 @@
                 - 'ceph'
                 - 'ses5'
                 - 'ses4'
+                - 'ses3'
                 - 'jewel'
+    execute-strategy:
+        combination-filter: |
+            (SES_VER=='leap-42.2') ||
+            (SES_VER=='sle12-sp3' && (CEPH_VER=='ses5' || CEPH_VER=='ceph')) ||
+            (SES_VER=='sle12-sp2' && (CEPH_VER=='ses4' || CEPH_VER=='jewel')) ||
+            (SES_VER=='sle12-sp1' && (CEPH_VER=='ses3')
     wrappers:
         - workspace-cleanup
     triggers:
