@@ -22,7 +22,7 @@ def suse_image_map = [
   'leap-42.2': 'teuthology-opensuse-42.2-x86_64',
   'leap-42.3': 'teuthology-opensuse-42.3-x86_64',
   'sle12-sp1': 'teuthology-sle-12.1-x86_64',
-  'sle12-sp2': 'teuthology-sle-12.2-x86_64'
+  'sle12-sp2': 'teuthology-sle-12.2-x86_64',
   'sle12-sp3': 'teuthology-sle-12.3-x86_64'
   ]
 
