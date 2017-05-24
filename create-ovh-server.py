@@ -144,6 +144,7 @@ while True:
 target_fqdn = target + ".suse.de"
 
 command_list = [
+  'zypper ref',
   'zypper install -y %s 2>&1' % dependencies,
   'echo "' + target_ip + '\t' + target_fqdn + '" >> /etc/hosts',
   'hostname ' + target_fqdn
