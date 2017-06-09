@@ -44,6 +44,7 @@
                 - job-status
     wrappers:
         - workspace-cleanup
+        - ansicolor
     triggers:
         - github-pull-request:
             #admin-list:

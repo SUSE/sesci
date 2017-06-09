@@ -28,6 +28,14 @@ ovh_conf      = os.environ.get('OVH_CONF', 'ovh.yaml')
 ceph_ref      = os.environ.get('CEPH_REF', '')
 ceph_repo_url = os.environ.get('CEPH_REPO_URL')
 
+server = {
+    'flavor':   target_flavor,
+    'name':     target_mask,
+    'image':    target_image,
+    'key-name': 'storage-automation',
+    'networks': ['Ext-Net'],
+}
+
 if os.path.isfile(target_file):
     print "Cleanup properties file: [" + target_file + "]"
     os.remove(target_file)
@@ -63,7 +71,7 @@ import fcntl
 
 lockfile = '/tmp/mkck'
 
-lock_timeout = 60
+lock_timeout = 5 * 60
 lock_wait = 2
 
 res = None
@@ -102,7 +110,7 @@ while res.status != 'ACTIVE':
   res = nova_client.servers.find(id=target_id)
 
 target = res.name
-target_ip = res.networks['Ext-Net'][0]
+target_ip = res.networks[server['networks'][0]][0]
 print 'Server [' + target + '] is active and has following IP: ' + target_ip
 with open(target_file, 'w') as f:
     f.write('TARGET_NAME=' + target + '\n')
@@ -141,8 +149,16 @@ while True:
                         print "Waiting " + str(wait) + " seconds..."
                         timeout -= wait
                         time.sleep(wait)
-target_fqdn = target + ".suse.de"
+def provision_node(node_client, commands):
+    for command in commands:
+      stdin, stdout, stderr = client.exec_command(command)
+      while True:
+        l = stdout.readline()
+        if not l:
+          break
+        print "> " + l.rstrip()
 
+target_fqdn = target + ".suse.de"
 command_list = [
   'zypper ref',
   'zypper install -y %s 2>&1' % dependencies,
@@ -150,13 +166,10 @@ command_list = [
   'hostname ' + target_fqdn
   ]
 if (ceph_ref == 'jewel'):
-  command_list.append('zypper remove -y zypper-aptitude 2>&1')
+    provision_node(client, command_list + 
+        [ 'zypper remove -y zypper-aptitude 2>&1' ])
+else:
+    provision_node(client, command_list)
 
-for command in command_list:
-  stdin, stdout, stderr = client.exec_command(command)
-  while True:
-    l = stdout.readline()
-    if not l:
-      break
-    print "> " + l.rstrip()
+
 
