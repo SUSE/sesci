@@ -112,7 +112,7 @@ http://download.opensuse.org/repositories/benchmark/SLE_12_SP2_Backports/x86_64/
 step_setup_rapido() {
 	pushd ${HOME_PATH}/rapido
 	sed "s:^[# ]*KERNEL_SRC=.*:KERNEL_SRC=\"${HOME_PATH}/kernel\":g; \
-	     s:^[# ]*CEPH_SRC=.*:CEPH_SRC=\"${HOME_PATH}/ceph/src\":g; \
+	     s:^[# ]*CEPH_SRC=.*:CEPH_SRC=\"${HOME_PATH}/ceph\":g; \
 	     s:^[# ]*TAP_USER=.*:TAP_USER=\"${TAP_USER}\":g; \
 	     s/^[# ]*MAC_ADDR1=.*/MAC_ADDR1=\"b8:ac:24:45:c6:01\"/g; \
 	     s/^[# ]*MAC_ADDR2=.*/MAC_ADDR2=\"b8:ac:24:45:c6:02\"/g; \
@@ -144,7 +144,6 @@ step_build_kernel() {
 	yes "" | make oldconfig
 	make -j ${CPU_THREADS_MAKE}
 	INSTALL_MOD_PATH=./mods make modules_install
-	sudo ln -sf $PWD/mods/lib/modules/$(make kernelrelease) /lib/modules/$(make kernelrelease)
 	popd
 }
 
