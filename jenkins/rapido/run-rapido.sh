@@ -144,7 +144,6 @@ step_build_kernel() {
 	yes "" | make oldconfig
 	make -j ${CPU_THREADS_MAKE}
 	INSTALL_MOD_PATH=./mods make modules_install
-	sudo ln -sf $PWD/mods/lib/modules/$(make kernelrelease) /lib/modules/$(make kernelrelease)
 	popd
 }
 
