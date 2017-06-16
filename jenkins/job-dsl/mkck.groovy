@@ -43,7 +43,7 @@ def mkck = "run-mkck-${ceph_ver}-${suse_ver}"
 multiJob("mkck-${ceph_ver}-${suse_ver}") {
   label('master')
   logRotator {
-    numToKeep (5)
+    numToKeep (9)
   }
 
   configure { project ->
@@ -124,13 +124,14 @@ job(mkck) {
   customWorkspace('ws/mkck')
   concurrentBuild()
   logRotator {
-    numToKeep (5)
+    numToKeep (9)
   }
   wrappers {
     preBuildCleanup()
     timeout {
       // absolute(200) // 3:20 hrs
-      absolute(150) //  2:30 hrs
+      absolute(180) //  3:00 hrs
+      // absolute(150) //  2:30 hrs
       // absolute(120) //  2:00 hrs
       // absolute(100) //  1:40 hrs
     }
