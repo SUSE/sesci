@@ -12,14 +12,11 @@ if [ "_${TEST_CONF}" != "_" ]  ; then
 	source ${TEST_CONF}
 fi
 
-#RAPIDO_REPO=https://gitlab.suse.de/dmdiss/rapido.git
-RAPIDO_REPO=https://github.com/ddiss/rapido.git
-#KERNEL_REPO=git://kerncvs.suse.de/kernel.git
-#KERNEL_REPO=https://github.com/openSUSE/kernel-source
+RAPIDO_REPO=https://github.com/rapido-linux/rapido
 KERNEL_REPO=git://kernel.suse.com/kernel.git
 
 LIBISCSI_REPO=${LIBISCSI_REPO:-https://github.com/sahlberg/libiscsi.git}
-XFSTESTS_REPO=${XFSTESTS_REPO:-https://github.com/ddiss/xfstests.git}
+XFSTESTS_REPO=${XFSTESTS_REPO:-https://git.kernel.org/pub/scm/fs/xfs/xfstests-dev.git}
 CEPH_REPO=${CEPH_REPO:-"https://github.com/SUSE/ceph.git"}
 
 TAP_USER=${USER}
