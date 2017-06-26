@@ -20,6 +20,7 @@ def ceph_map = [
 
 
 def suse_image_map = [
+  'leap-42.1': 'teuthology-opensuse-42.1-x86_64',
   'leap-42.2': 'teuthology-opensuse-42.2-x86_64',
   'leap-42.3': 'teuthology-opensuse-42.3-x86_64',
   'sle12-sp1': 'teuthology-sle-12.1-x86_64',
