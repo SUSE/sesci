@@ -5,11 +5,11 @@
     execution-strategy:
         combination-filter: |
             (SUSE_VER=='leap-42.3' && (CEPH_VER=='ses5' || CEPH_VER=='ceph')) ||
-            (SUSE_VER=='leap-42.2' && (CEPH_VER!='ses5' && CEPH_VER!='ceph')) ||
+            (SUSE_VER=='leap-42.2' && (CEPH_VER=='ses4' || CEPH_VER=='jewel')) ||
             (SUSE_VER=='leap-42.1' && (CEPH_VER=='ses3' || CEPH_VER=='ses2')) ||
             (SUSE_VER=='sle12-sp3' && (CEPH_VER=='ses5' || CEPH_VER=='ceph')) ||
-            (SUSE_VER=='sle12-sp2' && (CEPH_VER=='ses4' || CEPH_VER=='ses3' || CEPH_VER=='jewel')) ||
-            (SUSE_VER=='sle12-sp1' && (CEPH_VER=='ses2'))
+            (SUSE_VER=='sle12-sp2' && (CEPH_VER=='ses4' || CEPH_VER=='jewel')) ||
+            (SUSE_VER=='sle12-sp1' && (CEPH_VER=='ses3' || CEPH_VER=='ses2'))
     node: 'storage-compute'
     axes:
         - axis:
@@ -18,6 +18,7 @@
             values:
                 - 'leap-42.3'
                 - 'leap-42.2'
+                - 'leap-42.1'
                 - 'sle12-sp3'
                 - 'sle12-sp2'
                 - 'sle12-sp1'

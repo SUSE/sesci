@@ -168,7 +168,7 @@ job(mkck) {
   ]
   steps {
     if (['ses2', 'ses3', 'ses4', 'jewel'].contains(ceph_branch)) {
-      if (['leap-42.2', 'leap-42.3'].contains(suse_ver)) {
+      if (['leap-42.1', 'leap-42.2', 'leap-42.3'].contains(suse_ver)) {
         cmds.add("ulimit -u 10240")
       }
       cmds.add("""./run-make-check.sh""")

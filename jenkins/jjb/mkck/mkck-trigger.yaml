@@ -8,8 +8,8 @@
             name: DIST
             type: user-defined
             values:
-                - sle12_sp2
-                - leap42_2
+                - sle12_sp3
+                - leap42_3
     parameters:
         - string:
             name: TARGET_FLAVOR
@@ -17,6 +17,9 @@
             description: "OVH flavor"
         - string:
             name: sha1
+        - string:
+            name: leap42_1
+            default: 'teuthology-opensuse-42.1-x86_64'
         - string:
             name: leap42_2
             default: 'teuthology-opensuse-42.2-x86_64'
@@ -193,7 +196,7 @@
     wrappers:
         - workspace-cleanup
         - timeout:
-            timeout: 150
+            timeout: 180
     scm:
         - git:
             url: '$CEPH_REPO_URL'
