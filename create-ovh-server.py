@@ -2,6 +2,9 @@
 import os
 import yaml
 import time
+import paramiko
+import logging
+import socket
 
 def get_nova_credentials_v2(yaml_file):
     d = {}
@@ -121,10 +124,6 @@ with open(target_file, 'w') as f:
     f.close()
     print "Saved target properties to file: " + target_file
 
-import paramiko
-import logging
-import time
-
 client = paramiko.SSHClient()
 client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
@@ -140,7 +139,7 @@ while True:
                 client.connect(hostname, username='root', key_filename=secret_file)
                 print "Connected to the host " + hostname
                 break
-        except paramiko.ssh_exception.NoValidConnectionsError as e:
+        except (paramiko.ssh_exception.NoValidConnectionsError, socket.error) as e:
                 print "Exeption occured: " + str(e)
                 if timeout < 0:
                         print "ERROR: Timeout occured"
