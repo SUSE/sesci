@@ -8,8 +8,8 @@
             name: DIST
             type: user-defined
             values:
-                - sle12_sp3
-                - leap42_3
+                - sles
+                - leap
     parameters:
         - string:
             name: TARGET_FLAVOR
@@ -82,7 +82,25 @@
     builders:
         - shell: |
             #!/bin/bash
-            echo TARGET_IMAGE=${!DIST} > target.properties
+            export tgt=${ghprbTargetBranch:-'master'}
+
+            sles_ses6="sle12_sp3"
+            sles_ses5="sle12_sp3"
+            sles_ses4="sle12_sp2"
+            sles_ses3="sle12_sp1"
+            sles_master="sle12_sp3"
+            leap_ses6="leap42_3"
+            leap_ses5="leap42_3"
+            leap_ses4="leap42_2"
+            leap_ses3="leap42_1"
+            leap_master="leap42_3"
+
+            eval "export dst=\$${DIST}_${tgt}"
+
+            echo TARGET_IMAGE=${!dst}   > target.properties
+            echo DIST=${dst}           >> target.properties
+            cat target.properties
+
         - inject:
             properties-file: 'target.properties'
         - trigger-builds:

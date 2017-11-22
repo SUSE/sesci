@@ -63,7 +63,7 @@ def create_target():
           if target in existing_servers:
                   print "Server [" + target + "] already exists."
           else:
-                  print "Creating server [" + target + "]"
+                  print "Creating server '%s' with image name '%s'" % (target, target_image)
                   res = nova_client.servers.create(target, image, flavor, key_name=ovh_key)
                   return res
   raise SystemExit('Unable to aquire server resource: Maximum number (' + str(target_limit) + ') of servers reached')

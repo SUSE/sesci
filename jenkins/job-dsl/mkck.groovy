@@ -15,7 +15,8 @@ def ceph_map = [
   'ses3':  ['suse/ceph', 'ses3'],
   'ses4':  ['suse/ceph', 'ses4'],
   'ses5':  ['suse/ceph', 'ses5'],
-  'jewel': ['ceph/ceph', 'jewel']
+  'jewel': ['ceph/ceph', 'jewel'],
+  'luminous':  ['ceph/ceph', 'luminous']
   ]
 
 
