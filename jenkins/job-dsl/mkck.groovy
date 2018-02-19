@@ -181,7 +181,7 @@ job(mkck) {
       cmds.add("""./run-make-check.sh -DWITH_LTTNG=false -DWITH_BABELTRACE=false""")
     }
     else {
-      cmds.add("""./run-make-check.sh -DWITH_LTTNG=false -DWITH_BABELTRACE=false -DWITH_PYTHON3=ON""")
+      cmds.add("""./run-make-check.sh -DWITH_LTTNG=false -DWITH_BABELTRACE=false""")
     }
     shell(cmds.join("\n"))
   }
