@@ -45,7 +45,7 @@
                 - job-status
     builders:
         - shell: |
-            git clone https://github.com/kshtsk/sesci .
+            git clone https://github.com/suse/sesci .
         - dsl:
             script-text: !include-raw: 'jenkins/job-dsl/mkck.groovy'
         - trigger-builds:

@@ -177,8 +177,11 @@ job(mkck) {
       }
       cmds.add("""./run-make-check.sh""")
     }
-    else {
+    else if(['ses5'].contains(ceph_branch)) {
       cmds.add("""./run-make-check.sh -DWITH_LTTNG=false -DWITH_BABELTRACE=false""")
+    }
+    else {
+      cmds.add("""./run-make-check.sh -DWITH_LTTNG=false -DWITH_BABELTRACE=false -DWITH_PYTHON3=ON""")
     }
     shell(cmds.join("\n"))
   }
