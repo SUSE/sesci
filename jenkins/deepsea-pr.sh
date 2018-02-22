@@ -1,5 +1,4 @@
 #!/bin/bash
-set -ex
 
 # Job specific variables
 TEUTH_NAME=${TEUTH_NAME:-"ci"}
@@ -12,16 +11,20 @@ TEUTH_SUITE=${SUITE:-"deepsea:basic:health-ok"}
 JOB_NAME=${JOB_NAME:-"deepsea-teuthology"}
 BUILD_ID=${BUILD_ID:-"0"}
 OVH_CONF=${OVH_CONF:-"ovh.net"}
+#RPMBUILD=${RPMBUILD:-"/var/lib/jenkins/rpmbuild"}
+#RPMBUILD=${RPMBUILD:-"/var/rpmbuild"}
+RPMBUILD=${RPMBUILD:-"${HOME}/rpmbuild"}
+
 
 # Clear any old deepsea rpms
-rm /var/lib/jenkins/rpmbuild/RPMS/noarch/deepsea*.rpm
+rm -rf ${RPMBUILD}/RPMS/noarch/deepsea*.rpm
 
 # setup
 mkdir repo/
 make rpm
 
 # copy generated rpms and create a repo
-cp /var/lib/jenkins/rpmbuild/RPMS/noarch/deepsea*.rpm repo/
+cp ${RPMBUILD}/RPMS/noarch/deepsea*.rpm repo/
 createrepo --repo deespea_testing repo/
 
 # mv where to?
