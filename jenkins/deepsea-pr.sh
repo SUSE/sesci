@@ -1,5 +1,5 @@
 #!/bin/bash
-set -x
+set -ex
 
 # Job specific variables
 TEUTH_NAME=${TEUTH_NAME:-"ci"}
