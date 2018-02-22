@@ -218,7 +218,7 @@
     wrappers:
         - workspace-cleanup
         - timeout:
-            timeout: 180
+            timeout: 240
     scm:
         - git:
             url: '$CEPH_REPO_URL'

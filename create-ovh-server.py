@@ -15,6 +15,7 @@ def get_nova_credentials_v2(yaml_file):
         d['auth_url']    = c.get('OS_AUTH_URL')
         d['project_id']  = c.get('OS_TENANT_NAME')
         d['region_name'] = c.get('OS_REGION_NAME')
+        d['cacert']      = c.get('OS_CACERT', None);
     d['version'] = '2'
     return d
 
