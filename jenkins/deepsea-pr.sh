@@ -14,27 +14,27 @@ OVH_CONF=${OVH_CONF:-"ovh.net"}
 #RPMBUILD=${RPMBUILD:-"/var/lib/jenkins/rpmbuild"}
 #RPMBUILD=${RPMBUILD:-"/var/rpmbuild"}
 RPMBUILD=${RPMBUILD:-"${HOME}/rpmbuild"}
-
+ART_PATH=${ART_PATH:-"artifacts/jenkins/default/${JOB_NAME/-trigger/}-${BUILD_ID}"}
+PUBLISH_DIR=${PUBLISH_DIR:-"/mnt/logs/$ART_PATH"}
+ACCESS_URL=${ACCESS_URL:-"http://storage-ci.suse.de/$ART_PATH"}
 
 # Clear any old deepsea rpms
 rm -rf ${RPMBUILD}/RPMS/noarch/deepsea*.rpm
 
 # setup
-mkdir repo/
-make rpm
+make rpm || {
+    echo "ERROR: Can't build RPMs"
+    exit 1
+}
 
 # copy generated rpms and create a repo
-cp ${RPMBUILD}/RPMS/noarch/deepsea*.rpm repo/
-createrepo --repo deespea_testing repo/
 
-# mv where to?
-sub_dir=artifacts/jenkins/default/${JOB_NAME/-trigger/}-${BUILD_ID}
-path=/mnt/logs/$sub_dir
-mkdir -p $path
+mkdir -p $PUBLISH_DIR
+cp ${RPMBUILD}/RPMS/noarch/deepsea*.rpm $PUBLISH_DIR
+createrepo --repo deespea_testing $PUBLISH_DIR
 
-mv repo/ $path
+DEEPSEAREPOURL=$ACCESS_URL
 
-DEEPSEAREPOURL=http://storage-ci.suse.de/$sub_dir/repo
 echo DeepSea repo: $DEEPSEAREPOURL
 
 
