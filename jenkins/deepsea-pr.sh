@@ -5,7 +5,8 @@ set -x
 TEUTH_NAME=${TEUTH_NAME:-"ci"}
 TEUTH_BRANCH=${TEUTH_BRANCH:-"master"}
 CEPH_BRANCH=${CEPH_BRANCH:-"ses5"}
-TEUTH_PATH=${TEUH_PATH:="$HOME/teuthology"}
+TEUTH_PATH=${TEUH_PATH:-"$HOME/teuthology"}
+TEUTH_SUITE=${SUITE:-"deepsea:basic:health-ok"}
 
 # Jenkins specific variables
 JOB_NAME=${JOB_NAME:-"deepsea-teuthology"}
@@ -80,7 +81,7 @@ teuthology-openstack -v \
     --suite-branch wip-no-repo-deepsea \
     --ceph-repo http://github.com/SUSE/ceph \
     --ceph ${CEPH_BRANCH} \
-    --suite deepsea:basic:health-ok \
+    --suite ${TEUTH_SUITE} \
     --test-repo deepsea-b$BUILD_ID:$DEEPSEAREPOURL \
     $PWD/deepsea-overrides.yaml \
     --wait 2>&1 | tee teuth-deepsea-b$BUILD_ID.log
