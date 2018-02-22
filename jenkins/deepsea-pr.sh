@@ -7,14 +7,30 @@ CEPH_BRANCH=${CEPH_BRANCH:-"ses5"}
 TEUTH_PATH=${TEUH_PATH:-"$HOME/teuthology"}
 TEUTH_SUITE=${SUITE:-"deepsea:basic:health-ok"}
 
+CEPH_REPO=${CEPH_REPO:-"http://github.com/SUSE/ceph"}
+TEUTH_REPO=${TEUTH_REPO:-"http://github.com/SUSE/teuthology"}
+SUITE_REPO=${SUITE_REPO:-"http://github.com/SUSE/ceph"}
+SUITE_BRANCH=${SUITE_BRANCH:-"master"}
+
 # Jenkins specific variables
 JOB_NAME=${JOB_NAME:-"deepsea-teuthology"}
 BUILD_ID=${BUILD_ID:-"0"}
 OVH_CONF=${OVH_CONF:-"ovh.net"}
 ART_PATH=${ART_PATH:-"deepsea/PR/${JOB_NAME/-trigger/}-${BUILD_ID}"}
+
+# Next parameters supposed to be always declared by the Jenkins job.
+# The PUBLISH_DIR is used by rpmbuild to copy built rpms for later
+# repository creation. The ACCESS_URL is used by teuthology to add
+# is a test repo with deepsea artifacts, which will override the once
+# in SCC because they have always newer version.
+#
+# Value examples below:
+#
+# PUBLISH_DIR   /mnt/logs/artifacts/jenkins/$ART_PATH
+# ACCESS_URL    http://storage-ci.suse.de/artifacts/jenkins/$ART_PATH
+
 PUBLISH_DIR=${PUBLISH_DIR:-"/mnt/logs/artifacts/jenkins/$ART_PATH"}
 ACCESS_URL=${ACCESS_URL:-"http://storage-ci.suse.de/artifacts/jenkins/$ART_PATH"}
-
 
 # ------------------------------------------------------------------------------
 # BUILD RPMS
@@ -81,17 +97,15 @@ overrides:
 
 EOF
 
-
-
 teuthology-openstack -v \
     --name ci \
     --key-name storage-automation \
     --key-filename $SECRET_FILE \
-    --teuthology-git-url https://github.com/SUSE/teuthology \
+    --teuthology-git-url ${TEUTH_REPO} \
     --teuthology-branch ${TEUTH_BRANCH} \
-    --suite-repo http://github.com/SUSE/ceph \
-    --suite-branch wip-no-repo-deepsea \
-    --ceph-repo http://github.com/SUSE/ceph \
+    --suite-repo ${SUITE_REPO} \
+    --suite-branch ${SUITE_BRANCH} \
+    --ceph-repo ${CEPH_REPO} \
     --ceph ${CEPH_BRANCH} \
     --suite ${TEUTH_SUITE} \
     --test-repo deepsea-b$BUILD_ID:$DEEPSEAREPOURL \
