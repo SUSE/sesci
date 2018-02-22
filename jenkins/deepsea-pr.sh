@@ -19,24 +19,24 @@ ACCESS_URL=${ACCESS_URL:-"http://storage-ci.suse.de/artifacts/jenkins/$ART_PATH"
 # ------------------------------------------------------------------------------
 # BUILD RPMS
 
-#RPMBUILD=${RPMBUILD:-"/var/lib/jenkins/rpmbuild"}
-#RPMBUILD=${RPMBUILD:-"/var/rpmbuild"}
-RPMBUILD=${RPMBUILD:-"${HOME}/rpmbuild"}
-
-# Clear any old deepsea rpms
-rm -rf ${RPMBUILD}/RPMS/noarch/deepsea*.rpm
-
-# setup
-make rpm || {
-    echo "ERROR: Can't build RPMs"
-    exit 1
-}
-
-# copy generated rpms and create a repo
-
-mkdir -p $PUBLISH_DIR
-cp ${RPMBUILD}/RPMS/noarch/deepsea*.rpm $PUBLISH_DIR
-createrepo --repo deespea_testing $PUBLISH_DIR
+# #RPMBUILD=${RPMBUILD:-"/var/lib/jenkins/rpmbuild"}
+# #RPMBUILD=${RPMBUILD:-"/var/rpmbuild"}
+# RPMBUILD=${RPMBUILD:-"${HOME}/rpmbuild"}
+# 
+# # Clear any old deepsea rpms
+# rm -rf ${RPMBUILD}/RPMS/noarch/deepsea*.rpm
+# 
+# # setup
+# make rpm || {
+#     echo "ERROR: Can't build RPMs"
+#     exit 1
+# }
+# 
+# # copy generated rpms and create a repo
+# 
+# mkdir -p $PUBLISH_DIR
+# cp ${RPMBUILD}/RPMS/noarch/deepsea*.rpm $PUBLISH_DIR
+# createrepo --repo deespea_testing $PUBLISH_DIR
 
 
 # ==============================================================================
