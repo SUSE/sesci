@@ -1,0 +1,196 @@
+#jenkins-jobs --conf storage-ci.suse.de.ini update deepsea-teuthology.yaml 
+- project:
+    name: deepsea-teuthology
+
+    suite:
+        - 'health-ok':
+            facet: 'deepsea:basic:health-ok'
+            cron: 'H/5 * * * *'
+        - 'openattic':
+            facet: 'deepsea:basic:openattic'
+            cron: 'H/5 * * * *'
+        - 'ganesha':
+            facet: 'deepsea:basic:nfs-ganesha'
+            cron: 'H/5 * * * *'
+        - 'igw':
+            facet: 'deepsea:basic:igw'
+            cron: 'H/5 * * * *'
+        - 'mds':
+            facet: 'deepsea:basic:fs'
+            cron: 'H/5 * * * *'
+        - 'rgw':
+            facet: 'deepsea:basic:rgw'
+            cron: 'H/5 * * * *'
+    jobs:
+        - 'ds-{suite}-tmpl'
+        - 'ds-rpm-builder'
+# Separate job for building rpms is required in order to limit
+# one rpmbuild execution at time on a dedicated slave.
+# Since we are sharing it with 'master' node which
+# have plenty of executors, we need to remove concurrency
+# of the job too.
+- job:
+    id: 'ds-rpm-builder'
+    name: 'deepsea-teuthology-rpm-builder'
+    node: 'deepsea-teuthology-rpm-builder'
+    concurrent: false
+    wrappers:
+        - workspace-cleanup
+    parameters:
+        - string:
+            name: DEEPSEA_REPO_URL
+            default: https://github.com/suse/deepsea/
+        - string:
+            name: DEEPSEA_BRANCH
+        - string:
+            name: DEEPSEA_REF
+        - string:
+            name: PUBLISH_DIR
+            default: repo
+    scm:
+        - git:
+            url: '$DEEPSEA_REPO_URL'
+            refspec: '+refs/pull/*:refs/remotes/origin/pr/*'
+            branches:
+                - '$DEEPSEA_REF'
+    builders:
+        - shell: |
+            #!/bin/bash
+            RPMBUILD=$HOME/rpmbuild
+
+            # Clear any old deepsea rpms
+            rm -rf $RPMBUILD/RPMS/noarch/deepsea*.rpm
+
+            # setup
+            make rpm || {
+                echo "ERROR: Can't build RPMs"
+                exit 1
+            }
+            # copy generated rpms and create a repo
+            mkdir -p $PUBLISH_DIR
+            cp $RPMBUILD/RPMS/noarch/deepsea*.rpm $PUBLISH_DIR
+            createrepo --repo deespea_testing $PUBLISH_DIR
+
+
+- job-template:
+    id: 'ds-{suite}-tmpl'
+    name: 'trigger-deepsea-teuthology-{suite}'
+    concurrent: true
+    project-type: multijob
+    node: storage-compute
+    parameters:
+        - string:
+            name: SUITE
+            default: "{facet}"
+            description: Teuthology suite
+        - string:
+            name: NAME
+            default: "ci"
+            description: Teuthology instance name, what should be provided with '--name'
+    properties:
+        - github:
+            url: 'https://github.com/suse/deepsea/'
+            display-name: deepsea-test
+        - build-discarder:
+            num-to-keep: 9
+        - authorization:
+            anonymous:
+                - job-read
+                - job-status
+    wrappers:
+        - workspace-cleanup
+        - ansicolor
+        - timestamps
+        # - build-name: { name: '#$BUILD_NUMBER $chainlevel-$ses_version' }
+        - credentials-binding:
+            - file:
+                #credential-id: 'storage-os-conf'
+                credential-id: 'ci@bhs.sh'
+                variable: OVH_CONF
+            - file:
+                credential-id: 'storage-automation-secret-file'
+                variable: SECRET_FILE
+    triggers:
+        - github-pull-request:
+            admin-list:
+                - susebot
+                - kshtsk
+                - jan--f
+                - votdev
+                - rjfd
+                - mkoderer
+                - Marc-Assmann
+                - mogeb
+                - swiftgist
+                - jschmid1
+                - smithfarm
+                - denisok
+                - ddiss
+                - dzedro
+            white-list:
+                - jan--f
+                - votdev 
+                - mogeb 
+            org-list: ['suse']
+            cron: '{cron}'
+            #build-desc-template: "Ceph Pull Request"
+            #trigger-phrase: 'ok to test'
+            trigger-phrase: 'please run {suite} suite'
+            only-trigger-phrase: true
+            permit-all: false
+            allow-whitelist-orgs-as-admins: true
+            #auto-close-on-fail: false
+            #!!!!!!!!!!!! Add at least one NONE target branch
+            # so newly created jobs will not be scheduled for all PRs.
+            #white-list-target-branches:
+            #    - NONE
+            #    - ses3
+            #    - ses4
+            #    - ses5
+            #    - ses6
+            #    - jewel
+            auth-id: 'susebot'
+            status-add-test-results: true
+            status-context: "Deepsea's {suite} check"
+            triggered-status: "{suite} integration tests triggered"
+            started-status: "{suite} integration tests started"
+            error-status: "Unexpected error in the {suite} integration tests"
+            success-status: "{suite} integration tests passed"
+            failure-status: "{suite} integration tests failed"
+            #error-comment: "Unexpected error in the make check"
+            #success-comment: "The make check passed"
+            #failure-comment: "The make check failed"
+            # don't cancel build, because it aborts the top level job
+            # and that does not allow cleanup ovh resources
+            #cancel-builds-on-update: true
+    builders:
+        - shell: "git clone https://github.com/suse/sesci"
+        - multijob:
+            name: Build DeepSea RPMs
+            #condition: ALWAYS
+            condition: SUCCESSFUL
+            projects:
+                - name: deepsea-teuthology-rpm-builder
+                  current-parameters: true
+                  abort-all-job: true
+                  #property-file: '${TARGET_FILE}'
+                  predefined-parameters: |
+                    DEEPSEA_BRANCH=${{sha1}}
+                    DEEPSEA_REF=${{sha1}}
+                    PUBLISH_DIR=/mnt/logs/artifacts/jenkins/deepsea/pr/{suite}-${{BUILD_ID}}
+
+        # do not include-raw the source because jjb requires {} escaped
+        # variables if there are used templates
+        - shell: |
+            set -x
+            export ACCESS_URL=http://storage-ci.suse.de/artifacts/jenkins/deepsea/pr/{suite}-${{BUILD_ID}}
+            bash sesci/jenkins/deepsea-pr.sh
+
+    publishers:
+        - archive:
+            artifacts: "*.log,*.yaml"
+            allow-empty: true
+        #- junit:
+        #    results: 'qa-automation/*.xml,logs/TEST*.xml,logs/**/*.xml'
+        #    allow-empty-results: true
+        #    junit-attachments: true
