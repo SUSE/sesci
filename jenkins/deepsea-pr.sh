@@ -11,12 +11,17 @@ TEUTH_SUITE=${SUITE:-"deepsea:basic:health-ok"}
 JOB_NAME=${JOB_NAME:-"deepsea-teuthology"}
 BUILD_ID=${BUILD_ID:-"0"}
 OVH_CONF=${OVH_CONF:-"ovh.net"}
+ART_PATH=${ART_PATH:-"deepsea/PR/${JOB_NAME/-trigger/}-${BUILD_ID}"}
+PUBLISH_DIR=${PUBLISH_DIR:-"/mnt/logs/artifacts/jenkins/$ART_PATH"}
+ACCESS_URL=${ACCESS_URL:-"http://storage-ci.suse.de/artifacts/jenkins/$ART_PATH"}
+
+
+# ------------------------------------------------------------------------------
+# BUILD RPMS
+
 #RPMBUILD=${RPMBUILD:-"/var/lib/jenkins/rpmbuild"}
 #RPMBUILD=${RPMBUILD:-"/var/rpmbuild"}
 RPMBUILD=${RPMBUILD:-"${HOME}/rpmbuild"}
-ART_PATH=${ART_PATH:-"artifacts/jenkins/default/${JOB_NAME/-trigger/}-${BUILD_ID}"}
-PUBLISH_DIR=${PUBLISH_DIR:-"/mnt/logs/$ART_PATH"}
-ACCESS_URL=${ACCESS_URL:-"http://storage-ci.suse.de/$ART_PATH"}
 
 # Clear any old deepsea rpms
 rm -rf ${RPMBUILD}/RPMS/noarch/deepsea*.rpm
@@ -32,6 +37,10 @@ make rpm || {
 mkdir -p $PUBLISH_DIR
 cp ${RPMBUILD}/RPMS/noarch/deepsea*.rpm $PUBLISH_DIR
 createrepo --repo deespea_testing $PUBLISH_DIR
+
+
+# ==============================================================================
+# RUN TEUTHOLOGY TESTS NOW
 
 DEEPSEAREPOURL=$ACCESS_URL
 
