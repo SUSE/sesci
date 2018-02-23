@@ -3,7 +3,15 @@
 # Job specific variables
 TEUTH_NAME=${TEUTH_NAME:-"ci"}
 TEUTH_BRANCH=${TEUTH_BRANCH:-"master"}
-CEPH_BRANCH=${CEPH_BRANCH:-"ses5"}
+PRTGT_BRANCH=${ghprbTargetBranch:-"ses5"}
+
+if [[ "$PRTGT_BRANCH" == "master" ]] ; then
+    CEPH_BRANCH="ses6"
+else
+    CEPH_BRANCH="$PRTGT_BRANCH"
+fi
+
+
 TEUTH_PATH=${TEUH_PATH:-"$HOME/teuthology"}
 TEUTH_SUITE=${SUITE:-"deepsea:basic:health-ok"}
 
