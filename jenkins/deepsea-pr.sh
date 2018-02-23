@@ -7,8 +7,10 @@ PRTGT_BRANCH=${ghprbTargetBranch:-"ses5"}
 
 if [[ "$PRTGT_BRANCH" == "master" ]] ; then
     CEPH_BRANCH="ses6"
+    SUITE_BRANCH="ses6"
 else
     CEPH_BRANCH="$PRTGT_BRANCH"
+    SUITE_BRANCH="$PRTGT_BRANCH"
 fi
 
 
@@ -18,7 +20,6 @@ TEUTH_SUITE=${SUITE:-"deepsea:basic:health-ok"}
 CEPH_REPO=${CEPH_REPO:-"http://github.com/SUSE/ceph"}
 TEUTH_REPO=${TEUTH_REPO:-"http://github.com/SUSE/teuthology"}
 SUITE_REPO=${SUITE_REPO:-"http://github.com/SUSE/ceph"}
-SUITE_BRANCH=${SUITE_BRANCH:-"master"}
 
 # Jenkins specific variables
 JOB_NAME=${JOB_NAME:-"deepsea-teuthology"}
