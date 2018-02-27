@@ -9,8 +9,8 @@ if [[ "$PRTGT_BRANCH" == "master" ]] ; then
     CEPH_BRANCH="ses6"
     SUITE_BRANCH="ses6"
 else
-    CEPH_BRANCH="$PRTGT_BRANCH"
-    SUITE_BRANCH="$PRTGT_BRANCH"
+    CEPH_BRANCH="${PRTGT_BRANCH,,}"
+    SUITE_BRANCH="${PRTGT_BRANCH,,}"
 fi
 
 
