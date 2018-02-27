@@ -6,6 +6,9 @@
         - 'health-ok':
             facet: 'deepsea:basic:health-ok'
             cron: 'H/5 * * * *'
+        - 'health-ok-encrypted':
+            facet: 'deepsea:basic:health-ok-encrypted'
+            cron: 'H/5 * * * *'
         - 'openattic':
             facet: 'deepsea:basic:openattic'
             cron: 'H/5 * * * *'
