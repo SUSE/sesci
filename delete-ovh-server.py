@@ -8,11 +8,13 @@ def get_nova_credentials_v2():
     ovh_conf = os.environ.get('OVH_CONF', 'ovh.yaml')
     with open(ovh_conf) as y:
         c = yaml.load(y)
-        d['username']    = c.get('OS_USERNAME')
-        d['api_key']     = c.get('OS_PASSWORD')
-        d['auth_url']    = c.get('OS_AUTH_URL')
-        d['project_id']  = c.get('OS_TENANT_NAME')
-        d['region_name'] = c.get('OS_REGION_NAME')
+        d['username']     = c.get('OS_USERNAME')
+        d['password']     = c.get('OS_PASSWORD')
+        d['auth_url']     = c.get('OS_AUTH_URL')
+        d['project_id']   = c.get('OS_TENANT_ID')
+        d['project_name'] = c.get('OS_TENANT_NAME')
+        d['region_name']  = c.get('OS_REGION_NAME')
+        d['cacert']       = c.get('OS_CACERT', None);
     d['version'] = '2'
     return d
 
