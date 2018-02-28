@@ -43,7 +43,7 @@
             url: 'https://github.com/openattic/ceph/'
             display-name: ceph
         - build-discarder:
-            num-to-keep: 5
+            num-to-keep: 99
         - authorization:
             anonymous:
                 - job-read
@@ -123,7 +123,7 @@
     concurrent: true
     properties:
         - build-discarder:
-            num-to-keep: 10
+            num-to-keep: 99
         - authorization:
             anonymous:
                 - job-read
@@ -149,7 +149,7 @@
         - shell: "python -u delete-ovh-server.py"
         - copyartifact:
             project: dashboard_v2-run
-            filter: 'build/**, src/**/*.log, src/**/*.trs, **/coverage*.xml'
+            filter: 'build/**, src/**/*.log, src/**/*.trs, **/coverage*.xml, **/junit.*.xml'
             optional: true
             which-build: multijob-build
         - shell: |
@@ -172,10 +172,10 @@
                 credential-id: 'storage-automation-secret-file'
                 variable: SECRET_FILE
     publishers:
-        #- junit:
-        #    results: 'res/make-check.xml'
-        #    allow-empty-results: true
-        #    junit-attachments: true
+        - junit:
+            results: '**/junit.*.xml'
+            #allow-empty-results: true
+            #junit-attachments: true
         - cobertura:
             report-file: "**/coverage*.xml"
             fail-no-reports: "true"
@@ -223,7 +223,7 @@
     concurrent: true
     properties:
         - build-discarder:
-            num-to-keep: 10
+            num-to-keep: 99
         - authorization:
             anonymous:
                 - job-read
@@ -247,9 +247,9 @@
             cat /etc/os-release
 
         - shell: |
-            zypper install -y ccache gcc7-c++ npm
+            zypper install -y ccache gcc7-c++ psmisc npm
             export CC=gcc-7
-            export CXX=/usr/bin/g++-7
+            export CXX=$(which g++-7)
             ./install-deps.sh
             ./do_cmake.sh -DWITH_CCACHE=ON -DWITH_TESTS=OFF -DWITH_PYTHON3=ON
             pushd build
@@ -258,6 +258,7 @@
         - shell: |
             virtualenv v
             source v/bin/activate
+            pip install --upgrade pip
             pip install tox coverage
             export PATH=$PWD/build/bin:$PATH
             pushd src/pybind/mgr/dashboard_v2
@@ -278,6 +279,10 @@
             artifacts: "build/Testing/**,build/**/*.log,src/**/*.trs,src/**/*.log,test-suite.log,/var/lib/systemd/coredump/*.xz,**/junit.*.xml,**/coverage*.xml"
             allow-empty: true
             default-excludes: true
+        - junit:
+            results: '**/junit.*.xml'
+            #allow-empty-results: true
+            #junit-attachments: true
         - cobertura:
             report-file: "**/coverage*.xml"
             fail-no-reports: "true"
