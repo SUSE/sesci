@@ -110,6 +110,7 @@
               predefined-parameters: |
                   TARGET_FILE=targets_${DIST}.properties
                   TARGET_IMAGE=${TARGET_IMAGE}
+                  TARGET_FLAVOR=${TARGET_FLAVOR}
                   CEPH_REPO_URL=https://github.com/openattic/ceph.git
                   CEPH_BRANCH=${ghprbTargetBranch}
                   CEPH_REF=${sha1}
