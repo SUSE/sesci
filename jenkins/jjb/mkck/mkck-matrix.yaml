@@ -5,11 +5,12 @@
     execution-strategy:
         combination-filter: |
             (SUSE_VER=='leap-42.3' && (CEPH_VER=='ses5' || CEPH_VER=='luminous')) ||
-            (SUSE_VER=='leap-42.3' && (CEPH_VER=='ses5' || CEPH_VER=='ceph')) ||
+            (SUSE_VER=='leap-42.3' && (CEPH_VER=='ses5')) ||
             (SUSE_VER=='leap-42.2' && (CEPH_VER=='ses4' || CEPH_VER=='jewel')) ||
             (SUSE_VER=='leap-42.1' && (CEPH_VER=='ses3' || CEPH_VER=='ses2')) ||
+            (SUSE_VER=='leap-15.0' && (CEPH_VER=='ses6' || CEPH_VER=='ceph')) ||
             (SUSE_VER=='sle15'     && (CEPH_VER=='ses6')) ||
-            (SUSE_VER=='sle12-sp3' && (CEPH_VER=='ses5' || CEPH_VER=='ceph')) ||
+            (SUSE_VER=='sle12-sp3' && (CEPH_VER=='ses5')) ||
             (SUSE_VER=='sle12-sp2' && (CEPH_VER=='ses4' || CEPH_VER=='jewel')) ||
             (SUSE_VER=='sle12-sp1' && (CEPH_VER=='ses3' || CEPH_VER=='ses2'))
     node: 'storage-compute'
@@ -18,6 +19,7 @@
             name: SUSE_VER
             type: user-defined
             values:
+                - 'leap-15.0'
                 - 'leap-42.3'
                 - 'leap-42.2'
                 - 'sle15'
@@ -28,6 +30,7 @@
             name: CEPH_VER
             type: user-defined
             values:
+                - 'ceph'
                 - 'ses6'
                 - 'ses5'
                 - 'ses4'

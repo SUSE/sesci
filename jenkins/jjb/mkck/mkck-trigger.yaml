@@ -27,6 +27,9 @@
             name: leap42_3
             default: 'teuthology-opensuse-42.3-x86_64'
         - string:
+            name: leap15_0
+            default: 'teuthology-opensuse-15.0-x86_64'
+        - string:
             name: sle15
             default: 'teuthology-sle-15.0-x86_64'
         - string:
@@ -43,7 +46,7 @@
             url: 'https://github.com/suse/ceph/'
             display-name: ceph
         - build-discarder:
-            num-to-keep: 5
+            num-to-keep: 9
         - authorization:
             anonymous:
                 - job-read
@@ -71,7 +74,7 @@
                 - jewel
             auth-id: 'susebot'
             status-add-test-results: true
-            status-context: "Ceph make check"
+            status-context: "sesci/run-make-check"
             triggered-status: "make check triggered"
             started-status: "make check started"
             error-status: "Unexpected error in the make check"
@@ -93,7 +96,7 @@
             sles_ses4="sle12_sp2"
             sles_ses3="sle12_sp1"
             sles_master="sle12_sp3"
-            leap_ses6="leap42_3"
+            leap_ses6="leap15_0"
             leap_ses5="leap42_3"
             leap_ses4="leap42_2"
             leap_ses3="leap42_1"

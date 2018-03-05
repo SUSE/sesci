@@ -2,6 +2,7 @@
     name: 'dashboard_v2-trigger'
     concurrent: true
     #project-type: matrix
+    project-type: multijob
     node: master
     #axes:
     #    - axis:
@@ -17,24 +18,6 @@
             description: "OVH flavor"
         - string:
             name: sha1
-        - string:
-            name: leap42_1
-            default: 'teuthology-opensuse-42.1-x86_64'
-        - string:
-            name: leap42_2
-            default: 'teuthology-opensuse-42.2-x86_64'
-        - string:
-            name: leap42_3
-            default: 'teuthology-opensuse-42.3-x86_64'
-        - string:
-            name: sle12_sp1
-            default: 'teuthology-sle-12.2-x86_64'
-        - string:
-            name: sle12_sp2
-            default: 'teuthology-sle-12.2-x86_64'
-        - string:
-            name: sle12_sp3
-            default: 'teuthology-sle-12.3-x86_64'
         - string:
             name: DIST
             default: leap
@@ -68,9 +51,9 @@
                 - wip-mgr-dashboard_v2 
             auth-id: 'susebot'
             status-add-test-results: true
-            status-context: "dashboard_v2 test"
-            triggered-status: "dashboard_v2 check triggered"
-            started-status: "dashboard_v2 started"
+            status-context: "storage-ci/dashboard_v2"
+            triggered-status: "dashboard_v2 test triggered"
+            started-status: "dashboard_v2 test started"
             error-status: "Unexpected error in the dashboard_v2 test"
             success-status: "dashboard_v2 test passed"
             failure-status: "dashboard_v2 test failed"
@@ -86,16 +69,25 @@
             #export tgt=${ghprbTargetBranch:-'master'}
             export tgt=ses5
 
+            leap42_1="teuthology-opensuse-42.1-x86_64"
+            leap42_2="teuthology-opensuse-42.2-x86_64"
+            leap42_3="teuthology-opensuse-42.3-x86_64"
+            leap15_0="teuthology-opensuse-15.0-x86_64"
+            sle12_sp1="teuthology-sle-12.2-x86_64"
+            sle12_sp2="teuthology-sle-12.2-x86_64"
+            sle12_sp3="teuthology-sle-12.3-x86_64"
+            sle15="teuthology-sle-12.3-x86_64"
+
             sles_ses6="sle12_sp3"
             sles_ses5="sle12_sp3"
             sles_ses4="sle12_sp2"
             sles_ses3="sle12_sp1"
-            sles_master="sle12_sp3"
+            sles_master="sle15"
             leap_ses6="leap42_3"
             leap_ses5="leap42_3"
             leap_ses4="leap42_2"
             leap_ses3="leap42_1"
-            leap_master="leap42_3"
+            leap_master="leap15_0"
 
             eval "export dst=\$${DIST}_${tgt}"
 
@@ -105,18 +97,61 @@
 
         - inject:
             properties-file: 'target.properties'
-        - trigger-builds:
-            - project: 'dashboard_v2'
-              predefined-parameters: |
-                  TARGET_FILE=targets_${DIST}.properties
-                  TARGET_IMAGE=${TARGET_IMAGE}
-                  TARGET_FLAVOR=${TARGET_FLAVOR}
-                  CEPH_REPO_URL=https://github.com/openattic/ceph.git
-                  CEPH_BRANCH=${ghprbTargetBranch}
-                  CEPH_REF=${sha1}
-                  DIST=$DIST
-
-              block: true
+        #- trigger-builds:
+        #    - project: 'dashboard_v2'
+        #      predefined-parameters: |
+        #          TARGET_FILE=targets_${DIST}.properties
+        #          TARGET_IMAGE=${TARGET_IMAGE}
+        #          TARGET_FLAVOR=${TARGET_FLAVOR}
+        #          CEPH_REPO_URL=https://github.com/openattic/ceph.git
+        #          CEPH_BRANCH=${ghprbTargetBranch}
+        #          CEPH_REF=${sha1}
+        #          DIST=$DIST
+        #      block: true
+        - multijob:
+            name: Run wrapper job
+            condition: ALWAYS
+            projects:
+                - name: dashboard_v2
+                  current-parameters: true
+                  abort-all-job: true
+                  property-file: 'target.properties'
+                  predefined-parameters: |
+                      TARGET_FILE=targets_${DIST}.properties
+                      TARGET_IMAGE=${TARGET_IMAGE}
+                      TARGET_FLAVOR=${TARGET_FLAVOR}
+                      CEPH_REPO_URL=https://github.com/openattic/ceph.git
+                      CEPH_BRANCH=${ghprbTargetBranch}
+                      CEPH_REF=${sha1}
+                      DIST=$DIST
+        - copyartifact:
+            project: dashboard_v2
+            filter: '**/coverage*.xml, **/junit.*.xml'
+            optional: true
+            which-build: multijob-build
+    publishers:
+        - junit:
+            results: '**/junit.*.xml'
+            allow-empty-results: true
+            #junit-attachments: true
+        - cobertura:
+            report-file: "**/coverage*.xml"
+            #fail-no-reports: "true"
+            fail-no-reports: "false"
+            #source-encoding: "ASCII"
+            targets:
+                - method:
+                    healthy: 80
+                    unhealthy: 0
+                    failing: 0
+                - line:
+                    healthy: 80
+                    unhealthy: 0
+                    failing: 0
+                - conditional:
+                    healthy: 70
+                    unhealthy: 0
+                    failing: 0
 - job:
     name: dashboard_v2
     node: master
@@ -138,7 +173,7 @@
         - system-groovy:
             command: !include-raw: create-jenkins-node.groovy
         - multijob:
-            name: Run tests
+            name: Run ceph build, dashboard_v2 tox and coverage
             condition: ALWAYS
             projects:
                 - name: dashboard_v2-run
@@ -153,15 +188,6 @@
             filter: 'build/**, src/**/*.log, src/**/*.trs, **/coverage*.xml, **/junit.*.xml'
             optional: true
             which-build: multijob-build
-        - shell: |
-            case $CEPH_BRANCH in
-            ses3|ses4|jewel)
-                python convert-trs-to-junit.py src res
-                ;;
-            *)
-                python convert-ctest-to-junit.py
-                ;;
-            esac
 
     wrappers:
         - workspace-cleanup
@@ -173,6 +199,10 @@
                 credential-id: 'storage-automation-secret-file'
                 variable: SECRET_FILE
     publishers:
+        - archive:
+            artifacts: "**/junit.*.xml,**/coverage*.xml"
+            allow-empty: true
+            default-excludes: true
         - junit:
             results: '**/junit.*.xml'
             #allow-empty-results: true

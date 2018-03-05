@@ -75,7 +75,7 @@ multiJob("mkck-${ceph_ver}-${suse_ver}") {
     }
   }
   steps {
-    shell ('git clone https://github.com/kshtsk/sesci .')
+    shell ('git clone https://github.com/suse/sesci .')
     shell ('python -u create-ovh-server.py')
     shell ('cat ${TARGET_FILE}')
     environmentVariables {
