@@ -191,7 +191,7 @@
 
     publishers:
         - archive:
-            artifacts: "*.log,*.yaml,**/junit*.xml"
+            artifacts: "logs/**,*.log,*.yaml,**/junit*.xml"
             allow-empty: true
         - junit:
             results: '**/junit*.xml'

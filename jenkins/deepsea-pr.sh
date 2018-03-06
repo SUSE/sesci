@@ -1,5 +1,7 @@
 #!/bin/bash
 
+mkdir -p logs
+
 # Job specific variables
 TEUTH_NAME=${TEUTH_NAME:-"ci"}
 TEUTH_BRANCH=${TEUTH_BRANCH:-"master"}
@@ -26,6 +28,8 @@ JOB_NAME=${JOB_NAME:-"deepsea-teuthology"}
 BUILD_ID=${BUILD_ID:-"0"}
 OVH_CONF=${OVH_CONF:-"ovh.net"}
 ART_PATH=${ART_PATH:-"deepsea/PR/${JOB_NAME/-trigger/}-${BUILD_ID}"}
+
+TEUTH_LOG=logs/teuth-deepsea-b$BUILD_ID.log
 
 # Next parameters supposed to be always declared by the Jenkins job.
 # The PUBLISH_DIR is used by rpmbuild to copy built rpms for later
@@ -119,21 +123,22 @@ teuthology-openstack -v \
     --suite ${TEUTH_SUITE} \
     --test-repo deepsea-b$BUILD_ID:$DEEPSEAREPOURL \
     $PWD/deepsea-overrides.yaml \
-    --wait 2>&1 | tee teuth-deepsea-b$BUILD_ID.log
+    --wait 2>&1 | tee $TEUTH_LOG
 
 #    --test-repo ses5:http://storage-ci.suse.de/artifacts/13efbdd685728106cb7ca9ec29a967236c402aafbd23efdb98e998df8474f98a/SUSE-Enterprise-Storage-5-POOL-x86_64-Build0609 \
 #    --test-repo ses5-internal:http://storage-ci.suse.de/artifacts/941df0216e4adc9eeed1d607bc20bce6dc854255ac346c79301ed2a8de787e98/SUSE-Enterprise-Storage-5-POOL-Internal-x86_64-Build0609 \
     
     # verify if RC is accurate
 
-fails=$(grep -sc 'teuthology.suite:fail' teuth-deepsea-b$BUILD_ID.log)
-deads=$(grep -sc 'teuthology.suite:dead' teuth-deepsea-b$BUILD_ID.log)
-passed=$(grep -sc 'teuthology.suite:pass' teuth-deepsea-b$BUILD_ID.log)
+fails=$(grep -sc 'teuthology.suite:fail' $TEUTH_LOG)
+deads=$(grep -sc 'teuthology.suite:dead' $TEUTH_LOG)
+passed=$(grep -sc 'teuthology.suite:pass' $TEUTH_LOG)
+total=$(grep -sc 'Job scheduled with name' $TEUTH_LOG)
 
 echo PASS: $passed
 echo FAIL: $fails
 echo DEAD: $deads
-
+echo TOTAL: $total
 
 [ $((fails + deads)) -eq 0 ] || {
     echo "ERROR: There are failed jobs"
