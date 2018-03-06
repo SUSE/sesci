@@ -154,7 +154,7 @@
             #    - jewel
             auth-id: 'susebot'
             status-add-test-results: true
-            status-context: "Deepsea's {suite} check"
+            status-context: "sesci/teuthology/{suite}"
             triggered-status: "{suite} integration tests triggered"
             started-status: "{suite} integration tests started"
             error-status: "Unexpected error in the {suite} integration tests"
@@ -187,13 +187,13 @@
         - shell: |
             set -x
             export ACCESS_URL=http://storage-ci.suse.de/artifacts/jenkins/deepsea/pr/{suite}-${{BUILD_ID}}
-            bash sesci/jenkins/deepsea-pr.sh
+            bash -ex sesci/jenkins/deepsea-pr.sh
 
     publishers:
         - archive:
-            artifacts: "*.log,*.yaml"
+            artifacts: "*.log,*.yaml,**/junit*.xml"
             allow-empty: true
-        #- junit:
-        #    results: 'qa-automation/*.xml,logs/TEST*.xml,logs/**/*.xml'
-        #    allow-empty-results: true
-        #    junit-attachments: true
+        - junit:
+            results: '**/junit*.xml'
+            allow-empty-results: true
+            junit-attachments: true
