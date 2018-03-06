@@ -28,8 +28,9 @@ JOB_NAME=${JOB_NAME:-"deepsea-teuthology"}
 BUILD_ID=${BUILD_ID:-"0"}
 OVH_CONF=${OVH_CONF:-"ovh.net"}
 ART_PATH=${ART_PATH:-"deepsea/PR/${JOB_NAME/-trigger/}-${BUILD_ID}"}
+PULL_ID=${ghprbPullId:-"0"}
 
-TEUTH_LOG=logs/teuth-deepsea-b$BUILD_ID.log
+TEUTH_LOG=logs/teuth-deepsea-pr$PULL_ID-b$BUILD_ID.log
 
 # Next parameters supposed to be always declared by the Jenkins job.
 # The PUBLISH_DIR is used by rpmbuild to copy built rpms for later
@@ -72,6 +73,7 @@ ACCESS_URL=${ACCESS_URL:-"http://storage-ci.suse.de/artifacts/jenkins/$ART_PATH"
 # RUN TEUTHOLOGY TESTS NOW
 
 DEEPSEAREPOURL=$ACCESS_URL
+DEEPSEAREPONAME=deepsea-pr$PULL_ID-b$BUILD_ID
 
 echo DeepSea repo: $DEEPSEAREPOURL
 
@@ -121,7 +123,7 @@ teuthology-openstack -v \
     --ceph-repo ${CEPH_REPO} \
     --ceph ${CEPH_BRANCH} \
     --suite ${TEUTH_SUITE} \
-    --test-repo deepsea-b$BUILD_ID:$DEEPSEAREPOURL \
+    --test-repo $DEEPSEAREPONAME:$DEEPSEAREPOURL \
     $PWD/deepsea-overrides.yaml \
     --wait 2>&1 | tee $TEUTH_LOG
 

@@ -58,7 +58,7 @@
                 - '$DEEPSEA_REF'
     builders:
         - shell: |
-            #!/bin/bash
+            #!/bin/bash -ex
             RPMBUILD=$HOME/rpmbuild
 
             # Clear any old deepsea rpms
