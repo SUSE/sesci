@@ -154,7 +154,7 @@
             #    - jewel
             auth-id: 'susebot'
             status-add-test-results: true
-            status-context: "sesci/teuthology/{suite}"
+            status-context: "storage-ci/teuthology/{suite}"
             triggered-status: "{suite} integration tests triggered"
             started-status: "{suite} integration tests started"
             error-status: "Unexpected error in the {suite} integration tests"
