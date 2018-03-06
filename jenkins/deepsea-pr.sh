@@ -134,11 +134,14 @@ fails=$(grep -sc 'teuthology.suite:fail' $TEUTH_LOG)
 deads=$(grep -sc 'teuthology.suite:dead' $TEUTH_LOG)
 passed=$(grep -sc 'teuthology.suite:pass' $TEUTH_LOG)
 total=$(grep -sc 'Job scheduled with name' $TEUTH_LOG)
+alljobs=$(grep 'Job scheduled with name' $TEUTH_LOG | \
+          perl -n -e'/ID ([0-9]+)/ && CORE::say $1')
 
 echo PASS: $passed
 echo FAIL: $fails
 echo DEAD: $deads
 echo TOTAL: $total
+echo JOBS: $alljobs
 
 [ $((fails + deads)) -eq 0 ] || {
     echo "ERROR: There are failed jobs"
