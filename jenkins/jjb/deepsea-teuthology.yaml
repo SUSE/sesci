@@ -58,7 +58,7 @@
                 - '$DEEPSEA_REF'
     builders:
         - shell: |
-            #!/bin/bash -ex
+            #!/bin/bash -x
             RPMBUILD=$HOME/rpmbuild
 
             # Clear any old deepsea rpms
@@ -187,7 +187,7 @@
         - shell: |
             set -x
             export ACCESS_URL=http://storage-ci.suse.de/artifacts/jenkins/deepsea/pr/{suite}-${{BUILD_ID}}
-            bash -ex sesci/jenkins/deepsea-pr.sh
+            bash -x sesci/jenkins/deepsea-pr.sh
 
     publishers:
         - archive:
