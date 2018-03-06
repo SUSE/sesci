@@ -138,6 +138,12 @@ passed=$(grep -sc 'teuthology.suite:pass' $TEUTH_LOG)
 total=$(grep -sc 'Job scheduled with name' $TEUTH_LOG)
 alljobs=$(grep 'Job scheduled with name' $TEUTH_LOG | \
           perl -n -e'/ID ([0-9]+)/ && CORE::say $1')
+jobname=$(grep 'Job scheduled with name' $TEUTH_LOG | head -1 | \
+          perl -n -e'/name ([^ ]+)/ && CORE::say $1')
+teuth=$(grep -m1 'ssh access' $TEUTH_LOG | \
+        perl -n -e'/ubuntu@([^ ]+) #/ && CORE::say $1')
+
+scp -r -i $SECRET_FILE ubuntu@$teuth:/usr/share/nginx/html/$jobname/* logs/ || true
 
 echo PASS: $passed
 echo FAIL: $fails
