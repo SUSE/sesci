@@ -95,7 +95,7 @@
             url: 'https://github.com/suse/deepsea/'
             display-name: deepsea-test
         - build-discarder:
-            num-to-keep: 9
+            num-to-keep: 20
         - authorization:
             anonymous:
                 - job-read
@@ -139,8 +139,8 @@
             #build-desc-template: "Ceph Pull Request"
             #trigger-phrase: 'ok to test'
             trigger-phrase: 'please run {suite} suite'
-            only-trigger-phrase: true
-            permit-all: false
+            only-trigger-phrase: false
+            permit-all: true
             allow-whitelist-orgs-as-admins: true
             #auto-close-on-fail: false
             #!!!!!!!!!!!! Add at least one NONE target branch
@@ -153,13 +153,13 @@
             #    - ses6
             #    - jewel
             auth-id: 'susebot'
-            status-add-test-results: true
-            status-context: "storage-ci/teuthology/{suite}"
-            triggered-status: "{suite} integration tests triggered"
-            started-status: "{suite} integration tests started"
-            error-status: "Unexpected error in the {suite} integration tests"
-            success-status: "{suite} integration tests passed"
-            failure-status: "{suite} integration tests failed"
+            status-add-test-results: false
+            status-context: '--none--'
+            triggered-status: '--none--'
+            started-status: '--none--'
+            error-status: '--none--'
+            success-status: '--none--'
+            failure-status: '--none--'
             #error-comment: "Unexpected error in the make check"
             #success-comment: "The make check passed"
             #failure-comment: "The make check failed"
