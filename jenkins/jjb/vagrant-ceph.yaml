@@ -1,4 +1,14 @@
+- project:
+    name: vagrant-ceph
+    scope:
+        - 'master'
+        - 'pr'
+    jobs:
+        - 'vagrant-run-{scope}'
+        - 'vagrant'
+
 - job:
+    id: 'vagrant'
     name: vagrant
     node: master
     project-type: multijob
@@ -35,7 +45,7 @@
         - system-groovy:
             command: !include-raw: create-jenkins-node.groovy
         - multijob:
-            name: vagrant-ceph run master
+            name: run tests for vagrant-ceph 
             condition: ALWAYS
             projects:
                 - name: vagrant-run-master
@@ -43,10 +53,6 @@
                   abort-all-job: true
                   property-file: '${TARGET_FILE}'
                   enable-condition: '"${GIT_BRANCH}" == "origin/master"'
-        - multijob:
-            name: vagrant-ceph run PR
-            condition: ALWAYS
-            projects:
                 - name: vagrant-run-pr
                   current-parameters: true
                   abort-all-job: true
@@ -92,66 +98,9 @@
             name: DESTROY_ENVIRONMENT
             default: true
 
-- job:
-    name: vagrant-run-master      
-    concurrent: true
-    properties:
-        - build-discarder:
-            num-to-keep: 10
-        - authorization:
-            anonymous:
-                - job-read
-                - job-status
-        - groovy-label:
-            script: 'binding.getVariables().get("TARGET_NAME")'
-    wrappers:
-        - workspace-cleanup
-        - timeout:
-            timeout: 240
-    builders:
-        - shell: |
-            echo $(hostname -i) $(hostname -f)
-            cat /etc/os-release
-
-            ssh-keygen -t rsa -f /root/.ssh/id_rsa -P ""
-            cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
-
-            curl https://raw.githubusercontent.com/openSUSE/vagrant-ceph/master/openSUSE_vagrant_setup.sh -o openSUSE_vagrant_setup.sh
-            chmod +x openSUSE_vagrant_setup.sh
-
-            ./openSUSE_vagrant_setup.sh
-
-        - shell: |
-            rm -rf vagrant-ceph
-            git clone $GIT_URL
-            cd vagrant-ceph
-            git checkout $GIT_BRANCH
-            git checkout $GIT_COMMIT
-
-        - shell: |
-            cd vagrant-ceph
-            vagrant up || true
-            vagrant provision
-
-    publishers:
-        - archive:
-            artifacts: ".log,*.trs"
-            allow-empty: true
-            default-excludes: true
-    parameters:
-        - string:
-            name: GIT_URL
-        - string:
-            name: GIT_BRANCH
-        - string:
-            name: GIT_COMMIT
-        - string:
-            name: TARGET_NAME
-        - string:
-            name: DIST
-
-- job:
-    name: vagrant-run-pr      
+- job-template:
+    id: 'vagrant-run-{scope}'
+    name: vagrant-run-{scope}
     concurrent: true
     properties:
         - build-discarder:
