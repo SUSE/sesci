@@ -1,0 +1,209 @@
+- job:
+    name: vagrant
+    node: master
+    project-type: multijob
+    concurrent: true
+    properties:
+        - build-discarder:
+            num-to-keep: 10
+        - authorization:
+            anonymous:
+                - job-read
+                - job-status
+        - github:
+            url: 'https://github.com/openSUSE/vagrant-ceph/'
+            display-name: 'vagrant-ceph'
+    scm:
+        - git:
+            url: https://github.com/openSUSE/vagrant-ceph.git
+            browser: auto
+            timeout: 20
+            local-branch: 'vagrant-ceph'
+    triggers:
+        - timed: '@daily'
+        - github
+    builders:
+        - shell: "git clone https://github.com/suse/sesci sesci"
+        - shell: "python -u sesci/create-ovh-server.py"
+        - shell: |
+            echo GIT_BRANCH=$GIT_BRANCH >> ${TARGET_FILE}
+            echo GIT_COMMIT=$GIT_COMMIT >> ${TARGET_FILE}
+            echo GIT_URL=$GIT_URL >> ${TARGET_FILE}
+        - shell: "cat ${TARGET_FILE}"
+        - inject:
+            properties-file: ${TARGET_FILE}
+        - system-groovy:
+            command: !include-raw: create-jenkins-node.groovy
+        - multijob:
+            name: vagrant-ceph run master
+            condition: ALWAYS
+            projects:
+                - name: vagrant-run-master
+                  current-parameters: true
+                  abort-all-job: true
+                  property-file: '${TARGET_FILE}'
+                  enable-condition: '"${GIT_BRANCH}" == "origin/master"'
+        - multijob:
+            name: vagrant-ceph run PR
+            condition: ALWAYS
+            projects:
+                - name: vagrant-run-pr
+                  current-parameters: true
+                  abort-all-job: true
+                  property-file: '${TARGET_FILE}'
+                  enable-condition: '"${GIT_BRANCH}" != "origin/master"'
+        - system-groovy:
+            command: !include-raw: delete-jenkins-node.groovy
+        - shell: "python -u sesci/delete-ovh-server.py"
+    wrappers:
+        - workspace-cleanup
+        - credentials-binding:
+            - file:
+                credential-id: 'storage-os-conf'
+                variable: OVH_CONF
+            - file:
+                credential-id: 'storage-automation-secret-file'
+                variable: SECRET_FILE
+    publishers:
+        - junit:
+            results: 'res/vagrant-ceph.xml'
+            allow-empty-results: true
+            junit-attachments: true
+
+    parameters:
+        - string:
+            name: DIST
+        - string:
+            name: CEPH_REPO_URL
+            default: 'https://github.com/suse/ceph.git'
+        - string:
+            name: TARGET_FILE
+            default: vagrant.properties
+        - string:
+            name: TARGET_FLAVOR
+            default: hg-30-ssd
+        - string:
+            name: TARGET_IMAGE
+            default: 'teuthology-opensuse-42.3-x86_64'
+        - string:
+            name: TARGET_MASK
+            default: 'vagrant%02d'
+        - bool:
+            name: DESTROY_ENVIRONMENT
+            default: true
+
+- job:
+    name: vagrant-run-master      
+    concurrent: true
+    properties:
+        - build-discarder:
+            num-to-keep: 10
+        - authorization:
+            anonymous:
+                - job-read
+                - job-status
+        - groovy-label:
+            script: 'binding.getVariables().get("TARGET_NAME")'
+    wrappers:
+        - workspace-cleanup
+        - timeout:
+            timeout: 240
+    builders:
+        - shell: |
+            echo $(hostname -i) $(hostname -f)
+            cat /etc/os-release
+
+            ssh-keygen -t rsa -f /root/.ssh/id_rsa -P ""
+            cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+
+            curl https://raw.githubusercontent.com/openSUSE/vagrant-ceph/master/openSUSE_vagrant_setup.sh -o openSUSE_vagrant_setup.sh
+            chmod +x openSUSE_vagrant_setup.sh
+
+            ./openSUSE_vagrant_setup.sh
+
+        - shell: |
+            rm -rf vagrant-ceph
+            git clone $GIT_URL
+            cd vagrant-ceph
+            git checkout $GIT_BRANCH
+            git checkout $GIT_COMMIT
+
+        - shell: |
+            cd vagrant-ceph
+            vagrant up || true
+            vagrant provision
+
+    publishers:
+        - archive:
+            artifacts: ".log,*.trs"
+            allow-empty: true
+            default-excludes: true
+    parameters:
+        - string:
+            name: GIT_URL
+        - string:
+            name: GIT_BRANCH
+        - string:
+            name: GIT_COMMIT
+        - string:
+            name: TARGET_NAME
+        - string:
+            name: DIST
+
+- job:
+    name: vagrant-run-pr      
+    concurrent: true
+    properties:
+        - build-discarder:
+            num-to-keep: 10
+        - authorization:
+            anonymous:
+                - job-read
+                - job-status
+        - groovy-label:
+            script: 'binding.getVariables().get("TARGET_NAME")'
+    wrappers:
+        - workspace-cleanup
+        - timeout:
+            timeout: 240
+    builders:
+        - shell: |
+            echo $(hostname -i) $(hostname -f)
+            cat /etc/os-release
+
+            ssh-keygen -t rsa -f /root/.ssh/id_rsa -P ""
+            cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+
+            curl https://raw.githubusercontent.com/openSUSE/vagrant-ceph/master/openSUSE_vagrant_setup.sh -o openSUSE_vagrant_setup.sh
+            chmod +x openSUSE_vagrant_setup.sh
+
+            ./openSUSE_vagrant_setup.sh
+
+        - shell: |
+            rm -rf vagrant-ceph
+            git clone $GIT_URL
+            cd vagrant-ceph
+            git checkout $GIT_BRANCH
+            git checkout $GIT_COMMIT
+
+        - shell: |
+            cd vagrant-ceph
+            vagrant up || true
+            vagrant provision
+
+    publishers:
+        - archive:
+            artifacts: ".log,*.trs"
+            allow-empty: true
+            default-excludes: true
+    parameters:
+        - string:
+            name: GIT_URL
+        - string:
+            name: GIT_BRANCH
+        - string:
+            name: GIT_COMMIT
+        - string:
+            name: TARGET_NAME
+        - string:
+            name: DIST
