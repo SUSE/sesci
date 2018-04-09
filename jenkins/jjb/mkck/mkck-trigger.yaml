@@ -19,28 +19,28 @@
             name: sha1
         - string:
             name: leap42_1
-            default: 'teuthology-opensuse-42.1-x86_64'
+            default: 'makecheck-opensuse-42.1-x86_64'
         - string:
             name: leap42_2
-            default: 'teuthology-opensuse-42.2-x86_64'
+            default: 'makecheck-opensuse-42.2-x86_64'
         - string:
             name: leap42_3
-            default: 'teuthology-opensuse-42.3-x86_64'
+            default: 'makecheck-opensuse-42.3-x86_64'
         - string:
             name: leap15_0
-            default: 'teuthology-opensuse-15.0-x86_64'
+            default: 'makecheck-opensuse-15.0-x86_64'
         - string:
             name: sle15
-            default: 'teuthology-sle-15.0-x86_64'
+            default: 'makecheck-sle-15.0-x86_64'
         - string:
             name: sle12_sp1
-            default: 'teuthology-sle-12.2-x86_64'
+            default: 'makecheck-sle-12.1-x86_64'
         - string:
             name: sle12_sp2
-            default: 'teuthology-sle-12.2-x86_64'
+            default: 'makecheck-sle-12.2-x86_64'
         - string:
             name: sle12_sp3
-            default: 'teuthology-sle-12.3-x86_64'
+            default: 'makecheck-sle-12.3-x86_64'
     properties:
         - github:
             url: 'https://github.com/suse/ceph/'

@@ -22,14 +22,14 @@ def ceph_map = [
 
 
 def suse_image_map = [
-  'leap-42.1': 'teuthology-opensuse-42.1-x86_64',
-  'leap-42.2': 'teuthology-opensuse-42.2-x86_64',
-  'leap-42.3': 'teuthology-opensuse-42.3-x86_64',
-  'leap-15.0': 'teuthology-opensuse-15.0-x86_64',
-  'sle15':     'teuthology-sle-15.0-x86_64',
-  'sle12-sp1': 'teuthology-sle-12.1-x86_64',
-  'sle12-sp2': 'teuthology-sle-12.2-x86_64',
-  'sle12-sp3': 'teuthology-sle-12.3-x86_64'
+  'leap-42.1': 'makecheck-opensuse-42.1-x86_64',
+  'leap-42.2': 'makecheck-opensuse-42.2-x86_64',
+  'leap-42.3': 'makecheck-opensuse-42.3-x86_64',
+  'leap-15.0': 'makecheck-opensuse-15.0-x86_64',
+  'sle15':     'makecheck-sle-15.0-x86_64',
+  'sle12-sp1': 'makecheck-sle-12.1-x86_64',
+  'sle12-sp2': 'makecheck-sle-12.2-x86_64',
+  'sle12-sp3': 'makecheck-sle-12.3-x86_64'
   ]
 
 def ceph_repo_url = env.get('ghprbAuthorRepoGitUrl', 
