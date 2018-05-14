@@ -143,7 +143,52 @@ jobname=$(grep 'Job scheduled with name' $TEUTH_LOG | head -1 | \
 teuth=$(grep -m1 'ssh access' $TEUTH_LOG | \
         perl -n -e'/ubuntu@([^ ]+) #/ && CORE::say $1')
 
-scp -r -i $SECRET_FILE ubuntu@$teuth:/usr/share/nginx/html/$jobname/* logs/ || true
+function make_teuthology_junit() {
+    local logdir=$1
+    local junit=${2:-"junit-report.xml"}
+    cat > $junit << END
+<?xml version="1.0" ?>
+<testsuite name="suse.smoke">
+END
+        for i in $(ls $logdir) ; do
+            local summary=$logdir/$i/summary.yaml
+            local name=$(
+                python -c "import sys, yaml ; print(yaml.load(sys.stdin)['description'])" < $summary
+            )
+            local dura=$(
+                python -c "import sys, yaml ; print(yaml.load(sys.stdin)['duration'])" < $summary
+            )
+            local tlog=$logdir/teuthology-$i.log
+            cp $logdir/$i/teuthology.log $tlog
+            cat >> $junit << END
+  <testcase classname="teuthology.suse:smoke" name="$name" time="$dura">
+    <system-out>[[ATTACHMENT|$tlog]]</system-out>
+END
+            grep "^success:" $logdir/$i/summary.yaml | grep -q "true" || {
+                local reason=$(
+                    python -c "import sys, yaml ; print(yaml.load(sys.stdin)['failure_reason'])" < $summary
+                )
+                cat >> $junit << END
+    <failure>$reason</failure>
+END
+            }
+            cat >> $junit << END
+  </testcase>
+END
+        done
+        cat >> $junit << END
+</testsuite>
+END
+}
+
+if [[ "x$jobname" == "x" ]] ; then
+    echo "ERROR: Can't determine jobname"
+    exit 3
+else
+    mkdir -p logs/$jobname
+    scp -r -i $SECRET_FILE ubuntu@$teuth:/usr/share/nginx/html/$jobname/* logs/$jobname || true
+    make_teuthology_junit logs/$jobname logs/junit-report.xml
+fi
 
 echo PASS: $passed
 echo FAIL: $fails

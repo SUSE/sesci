@@ -108,7 +108,7 @@
         - credentials-binding:
             - file:
                 #credential-id: 'storage-os-conf'
-                credential-id: 'ci@bhs.sh'
+                credential-id: 'ci-sbg1'
                 variable: OVH_CONF
             - file:
                 credential-id: 'storage-automation-secret-file'
@@ -134,7 +134,7 @@
                 - jan--f
                 - votdev 
                 - mogeb 
-            org-list: ['suse']
+            org-list: ['suse', 'SUSE']
             cron: '{cron}'
             #build-desc-template: "Ceph Pull Request"
             #trigger-phrase: 'ok to test'
