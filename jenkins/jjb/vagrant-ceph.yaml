@@ -90,7 +90,7 @@
             default: hg-30-ssd
         - string:
             name: TARGET_IMAGE
-            default: 'teuthology-opensuse-42.3-x86_64'
+            default: 'makecheck-opensuse-42.3-x86_64'
         - string:
             name: TARGET_MASK
             default: 'vagrant%02d'
