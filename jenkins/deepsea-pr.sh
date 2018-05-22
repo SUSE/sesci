@@ -84,6 +84,33 @@ source $OVH_CONF
 echo Home directory: $HOME
 source $TEUTH_PATH/v/bin/activate
 
+function print_artifacts() {
+    local yaml=$1
+    python -c "import sys, yaml ; ars = yaml.load(sys.stdin)['artifacts']
+print(' '.join(ars.keys()))" < $yaml
+}
+
+function teuth_test_repos() {
+    local yaml=${1}
+    shift
+    local artifacts=${@:-"$(print_artifacts $yaml)"}
+    for i in $artifacts ; do
+        python -c "import sys, yaml
+ars=yaml.load(sys.stdin)['artifacts']
+print('--test-repo %s:%s' % ('$i', ars['$i']['url']))" \
+< $yaml
+    done
+}
+
+ARTIFACTS=${ARTIFACTS:-"artifacts:
+    $DEEPSEAREPONAME:
+        url:$DEEPSEAREPOURL
+"}
+
+echo "$ARTIFACTS" > artifacts.yaml
+
+TEST_REPO=$(teuth_test_repos artifacts.yaml)
+
 # (kyr) Notes: 
 # - deepsea does not install deepsea and deepsea-qa packages at the moment,
 #   it installs deepsea from source with given git repo and branch,
@@ -113,7 +140,7 @@ overrides:
 EOF
 
 teuthology-openstack -v \
-    --name ci \
+    --name ${TEUTH_NAME} \
     --key-name storage-automation \
     --key-filename $SECRET_FILE \
     --teuthology-git-url ${TEUTH_REPO} \
@@ -124,6 +151,7 @@ teuthology-openstack -v \
     --ceph ${CEPH_BRANCH} \
     --suite ${TEUTH_SUITE} \
     --test-repo $DEEPSEAREPONAME:$DEEPSEAREPOURL \
+    $TEST_REPO \
     $PWD/deepsea-overrides.yaml \
     --wait 2>&1 | tee $TEUTH_LOG
 
