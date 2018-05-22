@@ -25,7 +25,6 @@
                 - 'sle15'
                 - 'sle12-sp3'
                 - 'sle12-sp2'
-                - 'sle12-sp1'
         - axis:
             name: CEPH_VER
             type: user-defined
@@ -34,7 +33,6 @@
                 - 'ses6'
                 - 'ses5'
                 - 'ses4'
-                - 'ses3'
     wrappers:
         - workspace-cleanup
     triggers:
