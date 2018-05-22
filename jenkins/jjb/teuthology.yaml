@@ -1,0 +1,61 @@
+- job:
+    name: 'teuthology-suite'
+    concurrent: true
+    project-type: multijob
+    node: storage-compute
+    parameters:
+        - string:
+            name: SUITE
+            default: "{facet}"
+            description: Teuthology suite
+        - string:
+            name: NAME
+            default: "ci"
+            description: Teuthology instance name, what should be provided with '--name'
+        - text:
+            name: ARTIFACTS
+            default: ""
+            description: Artifact description
+        - string:
+            name: TEUTH_REPO
+            default: ""
+        - string:
+            name: SUITE_BRANCH
+            default: ""
+        - string:
+            name: CEPH_BRANCH
+            default: ""
+    properties:
+        - build-discarder:
+            num-to-keep: 20
+        - authorization:
+            anonymous:
+                - job-read
+                - job-status
+    wrappers:
+        - workspace-cleanup
+        - ansicolor
+        - timestamps
+        # - build-name: { name: '#$BUILD_NUMBER $chainlevel-$ses_version' }
+        - credentials-binding:
+            - file:
+                #credential-id: 'storage-os-conf'
+                credential-id: 'ci-sbg1'
+                variable: OVH_CONF
+            - file:
+                credential-id: 'storage-automation-secret-file'
+                variable: SECRET_FILE
+    builders:
+        - shell: "git clone https://github.com/suse/sesci -b teuth"
+        - shell: |
+            set -x
+            bash -x sesci/jenkins/deepsea-pr.sh
+
+    publishers:
+        - archive:
+            artifacts: "logs/**,*.log,*.yaml,**/junit*.xml"
+            allow-empty: true
+        - junit:
+            results: '**/junit*.xml'
+            allow-empty-results: true
+            junit-attachments: true
