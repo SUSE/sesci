@@ -21,6 +21,7 @@ SUITE_BRANCH=${SUITE_BRANCH:-"ses6"}
 
 TEUTH_PATH=${TEUH_PATH:-"$HOME/teuthology"}
 TEUTH_SUITE=${SUITE:-"deepsea:basic:health-ok"}
+TEUTH_EXTRA=${TEUTH_FILTER:-"--filter sle"}
 
 CEPH_REPO=${CEPH_REPO:-"http://github.com/SUSE/ceph"}
 TEUTH_REPO=${TEUTH_REPO:-"http://github.com/SUSE/teuthology"}
@@ -111,6 +112,7 @@ teuthology-openstack -v \
     --ceph ${CEPH_BRANCH} \
     --suite ${TEUTH_SUITE} \
     $TEST_REPO \
+    $TEUTH_EXTRA \
     $PWD/deepsea-overrides.yaml \
     --wait 2>&1 | tee $TEUTH_LOG
 
