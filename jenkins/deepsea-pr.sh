@@ -140,12 +140,13 @@ function make_teuthology_junit() {
 <testsuite name="suse.smoke">
 END
         for i in $(ls $logdir) ; do
-            local summary=$logdir/$i/summary.yaml
+            local summary_yaml=$logdir/$i/summary.yaml
+            local config_yaml=$logdir/$i/config.yaml
             local name=$(
-                python -c "import sys, yaml ; print(yaml.load(sys.stdin)['description'])" < $summary
+                python -c "import sys, yaml ; print(yaml.load(sys.stdin)['description'])" < $config_yaml
             )
             local dura=$(
-                python -c "import sys, yaml ; print(yaml.load(sys.stdin)['duration'])" < $summary
+                python -c "import sys, yaml ; print(yaml.load(sys.stdin)['duration'])" < $summary_yaml || echo "0"
             )
             local tlog=$logdir/teuthology-$i.log
             cp $logdir/$i/teuthology.log $tlog
@@ -153,9 +154,9 @@ END
   <testcase classname="teuthology.suse:smoke" name="$name" time="$dura">
     <system-out>[[ATTACHMENT|$tlog]]</system-out>
 END
-            grep "^success:" $logdir/$i/summary.yaml | grep -q "true" || {
+            grep "^success:" $summary_yaml | grep -q "true" || {
                 local reason=$(
-                    python -c "import sys, yaml ; print(yaml.load(sys.stdin)['failure_reason'])" < $summary
+                    python -c "import sys, yaml ; print(yaml.load(sys.stdin)['failure_reason'])" < $summary_yaml
                 )
                 cat >> $junit << END
     <failure>$reason</failure>
