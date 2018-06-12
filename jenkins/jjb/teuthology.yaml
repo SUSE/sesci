@@ -1,30 +1,205 @@
 - job:
-    name: 'teuthology-suite'
+    name: 'deepsea-pr'
     concurrent: true
     project-type: multijob
     node: storage-compute
     parameters:
         - string:
             name: SUITE
-            default: "{facet}"
+            default: "suse:smoke"
             description: Teuthology suite
         - string:
             name: NAME
             default: "ci"
             description: Teuthology instance name, what should be provided with '--name'
+        - string:
+            name: TARGET_BRANCH
+            default: "master"
+            description: "Deepsea target branch, for example: master, SES5"
+        - string:
+            name: DEEPSEA_REF
+            default: "master"
+            description: "Deepsea git ref"
+        - string:
+            name: TARGET_FILE
+            default: "deepsea.prop"
+            description: Used internally
         - text:
-            name: ARTIFACTS
+            name: ARTIFACTS_SES5
             default: ""
             description: Artifact description
-        - string:
-            name: TEUTH_REPO
+        - text:
+            name: ARTIFACTS_SES6
             default: ""
+            description: Artifact description
+    properties:
+        - github:
+            url: 'https://github.com/suse/deepsea/'
+            display-name: deepsea-test
+        - build-discarder:
+            num-to-keep: 20
+        - authorization:
+            anonymous:
+                - job-read
+                - job-status
+    wrappers:
+        - workspace-cleanup
+        - ansicolor
+        - timestamps
+        # - build-name: { name: '#$BUILD_NUMBER $chainlevel-$ses_version' }
+        - credentials-binding:
+            - file:
+                #credential-id: 'storage-os-conf'
+                credential-id: 'ci-sbg1'
+                variable: OVH_CONF
+            - file:
+                credential-id: 'storage-automation-secret-file'
+                variable: SECRET_FILE
+    triggers:
+        - github-pull-request:
+            admin-list:
+                - susebot
+                - kshtsk
+                - jan--f
+                - votdev
+                - rjfd
+                - mkoderer
+                - Marc-Assmann
+                - mogeb
+                - swiftgist
+                - jschmid1
+                - smithfarm
+                - denisok
+                - ddiss
+                - dzedro
+            white-list:
+                - jan--f
+                - votdev 
+                - mogeb 
+            org-list: ['suse', 'SUSE']
+            cron: 'H/5 * * * *'
+            #build-desc-template: "Ceph Pull Request"
+            #trigger-phrase: 'ok to test'
+            trigger-phrase: 'please run {suite} suite'
+            only-trigger-phrase: false
+            permit-all: true
+            allow-whitelist-orgs-as-admins: true
+            #auto-close-on-fail: false
+            #!!!!!!!!!!!! Add at least one NONE target branch
+            # so newly created jobs will not be scheduled for all PRs.
+            white-list-target-branches:
+                - NONE
+            #    - ses3
+            #    - ses4
+            #    - ses5
+            #    - ses6
+            #    - jewel
+            auth-id: 'susebot'
+            status-add-test-results: false
+            status-context: '--none--'
+            triggered-status: '--none--'
+            started-status: '--none--'
+            error-status: '--none--'
+            success-status: '--none--'
+            failure-status: '--none--'
+            #error-comment: "Unexpected error in the make check"
+            #success-comment: "The make check passed"
+            #failure-comment: "The make check failed"
+            # don't cancel build, because it aborts the top level job
+            # and that does not allow cleanup ovh resources
+            #cancel-builds-on-update: true
+    builders:
+        - shell: "git clone https://github.com/suse/sesci"
+        - shell: |
+            REPO_NAME=DEEPSEA-PR-${ghprbPullId:-"JOB-$BUILD_ID"}
+            REPO_SUBDIR=jenkins/deepsea/pr/$REPO_NAME
+            PUBLISH_DIR=/mnt/logs/artifacts/$REPO_SUBDIR
+            ACCESS_URL=http://storage-ci.suse.de/artifacts/$REPO_SUBDIR
+            #DEEPSEA_BRANCH=${sha1:-"DEEPSEA_$BRANCH"}
+
+            PRTGT_BRANCH=${ghprbTargetBranch:-"$TARGET_BRANCH"}
+            if [[ "$PRTGT_BRANCH" == "master" ]] ; then
+                CEPH_BRANCH="ses6"
+                SUITE_BRANCH="ses6"
+            else
+                CEPH_BRANCH="${PRTGT_BRANCH,,}"
+                SUITE_BRANCH="${PRTGT_BRANCH,,}"
+            fi
+            DEEPSEA_REF=${sha1:-"$TARGET_BRANCH"}
+            cat > ${TARGET_FILE} << EOF
+            PUBLISH_DIR=$PUBLISH_DIR
+            ACCESS_URL=$ACCESS_URL
+            DEEPSEA_REF=$DEEPSEA_REF
+            SUITE_BRANCH=$SUITE_BRANCH
+            CEPH_BRANCH=$CEPH_BRANCH
+            EOF
+        - inject:
+            properties-file: $TARGET_FILE    
+        - multijob:
+            name: create rpm repo
+            #condition: ALWAYS
+            condition: SUCCESSFUL
+            projects:
+                - name: deepsea-teuthology-rpm-builder
+                  current-parameters: true
+                  abort-all-job: true
+                  property-file: '${TARGET_FILE}'
+                  #predefined-parameters: |
+                  #  DEEPSEA_BRANCH=${{sha1}}
+                  #  DEEPSEA_REF=${{sha1}}
+        - multijob:
+            name: run teuthology suite
+            #condition: ALWAYS
+            condition: SUCCESSFUL
+            projects:
+                - name: deepsea-teuthology-suite-runner
+                  current-parameters: true
+                  abort-all-job: true
+                  property-file: '${TARGET_FILE}'
+                  predefined-parameters: |
+                    NAME=ci
+                    DEEPSEA_REPO=$ACCESS_URL
+                    #DEEPSEA_REF=${sha1}
+
+    publishers:
+        - archive:
+            artifacts: "logs/**,*.log,*.yaml,**/junit*.xml"
+            allow-empty: true
+        - junit:
+            results: '**/junit*.xml'
+            allow-empty-results: true
+            junit-attachments: true
+- job:
+    name: 'deepsea-teuthology-suite-runner'
+    concurrent: true
+    project-type: multijob
+    node: storage-compute
+    parameters:
+        - string:
+            name: SUITE
+            default: "suse:smoke"
+            description: Teuthology suite
+        - string:
+            name: NAME
+            default: "ci"
+            description: Teuthology instance name, what should be provided with '--name'
         - string:
             name: SUITE_BRANCH
             default: ""
         - string:
             name: CEPH_BRANCH
             default: ""
+        - string:
+            name: DEEPSEA_REPO
+            default: ""
+        - text:
+            name: ARTIFACTS_SES5
+            default: ""
+            description: Artifact description
+        - text:
+            name: ARTIFACTS_SES6
+            default: ""
+            description: Artifact description
     properties:
         - build-discarder:
             num-to-keep: 20
@@ -48,7 +223,8 @@
     builders:
         - shell: "git clone https://github.com/suse/sesci -b teuth"
         - shell: |
-            set -x
+            #/bin/bash -x
+            eval "export ARTIFACTS=\$ARTIFACTS_${CEPH_BRANCH^^}"
             bash -x sesci/jenkins/deepsea-pr.sh
 
     publishers:

@@ -31,7 +31,6 @@ SUITE_REPO=${SUITE_REPO:-"http://github.com/SUSE/ceph"}
 JOB_NAME=${JOB_NAME:-"deepsea-teuthology"}
 BUILD_ID=${BUILD_ID:-"0"}
 OVH_CONF=${OVH_CONF:-"ovh.net"}
-ART_PATH=${ART_PATH:-"deepsea/PR/${JOB_NAME/-trigger/}-${BUILD_ID}"}
 PULL_ID=${ghprbPullId:-"0"}
 
 TEUTH_LOG=logs/teuth-deepsea-pr$PULL_ID-b$BUILD_ID.log
@@ -63,31 +62,16 @@ print('--test-repo %s:%s' % ('$i', ars['$i']['url']))" \
     done
 }
 
-ARTIFACTS=${ARTIFACTS:-"artifacts:
-    $DEEPSEAREPONAME:
-        url:$DEEPSEAREPOURL
-"}
 
-echo "$ARTIFACTS" > artifacts.yaml
+if [[ "x$ARTIFACTS" != "x" ]] ; then
+    echo "$ARTIFACTS" > artifacts.yaml
+    TEST_REPO=$(teuth_test_repos artifacts.yaml)
+fi
+if [[ "x$DEEPSEA_REPO" != "x" ]] ; then
+    TEST_REPO=$TEST_REPO --test-repo deepsea:$DEEPSEA_REPO
+fi
 
-TEST_REPO=$(teuth_test_repos artifacts.yaml)
 
-# (kyr) Notes: 
-# - deepsea does not install deepsea and deepsea-qa packages at the moment,
-#   it installs deepsea from source with given git repo and branch,
-#   i.e. no hash support yet (maybe ask Nathan for support)
-# - we need to use --test-repo, since it is the only way not to build ceph
-# - we have following options to make working correctly for PR:
-#   > refactor deepsea task to install packages instead of building from git repo
-#   > add sha1 hash value to build for particular commit
-# - there are failures while trying to install ceph from SCC,
-#   probably this is a bug in teuthology images (ask Nathan for support?)
-# - this example, uses --wait feature of teuthology-openstack, 
-#   it sometimes fails due to socket connect error and probably will
-#   continue failing if many jobs scheduled.
-# - we can later switch to more advanced job monitory and reporting script,
-#   so there are logs fetched as well 
-#
 cat <<EOF > $PWD/deepsea-overrides.yaml
 overrides:
     install:
