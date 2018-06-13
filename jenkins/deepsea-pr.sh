@@ -62,11 +62,15 @@ print('--test-repo %s:%s' % ('$i', ars['$i']['url']))" \
     done
 }
 
-
-if [[ "x$ARTIFACTS" != "x" ]] ; then
-    echo "$ARTIFACTS" > artifacts.yaml
-    TEST_REPO=$(teuth_test_repos artifacts.yaml)
-fi
+test -f artifacts-$CEPH_BRANCH.yaml && {
+    echo Found artifact file artifacts-$CEPH_BRANCH.yaml
+    TEST_REPO=$(teuth_test_repos artifacts-$CEPH_BRANCH.yaml)
+} || {
+    if [[ "x$ARTIFACTS" != "x" ]] ; then
+        echo "$ARTIFACTS" > artifacts.yaml
+        TEST_REPO=$(teuth_test_repos artifacts.yaml)
+    fi
+}
 if [[ "x$DEEPSEA_REPO" != "x" ]] ; then
     TEST_REPO="$TEST_REPO --test-repo deepsea:$DEEPSEA_REPO"
 fi
