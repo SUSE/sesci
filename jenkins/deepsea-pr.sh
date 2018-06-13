@@ -155,13 +155,55 @@ END
 END
 }
 
+make_github_report() {
+    local logdir=$1
+    local report=${2:-"report.txt"}
+    cat > $report << END
+tuethology run results for **${TEUTH_SUITE}** suite
+
+---
+
+END
+        for i in $(ls $logdir) ; do
+            local summary_yaml=$logdir/$i/summary.yaml
+            local info_yaml=$logdir/$i/info.yaml
+            local name=$(
+                python -c "import sys, yaml ; print(yaml.load(sys.stdin)['description'])" < $info_yaml
+            )
+            local dura=$(
+                python -c "import sys, yaml ; print(yaml.load(sys.stdin)['duration'])" < $summary_yaml || echo "0"
+            )
+            grep "^success:" $summary_yaml | grep -q "true" || {
+                local reason=$(
+                    python -c "import sys, yaml ; print(yaml.load(sys.stdin)['failure_reason'])" < $summary_yaml
+                )
+                cat >> $report << END
+- Job $name **FAILED**
+END
+                if [[ "$report" == "" ]] ; then
+                cat >> $report << END
+```
+$reason
+```
+END
+                fi
+            } && {
+- Job $name **PASSED**
+            }
+        done
+}
+
 if [[ "x$jobname" == "x" ]] ; then
     echo "ERROR: Can't determine jobname"
+    cat > logs/report.txt << EOF
+Can't determine teuthology job name
+EOF
     exit 3
 else
     mkdir -p logs/$jobname
     scp -r -i $SECRET_FILE -o StrictHostKeyChecking=no ubuntu@$teuth:/usr/share/nginx/html/$jobname/* logs/$jobname || true
     make_teuthology_junit logs/$jobname logs/junit-report.xml
+    make_github_report logs/$jobname logs/report.txt
 fi
 
 echo PASS: $passed
