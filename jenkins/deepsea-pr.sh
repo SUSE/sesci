@@ -68,7 +68,7 @@ if [[ "x$ARTIFACTS" != "x" ]] ; then
     TEST_REPO=$(teuth_test_repos artifacts.yaml)
 fi
 if [[ "x$DEEPSEA_REPO" != "x" ]] ; then
-    TEST_REPO=$TEST_REPO --test-repo deepsea:$DEEPSEA_REPO
+    TEST_REPO="$TEST_REPO --test-repo deepsea:$DEEPSEA_REPO"
 fi
 
 
