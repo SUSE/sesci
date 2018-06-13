@@ -192,7 +192,9 @@ $reason
 END
                 fi
             } && {
+                cat >> $report << END
 - Job $name **PASSED**
+END
             }
         done
 }
