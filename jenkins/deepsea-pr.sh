@@ -125,9 +125,9 @@ function make_teuthology_junit() {
 END
         for i in $(ls $logdir) ; do
             local summary_yaml=$logdir/$i/summary.yaml
-            local config_yaml=$logdir/$i/config.yaml
+            local info_yaml=$logdir/$i/info.yaml
             local name=$(
-                python -c "import sys, yaml ; print(yaml.load(sys.stdin)['description'])" < $config_yaml
+                python -c "import sys, yaml ; print(yaml.load(sys.stdin)['description'])" < $info_yaml
             )
             local dura=$(
                 python -c "import sys, yaml ; print(yaml.load(sys.stdin)['duration'])" < $summary_yaml || echo "0"
