@@ -208,8 +208,8 @@ EOF
 else
     mkdir -p logs/$jobname
     scp -r -i $SECRET_FILE -o StrictHostKeyChecking=no ubuntu@$teuth:/usr/share/nginx/html/$jobname/* logs/$jobname || true
-    make_teuthology_junit logs/$jobname logs/junit-report.xml
     make_github_report logs/$jobname logs/report.txt
+    make_teuthology_junit logs/$jobname logs/junit-report.xml
 fi
 
 echo PASS: $passed
