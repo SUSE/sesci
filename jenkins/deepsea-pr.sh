@@ -184,7 +184,7 @@ END
                 cat >> $report << END
 - Job $name **FAILED**
 END
-                if [[ "$report" == "" ]] ; then
+                if [[ "$reason" != "" ]] ; then
                 cat >> $report << END
 ```
 $reason
