@@ -182,7 +182,7 @@ END
                     python -c "import sys, yaml ; print(yaml.load(sys.stdin)['failure_reason'])" < $summary_yaml
                 )
                 cat >> $report << END
-- Job $name **FAILED**
+- _**FAILED**_ - $name :hankey:
 END
                 if [[ "$reason" != "" ]] ; then
                 cat >> $report << END
@@ -193,7 +193,7 @@ END
                 fi
             } && {
                 cat >> $report << END
-- Job $name **PASSED**
+- _PASSED_ - $name :+1:
 END
             }
         done
