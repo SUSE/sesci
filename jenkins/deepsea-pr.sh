@@ -186,9 +186,9 @@ END
 END
                 if [[ "$reason" != "" ]] ; then
                 cat >> $report << END
-```
+\`\`\`
 $reason
-```
+\`\`\`
 END
                 fi
             } && {
