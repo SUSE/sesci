@@ -1,23 +1,71 @@
-- job:
-    name: 'deepsea-make-rpm'
+#jenkins-jobs --conf storage-ci.suse.de.ini update deepsea-teuthology.yaml 
+- project:
+    name: deepsea-teuthology
+    test:
+        - 'lint':
+            target: 'lint'
+            branch: ['NONE', 'master']
+            #branch: [ 'NONE']
+            test-results: false
+            cron: 'H/5 * * * *'
+        - 'py27':
+            target: 'test'
+            branch: ['NONE', 'master', 'SES5']
+            #branch: ['SES5']
+            test-results: true
+            cron: 'H/5 * * * *'
+    jobs:
+        - 'ds-test-{test}-tmpl'
+- builder:
+    name: run-lint
+    builders:
+        - shell: |
+            #!/bin/bash
+            virtualenv --python python2.7 v
+            . v/bin/activate
+            pip install --upgrade pip
+            pip install tox
+            make lint
+- builder:
+    name: run-py27
+    builders:
+        - shell: |
+            #!/bin/bash
+            virtualenv --python python2.7 v
+            . v/bin/activate
+            pip install --upgrade pip
+            pip install tox
+            make test
+- job-template:
+    id: 'ds-test-{test}-tmpl'
+    name: 'deepsea-test-{test}'
     concurrent: true
     project-type: multijob
     node: storage-compute
- #    parameters:
- #       - string:
- #           name: SUITE
- #           default: "{facet}"
- #           description: Teuthology suite
- #       - string:
- #           name: NAME
- #           default: "ci"
- #           description: Teuthology instance name, what should be provided with '--name'
+    parameters:
+        - string:
+            name: TARGET
+            default: "{target}"
+            description: Teuthology instance name, what should be provided with '--name'
+        - string:
+            name: DEEPSEA_REF
+            default: "${{sha1}}"
+        - string:
+            name: DEEPSEA_REPO_URL
+            default: https://github.com/suse/deepsea/
+    scm:
+        - git:
+            url: '$DEEPSEA_REPO_URL'
+            name: ''
+            refspec: '+refs/pull/*:refs/remotes/origin/pr/*'
+            branches:
+                - '$DEEPSEA_REF'
     properties:
         - github:
             url: 'https://github.com/suse/deepsea/'
-            display-name: suse-deepsea
+            display-name: deepsea-test
         - build-discarder:
-            num-to-keep: 28
+            num-to-keep: 20
         - authorization:
             anonymous:
                 - job-read
@@ -40,12 +88,10 @@
             #admin-list:
             #    - susebot
             #    - kshtsk
+            #    - jschmid1
             #white-list:
-            #    - jan--f
-            #    - votdev 
-            #    - mogeb 
             org-list: ['suse', 'SUSE']
-            cron: 'H/5 * * * *'
+            cron: '{cron}'
             #build-desc-template: "Ceph Pull Request"
             #trigger-phrase: 'ok to test'
             #trigger-phrase: 'please run {suite} suite'
@@ -55,11 +101,8 @@
             #auto-close-on-fail: false
             #!!!!!!!!!!!! Add at least one NONE target branch
             # so newly created jobs will not be scheduled for all PRs.
-            white-list-target-branches:
-                - NONE
-                - master
-                - SES5
-                - SES4
+            white-list-target-branches: '{branch}'
+            #    - NONE
             #    - ses3
             #    - ses4
             #    - ses5
@@ -67,12 +110,13 @@
             #    - jewel
             auth-id: 'susebot'
             status-add-test-results: false
-            status-context: 'storage-ci/deepsea-make-rpm'
+            status-context: 'storage-ci/deepsea-make-{target}'
             #triggered-status: '--none--'
             #started-status: '--none--'
-            error-status: 'Unexpected error occured'
+            error-status: '--none--'
             success-status: 'DONE'
             failure-status: 'FAIL'
+            status-add-test-results: '{test-results}'
             #error-comment: "Unexpected error in the make check"
             #success-comment: "The make check passed"
             #failure-comment: "The make check failed"
@@ -80,20 +124,7 @@
             # and that does not allow cleanup ovh resources
             cancel-builds-on-update: true
     builders:
-        - shell: "git clone https://github.com/suse/sesci"
-        - multijob:
-            name: Build DeepSea RPMs
-            #condition: ALWAYS
-            condition: SUCCESSFUL
-            projects:
-                - name: deepsea-teuthology-rpm-builder
-                  current-parameters: true
-                  abort-all-job: true
-                  #property-file: '${TARGET_FILE}'
-                  predefined-parameters: |
-                    DEEPSEA_BRANCH=${sha1}
-                    DEEPSEA_REF=${sha1}
-                    PUBLISH_DIR=/mnt/logs/artifacts/jenkins/deepsea/target/${ghprbTargetBranch}/pr/${ghprbPullId}/${ghprbActualCommit}.${BUILD_ID}
+        - run-{test}
     publishers:
         - archive:
             artifacts: "logs/**,*.log,*.yaml,**/junit*.xml"
