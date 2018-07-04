@@ -1,0 +1,104 @@
+- job:
+    name: 'deepsea-make-rpm'
+    concurrent: true
+    project-type: multijob
+    node: storage-compute
+ #    parameters:
+ #       - string:
+ #           name: SUITE
+ #           default: "{facet}"
+ #           description: Teuthology suite
+ #       - string:
+ #           name: NAME
+ #           default: "ci"
+ #           description: Teuthology instance name, what should be provided with '--name'
+    properties:
+        - github:
+            url: 'https://github.com/suse/deepsea/'
+            display-name: suse-deepsea
+        - build-discarder:
+            num-to-keep: 28
+        - authorization:
+            anonymous:
+                - job-read
+                - job-status
+    wrappers:
+        - workspace-cleanup
+        - ansicolor
+        - timestamps
+        # - build-name: { name: '#$BUILD_NUMBER $chainlevel-$ses_version' }
+        - credentials-binding:
+            - file:
+                #credential-id: 'storage-os-conf'
+                credential-id: 'ci-sbg1'
+                variable: OVH_CONF
+            - file:
+                credential-id: 'storage-automation-secret-file'
+                variable: SECRET_FILE
+    triggers:
+        - github-pull-request:
+            #admin-list:
+            #    - susebot
+            #    - kshtsk
+            #white-list:
+            #    - jan--f
+            #    - votdev 
+            #    - mogeb 
+            org-list: ['suse', 'SUSE']
+            cron: 'H/5 * * * *'
+            #build-desc-template: "Ceph Pull Request"
+            #trigger-phrase: 'ok to test'
+            #trigger-phrase: 'please run {suite} suite'
+            only-trigger-phrase: false
+            permit-all: true
+            allow-whitelist-orgs-as-admins: true
+            #auto-close-on-fail: false
+            #!!!!!!!!!!!! Add at least one NONE target branch
+            # so newly created jobs will not be scheduled for all PRs.
+            white-list-target-branches:
+                - NONE
+                - master
+                - SES5
+                - SES4
+            #    - ses3
+            #    - ses4
+            #    - ses5
+            #    - ses6
+            #    - jewel
+            auth-id: 'susebot'
+            status-add-test-results: false
+            status-context: 'storage-ci/deepsea-make-rpm'
+            triggered-status: '--none--'
+            started-status: 'Started'
+            error-status: 'Unexpected error occured'
+            success-status: 'Passed'
+            failure-status: 'Failed'
+            #error-comment: "Unexpected error in the make check"
+            #success-comment: "The make check passed"
+            #failure-comment: "The make check failed"
+            # don't cancel build, because it aborts the top level job
+            # and that does not allow cleanup ovh resources
+            cancel-builds-on-update: true
+    builders:
+        - shell: "git clone https://github.com/suse/sesci"
+        - multijob:
+            name: Build DeepSea RPMs
+            #condition: ALWAYS
+            condition: SUCCESSFUL
+            projects:
+                - name: deepsea-teuthology-rpm-builder
+                  current-parameters: true
+                  abort-all-job: true
+                  #property-file: '${TARGET_FILE}'
+                  predefined-parameters: |
+                    DEEPSEA_BRANCH=${sha1}
+                    DEEPSEA_REF=${sha1}
+                    PUBLISH_DIR=/mnt/logs/artifacts/jenkins/deepsea/target/${ghprbTargetBranch}/pr/${ghprbPullId}/${ghprbActualCommit}.${BUILD_ID}
+    publishers:
+        - archive:
+            artifacts: "logs/**,*.log,*.yaml,**/junit*.xml"
+            allow-empty: true
+        - junit:
+            results: '**/junit*.xml'
+            allow-empty-results: true
+            junit-attachments: true
