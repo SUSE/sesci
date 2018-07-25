@@ -6,6 +6,52 @@
     jobs:
         - 'vagrant-run-{scope}'
         - 'vagrant'
+        - 'vagrant-matrix'
+
+- job:
+    name: 'vagrant-matrix'
+    concurrent: true
+    project-type: matrix
+    node: 'storage-compute'
+    axes:
+        - axis:
+            name: TARGET_IMAGE
+            type: user-defined
+            values:
+                - 'teuthology-opensuse-42.3-x86_64'
+                - 'teuthology-opensuse-15.0-x86_64'
+        - axis:
+            name: BOX
+            type: user-defined
+            values:
+                - 'opensuse/openSUSE-42.3-x86_64'
+                - 'opensuse/openSUSE-15.0-x86_64'
+    wrappers:
+        - workspace-cleanup
+    triggers:
+        - timed: "@midnight"
+    properties:
+        - build-discarder:
+            num-to-keep: 5
+        - authorization:
+            anonymous:
+                - job-read
+                - job-status
+    builders:
+        - trigger-builds:
+            - project: 'vagrant'
+              predefined-parameters: |
+                  TARGET_FILE=vagrant.properties
+                  BOX=${BOX}
+                  TARGET_IMAGE=${TARGET_IMAGE}
+                  GIT_URL=https://github.com/openSUSE/vagrant-ceph.git
+                  GIT_BRANCH=origin/master
+                  GIT_COMMIT=HEAD
+
+              block: true
+    publishers:
+        - aggregate-tests:
+            include-failed-builds: true
 
 - job:
     id: 'vagrant'
@@ -30,7 +76,6 @@
             timeout: 20
             local-branch: 'vagrant-ceph'
     triggers:
-        - timed: '@daily'
         - github
     builders:
         - shell: "git clone https://github.com/suse/sesci sesci"
@@ -39,6 +84,7 @@
             echo GIT_BRANCH=$GIT_BRANCH >> ${TARGET_FILE}
             echo GIT_COMMIT=$GIT_COMMIT >> ${TARGET_FILE}
             echo GIT_URL=$GIT_URL >> ${TARGET_FILE}
+            echo BOX=$BOX >> ${TARGET_FILE}
         - shell: "cat ${TARGET_FILE}"
         - inject:
             properties-file: ${TARGET_FILE}
@@ -94,6 +140,14 @@
         - string:
             name: TARGET_MASK
             default: 'vagrant%02d'
+        - string:
+            name: GIT_URL
+        - string:
+            name: GIT_BRANCH
+        - string:
+            name: GIT_COMMIT
+        - string:
+            name: BOX
         - bool:
             name: DESTROY_ENVIRONMENT
             default: true
@@ -123,17 +177,14 @@
             ssh-keygen -t rsa -f /root/.ssh/id_rsa -P ""
             cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
 
-            curl https://raw.githubusercontent.com/openSUSE/vagrant-ceph/master/openSUSE_vagrant_setup.sh -o openSUSE_vagrant_setup.sh
-            chmod +x openSUSE_vagrant_setup.sh
-
-            ./openSUSE_vagrant_setup.sh
-
         - shell: |
             rm -rf vagrant-ceph
             git clone $GIT_URL
             cd vagrant-ceph
             git checkout $GIT_BRANCH
             git checkout $GIT_COMMIT
+
+            ./openSUSE_vagrant_setup.sh
 
         - shell: |
             cd vagrant-ceph
@@ -146,6 +197,8 @@
             allow-empty: true
             default-excludes: true
     parameters:
+        - string:
+            name: BOX
         - string:
             name: GIT_URL
         - string:
