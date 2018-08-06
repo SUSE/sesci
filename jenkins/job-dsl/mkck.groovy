@@ -6,7 +6,72 @@ def env = binding.variables
 
 def suse_ver = env['SUSE_VER']
 def ceph_ver = env.get('CEPH_VER', 'suse')
-def flavor   = env.get('TARGET_FLAVOR', 'hg-15-ssd')
+//def flavor   = env.get('TARGET_FLAVOR', 'hg-15-ssd')
+//def flavor   = env.get('TARGET_FLAVOR', 'c2-15')
+def flavor   = env.get('TARGET_FLAVOR', 'b2-30')
+
+// https://www.ovh.com/world/public-cloud/instances/prices/
+//
+//
+//	Model	RAM	Processor	Freq.	Storage		Bandwidth		Price/hour
+//		GB	vCores			Local SSD RAID	pub. guranteed/
+//								max. vRack
+//
+// GENERAL PURPOSE Instances - Guaranteed resources, a balance of CPU/RAM
+//	B2-7	7 GB	2 vCores	2.3 GHz	50 GB		250 Mbps/300 Mbps	$0.074
+//	B2-15	15 GB	4 vCores	2.3 GHz	100 GB		250 Mbps/1000 Mbps	$0.140
+//	B2-30	30 GB	8 vCores	2.3 GHz	200 GB		500 Mbps/2000 Mbps	$0.284
+//	B2-60	60 GB	16 vCores	2.3 GHz	400 GB		500 Mbps/4000 Mbps	$0.551
+//	B2-120	120 GB	32 vCores	2.3 GHz	400 GB		500 Mbps/4000 Mbps	$1.084
+//
+// CPU Instances - Guaranteed resources, very high frequency CPU
+//	C2-7	7 GB	2 vCores	3.1 GHz	50 GB		250 Mbps/300 Mbps	$0.107
+//	C2-15	15 GB	4 vCores	3.1 GHz	100 GB		250 Mbps/1000 Mbps	$0.207
+//	C2-30	30 GB	8 vCores	3.1 GHz	200 GB		500 Mbps/2000 Mbps	$0.417
+//	C2-60	60 GB	16 vCores	3.1 GHz	400 GB		500 Mbps/4000 Mbps	$0.817
+//	C2-120	120 GB	32 vCores	3.1 GHz	400 GB		500 Mbps/4000 Mbps	$1.617
+//
+// RAM Instances - Guaranteed resources, optimized RAM/cost ratio
+//	R2-15	15 GB	2 vCores	2.4 GHz	50 GB		250 Mbps/1000 Mbps	$0.107
+//	R2-30	30 GB	2 vCores	2.4 GHz	50 GB		250 Mbps/1000 Mbps	$0.124
+//	R2-60	60 GB	4 vCores	2.4 GHz	100 GB		250 Mbps/2000 Mbps	$0.240
+//	R2-120	120 GB	8 vCores	2.4 GHz	200 GB		500 Mbps/4000 Mbps	$0.484
+//	R2-240	240 GB	16 vCores	2.4 GHz	400 GB		500 Mbps/4000 Mbps	$0.950
+
+//	Model	RAM	Processor	Frequency	Storage, SSD	Bandwidth	Price/hour
+//		GB	vCores		BEST EFFORT	Local RAID 10	BEST EFFORT
+//
+// SANDBOX Instances - Shared resources
+// 	S1-2	2 GB	1 vCore		2.4 GHz		10 GB		100 Mbps public	$0.009/hour
+//	S1-4	4 GB	1 vCore		2.4 GHz		20 GB		100 Mbps public	$0.024/hour
+//	S1-8	8 GB	2 vCores	2.4 GHz		40 GB		100 Mbps public	$0.044/hour
+
+// https://www.ovh.com/world/public-cloud/instances/prices/old.xml
+//
+// HG Instances
+//	Model	RAM	Processor	Freq.	Storage		Bandwidth		Price/hour
+//						HA or		public guranteed or
+//						SSD No RAID	max. vRack
+//
+//	HG-7	7 GB	2 vCores	3.1 GHz	200 GB/100 GB	250 Mbps/300 Mbps	$0.107
+//	HG-15	15 GB	4 vCores	3.1 GHz	400 GB/200 GB	250 Mbps/1000 Mbps	$0.207
+//	HG-30	30 GB	8 vCores	3.1 GHz	800 GB/400 GB	500 Mbps/2000 Mbps	$0.417
+//	HG-60	60 GB	16 vCores	3.1 GHz	1600 GB/800 GB	500 Mbps/4000 Mbps	$0.817
+//	HG-120	120 GB	32 vCores	3.1 GHz	1600 GB/800 GB	500 Mbps/4000 Mbps	$1.617
+//
+//	EG-7	7 GB	2 vCores	2.3 GHz	200 GB/100 GB	250 Mbps/300 Mbps	$0.074
+//	EG-15	15 GB	4 vCores	2.3 GHz	400 GB/200 GB	250 Mbps/1000 Mbps	$0.140
+//	EG-30	30 GB	8 vCores	2.3 GHz	800 GB/400 GB	500 Mbps/2000 Mbps	$0.284
+//	EG-60	60 GB	16 vCores	2.3 GHz	1600 GB/800 GB	500 Mbps/4000 Mbps	$0.551
+//	EG-120	120 GB	32 vCores	2.3 GHz	1600 GB/800 GB	500 Mbps/4000 Mbps	$1.084
+//
+// VPS-SSD Instances
+//	Model		RAM	Processor	Frequency	Storage		Bandwidth	Price/hour
+//						BEST EFFORT	Local RAID 10	BEST EFFORT
+//
+//	VPS-SSD 1	2 GB	1 vCore		2.4 GHz		10 GB SSD	100 Mbps public	$0.009/hour
+//	VPS-SSD 2	4 GB	1 vCore		2.4 GHz		20 GB SSD	100 Mbps public	$0.024/hour
+//	VPS-SSD 3	8 GB	2 vCores	2.4 GHz		40 GB SSD	100 Mbps public $0.044/hour
 
 def ceph_map = [
   'ceph':  ['ceph/ceph', 'master'],

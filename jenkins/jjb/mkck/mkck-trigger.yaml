@@ -13,7 +13,9 @@
     parameters:
         - string:
             name: TARGET_FLAVOR
-            default: hg-30-ssd
+            # default: hg-30-ssd
+            #default: c2-30
+            default: b2-60
             description: "OVH flavor"
         - string:
             name: sha1
@@ -58,7 +60,7 @@
         - github-pull-request:
             #admin-list:
             #white-list:
-            org-list: ['suse']
+            org-list: ['suse', 'SUSE']
             cron: 'H/5 * * * *'
             #build-desc-template: "Ceph Pull Request"
             trigger-phrase: 'ok to test'
@@ -194,7 +196,8 @@
             default: mkck.properties
         - string:
             name: TARGET_FLAVOR
-            default: hg-15-ssd
+            #default: hg-15-ssd
+            default: b2-30
         - string:
             name: TARGET_IMAGE
         - string:
