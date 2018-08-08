@@ -1,0 +1,50 @@
+# Separate job for building rpms is required in order to limit
+# one rpmbuild execution at time on a dedicated slave.
+# Since we are sharing it with 'master' node which
+# have plenty of executors, we need to remove concurrency
+# of the job too.
+- job:
+    id: 'ds-rpm-builder'
+    name: 'deepsea-teuthology-rpm-builder'
+    node: 'deepsea-teuthology-rpm-builder'
+    concurrent: false
+    wrappers:
+        - workspace-cleanup
+    parameters:
+        - string:
+            name: DEEPSEA_REPO_URL
+            default: https://github.com/suse/deepsea/
+        - string:
+            name: DEEPSEA_BRANCH
+        - string:
+            name: DEEPSEA_REF
+        - string:
+            name: PUBLISH_DIR
+            default: repo
+    scm:
+        - git:
+            url: '$DEEPSEA_REPO_URL'
+            refspec: '+refs/pull/*:refs/remotes/origin/pr/*'
+            branches:
+                - '$DEEPSEA_REF'
+    builders:
+        - shell: |
+            #!/bin/bash -x
+            virtualenv v
+            . v/bin/activate
+            pip install --upgrade pip
+            pip install tox
+            RPMBUILD=$HOME/rpmbuild
+
+            # Clear any old deepsea rpms
+            rm -rf $RPMBUILD/RPMS/noarch/deepsea*.rpm
+
+            # setup
+            make rpm || {
+                echo "ERROR: Can't build RPMs"
+                exit 1
+            }
+            # copy generated rpms and create a repo
+            mkdir -p $PUBLISH_DIR
+            cp $RPMBUILD/RPMS/noarch/deepsea*.rpm $PUBLISH_DIR
+            createrepo --repo deespea_testing $PUBLISH_DIR

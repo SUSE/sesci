@@ -30,7 +30,7 @@ SUITE_REPO=${SUITE_REPO:-"http://github.com/SUSE/ceph"}
 # Jenkins specific variables
 JOB_NAME=${JOB_NAME:-"deepsea-teuthology"}
 BUILD_ID=${BUILD_ID:-"0"}
-OVH_CONF=${OVH_CONF:-"ovh.net"}
+#OVH_CONF=${OVH_CONF:-"ovh.net"}
 PULL_ID=${ghprbPullId:-"0"}
 
 TEUTH_LOG=logs/teuth-deepsea-pr$PULL_ID-b$BUILD_ID.log
@@ -39,7 +39,8 @@ echo DeepSea repo: $DEEPSEAREPOURL
 
 
 # include OVH_CONF
-source $OVH_CONF
+# source $OVH_CONF
+
 # include teuthology
 echo Home directory: $HOME
 source $TEUTH_PATH/v/bin/activate
