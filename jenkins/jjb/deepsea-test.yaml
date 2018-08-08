@@ -1,0 +1,135 @@
+#jenkins-jobs --conf storage-ci.suse.de.ini update deepsea-teuthology.yaml 
+- project:
+    name: deepsea-teuthology
+    test:
+        - 'lint':
+            target: 'lint'
+            branch: ['NONE', 'master']
+            #branch: [ 'NONE']
+            test-results: false
+            cron: 'H/5 * * * *'
+        - 'py27':
+            target: 'test'
+            branch: ['NONE', 'master', 'SES5']
+            #branch: ['SES5']
+            test-results: true
+            cron: 'H/5 * * * *'
+    jobs:
+        - 'ds-test-{test}-tmpl'
+- builder:
+    name: run-lint
+    builders:
+        - shell: |
+            #!/bin/bash
+            virtualenv --python python2.7 v
+            . v/bin/activate
+            pip install --upgrade pip
+            pip install tox
+            make lint
+- builder:
+    name: run-py27
+    builders:
+        - shell: |
+            #!/bin/bash
+            virtualenv --python python2.7 v
+            . v/bin/activate
+            pip install --upgrade pip
+            pip install tox
+            make test
+- job-template:
+    id: 'ds-test-{test}-tmpl'
+    name: 'deepsea-test-{test}'
+    concurrent: true
+    project-type: multijob
+    node: storage-compute
+    parameters:
+        - string:
+            name: TARGET
+            default: "{target}"
+            description: Teuthology instance name, what should be provided with '--name'
+        - string:
+            name: DEEPSEA_REF
+            default: "${{sha1}}"
+        - string:
+            name: DEEPSEA_REPO_URL
+            default: https://github.com/suse/deepsea/
+    scm:
+        - git:
+            url: '$DEEPSEA_REPO_URL'
+            name: ''
+            refspec: '+refs/pull/*:refs/remotes/origin/pr/*'
+            branches:
+                - '$DEEPSEA_REF'
+    properties:
+        - github:
+            url: 'https://github.com/suse/deepsea/'
+            display-name: deepsea-test
+        - build-discarder:
+            num-to-keep: 20
+        - authorization:
+            anonymous:
+                - job-read
+                - job-status
+    wrappers:
+        - workspace-cleanup
+        - ansicolor
+        - timestamps
+        # - build-name: { name: '#$BUILD_NUMBER $chainlevel-$ses_version' }
+        - credentials-binding:
+            - file:
+                #credential-id: 'storage-os-conf'
+                credential-id: 'ci-sbg1'
+                variable: OVH_CONF
+            - file:
+                credential-id: 'storage-automation-secret-file'
+                variable: SECRET_FILE
+    triggers:
+        - github-pull-request:
+            #admin-list:
+            #    - susebot
+            #    - kshtsk
+            #    - jschmid1
+            #white-list:
+            org-list: ['suse', 'SUSE']
+            cron: '{cron}'
+            #build-desc-template: "Ceph Pull Request"
+            #trigger-phrase: 'ok to test'
+            #trigger-phrase: 'please run {suite} suite'
+            only-trigger-phrase: false
+            permit-all: true
+            allow-whitelist-orgs-as-admins: true
+            #auto-close-on-fail: false
+            #!!!!!!!!!!!! Add at least one NONE target branch
+            # so newly created jobs will not be scheduled for all PRs.
+            white-list-target-branches: '{branch}'
+            #    - NONE
+            #    - ses3
+            #    - ses4
+            #    - ses5
+            #    - ses6
+            #    - jewel
+            auth-id: 'susebot'
+            status-add-test-results: false
+            status-context: 'storage-ci/deepsea-make-{target}'
+            #triggered-status: '--none--'
+            #started-status: '--none--'
+            error-status: '--none--'
+            success-status: 'DONE'
+            failure-status: 'FAIL'
+            status-add-test-results: '{test-results}'
+            #error-comment: "Unexpected error in the make check"
+            #success-comment: "The make check passed"
+            #failure-comment: "The make check failed"
+            # don't cancel build, because it aborts the top level job
+            # and that does not allow cleanup ovh resources
+            cancel-builds-on-update: true
+    builders:
+        - run-{test}
+    publishers:
+        - archive:
+            artifacts: "logs/**,*.log,*.yaml,**/junit*.xml"
+            allow-empty: true
+        - junit:
+            results: '**/junit*.xml'
+            allow-empty-results: true
+            junit-attachments: true
