@@ -5,6 +5,9 @@ import time
 import paramiko
 import logging
 import socket
+import json
+
+from novaclient.client import Client
 
 def get_nova_credentials_v2(yaml_file):
     d = {}
@@ -19,9 +22,6 @@ def get_nova_credentials_v2(yaml_file):
         d['cacert']       = c.get('OS_CACERT', None);
     d['version'] = '2'
     return d
-
-
-from novaclient.client import Client
 
 target_file   = os.environ.get('TARGET_FILE', 'target.properties')
 target_mask   = os.environ.get('TARGET_MASK', 'mkck%02d')
@@ -42,7 +42,7 @@ server = {
 }
 
 if os.path.isfile(target_file):
-    print "Cleanup properties file: [" + target_file + "]"
+    print("Cleanup properties file: [" + target_file + "]")
     os.remove(target_file)
 
 credentials = get_nova_credentials_v2(ovh_conf)
@@ -81,15 +81,15 @@ lock_wait = 2
 
 res = None
 
-print "Trying to lock file for process " + str(os.getpid())
+print("Trying to lock file for process " + str(os.getpid()))
 while True:
         try:
                 lock = open(lockfile, 'w')
                 fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                print "File locked for process", os.getpid()
+                print("File locked for process", os.getpid())
                 res = create_target()
                 fcntl.flock(lock, fcntl.LOCK_UN)
-                print "Unlocking for", str(os.getpid())
+                print("Unlocking for", str(os.getpid()))
                 break
         except IOError as err:
                 # print "Can't lock: ", err
@@ -116,7 +116,13 @@ while res.status != 'ACTIVE':
 
 target = res.name
 target_ip = res.networks[server['networks'][0]][0]
-print 'Server [' + target + '] is active and has following IP: ' + target_ip
+print('Server [' + target + '] is active and has following IP: ' + target_ip)
+node = {
+    'name' : res.name,
+    'ip' : target_ip,
+    'id' : res.id,
+}
+
 with open(target_file, 'w') as f:
     f.write('TARGET_NAME=' + target + '\n')
     f.write('TARGET_IP=' + target_ip + '\n')
@@ -124,7 +130,10 @@ with open(target_file, 'w') as f:
     f.write('CEPH_REPO_URL=' + ceph_repo_url + '\n')
     f.write('CEPH_REF=' + ceph_ref + '\n')
     f.close()
-    print "Saved target properties to file: " + target_file
+    print("Saved target properties to file: " + target_file)
+
+with open('node.json', 'w') as f:
+    json.dump(node, f, indent=2)
 
 client = paramiko.SSHClient()
 client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -145,6 +154,8 @@ while True:
                 print "Exeption occured: " + str(e)
                 if timeout < 0:
                         print "ERROR: Timeout occured"
+                        print("Cleanup server %s id %s" % (res.name, res.id))
+                        res.delete()
                         raise e
                 else:
                         print "Waiting " + str(wait) + " seconds..."
