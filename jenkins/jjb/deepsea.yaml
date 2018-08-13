@@ -20,14 +20,14 @@
                 deepsea:basic:fs
                 deepsea:basic:rgw
                 deepsea:basic:nfs-ganesha
-        - string:
-            name: DEEPSEA_REF
-            default: "master"
-            description: "For example: origin/pr/X/merge, "
-        - string:
-            name: DEEPSEA_BRANCH
-            default: "master"
-            description: defaults to master, sha1 value if present, ses5, ses6
+       # - string:
+       #     name: DEEPSEA_REF
+       #     default: "master"
+       #     description: "For example: origin/pr/X/merge, "
+       #- string:
+       #     name: DEEPSEA_BRANCH
+       #     default: "master"
+       #     description: defaults to master, sha1 value if present, ses5, ses6
         - string:
             name: NAME
             default: "ci"
@@ -152,7 +152,7 @@
                 credential-id: 'storage-automation-secret-file'
                 variable: SECRET_FILE
     builders:
-        - shell: "git clone https://github.com/suse/sesci -b teuth"
+        - shell: "git clone https://github.com/suse/sesci"
         # do not include-raw the source because jjb requires {} escaped
         # variables if there are used templates
         - copyartifact:
@@ -275,7 +275,7 @@
             mkdir -p logs
             touch logs/report.txt
         - shell: |
-            #!/bin/bash
+            #!/bin/bash -x
             PRTGT_BRANCH=${ghprbTargetBranch:-"ses5"}
             if [[ "$PRTGT_BRANCH" == "master" ]] ; then
                 CEPH_BRANCH="ses6"
@@ -300,6 +300,7 @@
                   #property-file: '${TARGET_FILE}'
                   predefined-parameters: |
                     PUBLISH_DIR=/mnt/logs/artifacts/jenkins/deepsea-pr/${SUITE}/${BUILD_ID}
+                    DEEPSEA_REF=$sha1
         - multijob:
             name: Build DeepSea RPMs
             condition: ALWAYS
@@ -316,6 +317,7 @@
                     DEEPSEA_REPO=http://ceph-ci.suse.de/artifacts/jenkins/deepsea-pr/${SUITE}/${BUILD_ID}
                     CEPH_BRANCH=$CEPH_BRANCH
                     SUITE_BRANCH=$SUITE_BRANCH
+                    TEUTH_NAME=$NAME
         - copyartifact:
             project: deepsea-teuthology-suite
             filter: 'logs/**'
