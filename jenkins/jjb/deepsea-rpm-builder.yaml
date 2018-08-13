@@ -30,14 +30,15 @@
     builders:
         - shell: |
             #!/bin/bash -x
-            virtualenv v
-            . v/bin/activate
-            pip install --upgrade pip
-            pip install tox
+            #virtualenv v
+            #. v/bin/activate
+            #pip install --upgrade pip
+            #pip install tox
             RPMBUILD=$HOME/rpmbuild
 
             # Clear any old deepsea rpms
             rm -rf $RPMBUILD/RPMS/noarch/deepsea*.rpm
+            rm -rf $RPMBUILD
 
             # setup
             make rpm || {
