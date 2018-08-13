@@ -163,6 +163,7 @@
             #target: ''
             which-build: 'last-successful'
         - shell: |
+            set +x
             source $OVH_CONF
             bash -x sesci/jenkins/deepsea-pr.sh
 
