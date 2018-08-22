@@ -20,10 +20,14 @@
                 deepsea:basic:fs
                 deepsea:basic:rgw
                 deepsea:basic:nfs-ganesha
-       # - string:
-       #     name: DEEPSEA_REF
-       #     default: "master"
-       #     description: "For example: origin/pr/X/merge, "
+        - string:
+            name: TARGET_BRANCH
+            default: "master"
+            description: "Deepsea target branch, for example: master, SES5"
+        - string:
+            name: DEEPSEA_REF
+            default: "master"
+            description: "For example: origin/pr/X/merge, "
        #- string:
        #     name: DEEPSEA_BRANCH
        #     default: "master"
@@ -57,6 +61,31 @@
                 variable: SECRET_FILE
     builders:
         - shell: "git clone https://github.com/suse/sesci"
+        - shell: |
+            #!/bin/bash -x
+            REPO_NAME=DEEPSEA-PR-${ghprbPullId:-"JOB-$BUILD_ID"}
+            REPO_SUBDIR=jenkins/deepsea/pr/$REPO_NAME
+            PUBLISH_DIR=/mnt/logs/artifacts/$REPO_SUBDIR
+            ACCESS_URL=http://ceph-ci.suse.de/artifacts/$REPO_SUBDIR
+
+            DEEPSEA_REF=${sha1:-"$DEEPSEA_REF"}
+            PRTGT_BRANCH=${ghprbTargetBranch:-"$TARGET_BRANCH"}
+            if [[ "$PRTGT_BRANCH" == "master" ]] ; then
+                CEPH_BRANCH="ses6"
+                SUITE_BRANCH="ses6"
+            else
+                CEPH_BRANCH="${PRTGT_BRANCH,,}"
+                SUITE_BRANCH="${PRTGT_BRANCH,,}"
+            fi
+            cat > deepsea-pr.properties << EOF
+            PUBLISH_DIR=$PUBLISH_DIR
+            ACCESS_URL=$ACCESS_URL
+            DEEPSEA_REF=$DEEPSEA_REF
+            CEPH_BRANCH=${CEPH_BRANCH}
+            SUITE_BRANCH=${SUITE_BRANCH}
+            EOF
+        - inject:
+            properties-file: 'deepsea-pr.properties'
         - multijob:
             name: Build DeepSea RPMs
             #condition: ALWAYS
@@ -65,16 +94,27 @@
                 - name: deepsea-teuthology-rpm-builder
                   current-parameters: true
                   abort-all-job: true
-                  #property-file: '${TARGET_FILE}'
                   predefined-parameters: |
-                    PUBLISH_DIR=/mnt/logs/artifacts/jenkins/deepsea-pr/${SUITE}/${BUILD_ID}
-
-        # do not include-raw the source because jjb requires {} escaped
-        # variables if there are used templates
-        - shell: |
-            set -x
-            export ACCESS_URL=http://storage-ci.suse.de/artifacts/jenkins/deepsea-pr/${SUITE}/${BUILD_ID}
-            bash -x sesci/jenkins/deepsea-pr.sh
+                    PUBLISH_DIR=$PUBLISH_DIR
+                    DEEPSEA_REF=$DEEPSEA_REF
+        - multijob:
+            name: Run teuthology suite
+            condition: ALWAYS
+            projects:
+                - name: deepsea-teuthology-suite
+                  current-parameters: true
+                  abort-all-job: true
+                  predefined-parameters: |
+                    PUBLISH_DIR=$PUBLISH_DIR
+                    DEEPSEA_REPO=$ACCESS_URL
+                    CEPH_BRANCH=$CEPH_BRANCH
+                    SUITE_BRANCH=$SUITE_BRANCH
+                    TEUTH_NAME=$NAME
+        - copyartifact:
+            project: deepsea-teuthology-suite
+            filter: 'logs/**'
+            optional: true
+            which-build: multijob-build
 
     publishers:
         - archive:
@@ -233,7 +273,7 @@
             cron: 'H/2 * * * *'
             #build-desc-template: "Ceph Pull Request"
             #trigger-phrase: 'ok to test'
-            trigger-phrase: '\W*@susebot\W+run\W+teuthology'
+            trigger-phrase: '\W*@susebot\W+run\W+teuthology(\W+.*)?'
             only-trigger-phrase: true
             permit-all: true
             allow-whitelist-orgs-as-admins: true
@@ -261,10 +301,10 @@
             failure-status: '--none--'
             #error-comment: "Unexpected error in the make check"
             success-comment: |
-                Commit $ghprbActualCommit is *OK*.
+                Commit $ghprbActualCommit is *OK* for suite $SUITE.
                 Check tests results in the Jenkins job: $BUILD_URL
             failure-comment: |
-                Commit $ghprbActualCommit is *NOT OK*.
+                Commit $ghprbActualCommit is *NOT OK* for suite $SUITE.
                 Check tests results in the Jenkins job: $BUILD_URL
             # don't cancel build, because it aborts the top level job
             # and that does not allow cleanup ovh resources
@@ -285,6 +325,11 @@
                 CEPH_BRANCH="${PRTGT_BRANCH,,}"
                 SUITE_BRANCH="${PRTGT_BRANCH,,}"
             fi
+
+            x="^\s*@susebot\s+run\s+teuthology\s+((with|for)\s+)?(suite\s+)?(\S+)\$"
+            [[ $ghprbCommentBody =~ $x ]] && {
+	        SUITE=${BASH_REMATCH[4]}
+            }
             cat > deepsea-pr.properties << EOF
             CEPH_BRANCH=${CEPH_BRANCH}
             SUITE_BRANCH=${SUITE_BRANCH}
@@ -319,12 +364,13 @@
                     CEPH_BRANCH=$CEPH_BRANCH
                     SUITE_BRANCH=$SUITE_BRANCH
                     TEUTH_NAME=$NAME
+                    SUITE=$SUITE
         - copyartifact:
             project: deepsea-teuthology-suite
             filter: 'logs/**'
             optional: true
             #target: 'teuthology'
-            which-build: multijob-build        
+            which-build: multijob-build
     publishers:
         - archive:
             artifacts: "logs/**,*.log,*.yaml,**/junit*.xml"
