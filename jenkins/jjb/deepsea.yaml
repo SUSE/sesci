@@ -333,6 +333,7 @@
             cat > deepsea-pr.properties << EOF
             CEPH_BRANCH=${CEPH_BRANCH}
             SUITE_BRANCH=${SUITE_BRANCH}
+            SUITE=${SUITE}
             EOF
         - inject:
             properties-file: 'deepsea-pr.properties'
