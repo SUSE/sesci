@@ -301,10 +301,10 @@
             failure-status: '--none--'
             #error-comment: "Unexpected error in the make check"
             success-comment: |
-                Commit $ghprbActualCommit is *OK* for suite $SUITE.
+                Commit $ghprbActualCommit is *OK*.
                 Check tests results in the Jenkins job: $BUILD_URL
             failure-comment: |
-                Commit $ghprbActualCommit is *NOT OK* for suite $SUITE.
+                Commit $ghprbActualCommit is *NOT OK*.
                 Check tests results in the Jenkins job: $BUILD_URL
             # don't cancel build, because it aborts the top level job
             # and that does not allow cleanup ovh resources
