@@ -222,19 +222,6 @@
     node: storage-compute
     parameters:
         - string:
-            name: SUITE
-            default: "suse:smoke"
-            description: |
-                Teuthology suite name or facet, for example,
-                deepsea/basic/health-ok,
-                deepsea:basic:health-ok,
-                deepsea:basic:health-ok-encrypted
-                deepsea:basic:openattic
-                deepsea:basic:igw
-                deepsea:basic:fs
-                deepsea:basic:rgw
-                deepsea:basic:nfs-ganesha
-        - string:
             name: DEEPSEA_REF
             default: "master"
             description: "For example: origin/pr/X/merge, "
@@ -285,11 +272,6 @@
                 - master
                 - SES5
                 - SES4
-            #    - ses3
-            #    - ses4
-            #    - ses5
-            #    - ses6
-            #    - jewel
             auth-id: 'susebot'
             status-add-test-results: false
             #status-context: 'storage-ci/deepsea-make-rpm'
@@ -301,10 +283,10 @@
             failure-status: '--none--'
             #error-comment: "Unexpected error in the make check"
             success-comment: |
-                Commit $ghprbActualCommit is *OK*.
+                Commit $ghprbActualCommit is *OK* for suite $SUITE.
                 Check tests results in the Jenkins job: $BUILD_URL
             failure-comment: |
-                Commit $ghprbActualCommit is *NOT OK*.
+                Commit $ghprbActualCommit is *NOT OK* for suite $SUITE.
                 Check tests results in the Jenkins job: $BUILD_URL
             # don't cancel build, because it aborts the top level job
             # and that does not allow cleanup ovh resources
@@ -321,16 +303,23 @@
             if [[ "$PRTGT_BRANCH" == "master" ]] ; then
                 CEPH_BRANCH="ses6"
                 SUITE_BRANCH="ses6"
+                SUITE="suse:tier1"
             else
                 CEPH_BRANCH="${PRTGT_BRANCH,,}"
                 SUITE_BRANCH="${PRTGT_BRANCH,,}"
+                SUITE="suse:smoke"
             fi
 
             x="^\s*@susebot\s+run\s+teuthology\s+((with|for)\s+)?(suite\s+)?(\S+)\$"
             [[ $ghprbCommentBody =~ $x ]] && {
                 SUITE=${BASH_REMATCH[4]}
+            } || {
+                echo "Comment: $ghprbCommentBody"
+                echo "Does not match the regex: $x"
             }
             cat > deepsea-pr.properties << EOF
+            PUBLISH_DIR=/mnt/logs/artifacts/jenkins/deepsea-pr/${SUITE}/${BUILD_ID}
+            DEEPSEA_REPO=http://ceph-ci.suse.de/artifacts/jenkins/deepsea-pr/${SUITE}/${BUILD_ID}
             CEPH_BRANCH=${CEPH_BRANCH}
             SUITE_BRANCH=${SUITE_BRANCH}
             SUITE=${SUITE}
@@ -346,7 +335,7 @@
                   abort-all-job: true
                   #property-file: '${TARGET_FILE}'
                   predefined-parameters: |
-                    PUBLISH_DIR=/mnt/logs/artifacts/jenkins/deepsea-pr/${SUITE}/${BUILD_ID}
+                    PUBLISH_DIR=$PUBLISH_DIR
                     DEEPSEA_REF=$sha1
         - multijob:
             name: Build DeepSea RPMs
@@ -356,12 +345,11 @@
             #execution-type: 'SEQUENTIALLY'
             projects:
                 - name: deepsea-teuthology-suite
-                  current-parameters: true
+                  current-parameters: false
                   abort-all-job: true
                   #property-file: '${TARGET_FILE}'
                   predefined-parameters: |
-                    PUBLISH_DIR=/mnt/logs/artifacts/jenkins/deepsea-pr/${SUITE}/${BUILD_ID}
-                    DEEPSEA_REPO=http://ceph-ci.suse.de/artifacts/jenkins/deepsea-pr/${SUITE}/${BUILD_ID}
+                    DEEPSEA_REPO=$DEEPSEA_REPO
                     CEPH_BRANCH=$CEPH_BRANCH
                     SUITE_BRANCH=$SUITE_BRANCH
                     TEUTH_NAME=$NAME
