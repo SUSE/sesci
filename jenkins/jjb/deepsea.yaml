@@ -328,7 +328,7 @@
 
             x="^\s*@susebot\s+run\s+teuthology\s+((with|for)\s+)?(suite\s+)?(\S+)\$"
             [[ $ghprbCommentBody =~ $x ]] && {
-	        SUITE=${BASH_REMATCH[4]}
+                SUITE=${BASH_REMATCH[4]}
             }
             cat > deepsea-pr.properties << EOF
             CEPH_BRANCH=${CEPH_BRANCH}
