@@ -162,6 +162,57 @@ END
 END
 }
 
+function make_teuthology_html() {
+    local logdir=$1
+    local report=${2:-"teuthology-report.html"}
+    local suite=${3:-"teuthology"}
+    local class="teuthology.${suite//[:\/]/\.}"
+    cat > $report << END
+<html>
+<body>
+<a href="http://$teuth:8081/$jobname">http://$teuth:8081/$jobname</a>
+<table>
+END
+        for i in $(ls $logdir) ; do
+            local summary_yaml=$logdir/$i/summary.yaml
+            local info_yaml=$logdir/$i/info.yaml
+            local name=$(
+                python -c "import sys, yaml ; print(yaml.load(sys.stdin)['description'])" < $info_yaml
+            )
+            local dura=$(
+                python -c "import sys, yaml ; print(yaml.load(sys.stdin)['duration'])" < $summary_yaml || echo "0"
+            )
+            local tlog=$logdir/teuthology-$i.log
+            cp $logdir/$i/teuthology.log $tlog
+            cat >> $report << END
+  <tr>
+    <td>$class</td>
+    <td>$name</td>
+    <td>$dura</td>
+END
+            grep "^success:" $summary_yaml | grep -q "true" && {
+                cat >> $report << END
+    <td><a href="$tlog" style="text-decoration: none; color: green">passed</a></td>
+END
+            } || {
+                local reason=$(
+                    python -c "import sys, yaml ; print(yaml.load(sys.stdin)['failure_reason'])" < $summary_yaml
+                )
+                cat >> $report << END
+    <td><a href="$tlog" style="text-decoration: none; color: red" title="$reason">failed</a></td>
+END
+            }
+            cat >> $report << END
+  </tr>
+END
+        done
+        cat >> $report << END
+</table>
+</body>
+</html>
+END
+}
+
 make_github_report() {
     local logdir=$1
     local report=${2:-"report.txt"}
@@ -213,6 +264,7 @@ else
     scp -r -i $SECRET_FILE -o StrictHostKeyChecking=no ubuntu@$teuth:/usr/share/nginx/html/$jobname/* logs/$jobname || true
     make_github_report logs/$jobname logs/report.txt
     make_teuthology_junit logs/$jobname logs/junit-report.xml $TEUTH_SUITE
+    make_teuthology_html logs/$jobname logs/teuthology-$TEUTH_SUITE.html
 fi
 
 echo PASS: $passed
