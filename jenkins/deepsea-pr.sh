@@ -172,6 +172,9 @@ function make_teuthology_html() {
 <body>
 <a href="http://$teuth:8081/$jobname">http://$teuth:8081/$jobname</a>
 <table>
+<thead>
+<tr><th>NAME</th><th>TIME</th><th>STATUS</th></tr>
+</thead>
 END
         for i in $(ls $logdir) ; do
             local summary_yaml=$logdir/$i/summary.yaml
