@@ -124,9 +124,11 @@ teuth=$(grep -m1 'ssh access' $TEUTH_LOG | \
 function make_teuthology_junit() {
     local logdir=$1
     local junit=${2:-"junit-report.xml"}
+    local suite=${3:-"teuthology"}
+    local class="teuthology.${suite//[:\/]/\./}"
     cat > $junit << END
 <?xml version="1.0" ?>
-<testsuite name="suse.smoke">
+<testsuite name="$suite">
 END
         for i in $(ls $logdir) ; do
             local summary_yaml=$logdir/$i/summary.yaml
@@ -140,7 +142,7 @@ END
             local tlog=$logdir/teuthology-$i.log
             cp $logdir/$i/teuthology.log $tlog
             cat >> $junit << END
-  <testcase classname="teuthology.suse:smoke" name="$name" time="$dura">
+  <testcase classname="$class" name="$name" time="$dura">
     <system-out>[[ATTACHMENT|$tlog]]</system-out>
 END
             grep "^success:" $summary_yaml | grep -q "true" || {
@@ -210,7 +212,7 @@ else
     mkdir -p logs/$jobname
     scp -r -i $SECRET_FILE -o StrictHostKeyChecking=no ubuntu@$teuth:/usr/share/nginx/html/$jobname/* logs/$jobname || true
     make_github_report logs/$jobname logs/report.txt
-    make_teuthology_junit logs/$jobname logs/junit-report.xml
+    make_teuthology_junit logs/$jobname logs/junit-report.xml $TEUTH_SUITE
 fi
 
 echo PASS: $passed
