@@ -182,11 +182,9 @@ END
             local dura=$(
                 python -c "import sys, yaml ; print(yaml.load(sys.stdin)['duration'])" < $summary_yaml || echo "0"
             )
-            local tlog=$logdir/teuthology-$i.log
-            cp $logdir/$i/teuthology.log $tlog
+            local tlog="../$logdir/$i/teuthology.log"
             cat >> $report << END
   <tr>
-    <td>$class</td>
     <td>$name</td>
     <td>$dura</td>
 END
@@ -263,8 +261,8 @@ else
     mkdir -p logs/$jobname
     scp -r -i $SECRET_FILE -o StrictHostKeyChecking=no ubuntu@$teuth:/usr/share/nginx/html/$jobname/* logs/$jobname || true
     make_github_report logs/$jobname logs/report.txt
-    make_teuthology_junit logs/$jobname logs/junit-report.xml $TEUTH_SUITE
     make_teuthology_html logs/$jobname logs/teuthology-$TEUTH_SUITE.html
+    make_teuthology_junit logs/$jobname logs/junit-report.xml $TEUTH_SUITE
 fi
 
 echo PASS: $passed
