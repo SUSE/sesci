@@ -125,7 +125,7 @@ function make_teuthology_junit() {
     local logdir=$1
     local junit=${2:-"junit-report.xml"}
     local suite=${3:-"teuthology"}
-    local class="teuthology.${suite//[:\/]/\.}"
+    local class="teuthology.${suite//[:\/]/\:}"
     cat > $junit << END
 <?xml version="1.0" ?>
 <testsuite name="$suite">
