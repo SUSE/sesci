@@ -263,8 +263,10 @@ EOF
 else
     mkdir -p logs/$jobname
     scp -r -i $SECRET_FILE -o StrictHostKeyChecking=no ubuntu@$teuth:/usr/share/nginx/html/$jobname/* logs/$jobname || true
+    HTML_REPORT=teuthology-${TEUTH_SUITE//\//\:}
     make_github_report logs/$jobname logs/report.txt
-    make_teuthology_html logs/$jobname logs/teuthology-$TEUTH_SUITE.html
+    make_teuthology_html logs/$jobname logs/$HTML_REPORT
+    (cd logs ; ln -s $HTML_REPORT teuthology-report.html)
     make_teuthology_junit logs/$jobname logs/junit-report.xml $TEUTH_SUITE
 fi
 
