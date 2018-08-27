@@ -124,8 +124,8 @@ teuth=$(grep -m1 'ssh access' $TEUTH_LOG | \
 function make_teuthology_junit() {
     local logdir=$1
     local junit=${2:-"junit-report.xml"}
-    local suite=${3:-"teuthology"}
-    local class="teuthology.run"
+    local suite=${3:-"run"}
+    local class="${suite//[:\/]/\:}"
     cat > $junit << END
 <?xml version="1.0" ?>
 <testsuite name="$suite">
@@ -136,13 +136,14 @@ END
             local name=$(
                 python -c "import sys, yaml ; print(yaml.load(sys.stdin)['description'])" < $info_yaml
             )
+            name=${name/"$class"\//}
             local dura=$(
                 python -c "import sys, yaml ; print(yaml.load(sys.stdin)['duration'])" < $summary_yaml || echo "0"
             )
             local tlog=$logdir/teuthology-$i.log
             cp $logdir/$i/teuthology.log $tlog
             cat >> $junit << END
-  <testcase classname="$class" name="$name" time="$dura">
+  <testcase classname="teuthology.$class" name="$name" time="$dura">
     <system-out>[[ATTACHMENT|$tlog]]</system-out>
 END
             grep "^success:" $summary_yaml | grep -q "true" || {
@@ -170,6 +171,14 @@ function make_teuthology_html() {
     cat > $report << END
 <html>
 <body>
+END
+    [[ "$PULL_ID" == "0" ]] || {
+        cat > $report << END
+PR=$PULL_ID
+END
+    }
+    cat > $report << END
+PULL_ID
 <a href="http://$teuth:8081/$jobname">http://$teuth:8081/$jobname</a>
 <table>
 <thead>
