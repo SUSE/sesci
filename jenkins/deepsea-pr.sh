@@ -172,13 +172,12 @@ function make_teuthology_html() {
 <html>
 <body>
 END
-    [[ "$PULL_ID" == "0" ]] || {
+    [[ "$ghprbPullLink" == "" ]] || {
         cat > $report << END
-PR=$PULL_ID
+<p>$ghprbPullLink</p><br/>
 END
     }
     cat > $report << END
-PULL_ID
 <a href="http://$teuth:8081/$jobname">http://$teuth:8081/$jobname</a>
 <table>
 <thead>
