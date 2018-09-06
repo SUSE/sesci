@@ -61,7 +61,10 @@ def create_target():
   existing_servers = [s.name for s in srvs]
   print(range(target_limit))
   for n in range(target_limit):
-          target = target_mask % n
+          try:
+              target = target_mask % n
+          except:
+              target = target_mask
           if target in existing_servers:
                   print("Server [" + target + "] already exists.")
           else:
