@@ -130,6 +130,7 @@ multiJob("mkck-${ceph_ver}-${suse_ver}") {
     stringParam('CEPH_VER', '', 'For example:<ul><li>ceph<li>suse<li>ses5<li>ses4<li>ses3</ul>')
     stringParam('TARGET_FILE', 'mkck.properties', 'Target properties')
     stringParam('TARGET_FLAVOR', flavor)
+    stringParam('TARGET_MASK', "mkck-${ceph_ver}-${suse_ver}-\$BUILD_NUMBER") // mkck%02d
     stringParam('TARGET_IMAGE', suse_image)
     stringParam('CEPH_REPO_URL', ceph_repo_url)
   }
