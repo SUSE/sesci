@@ -121,8 +121,9 @@ jobname=$(grep 'Job scheduled with name' $TEUTH_LOG | head -1 | \
 teuth=$(grep -m1 'ssh access' $TEUTH_LOG | \
         perl -n -e'/ubuntu@([^ ]+) #/ && CORE::say $1')
 
-joburl=http://$teuth:8081/$jobname
-echo JOBURL=$joburl
+runname=$jobname
+runurl=http://$teuth:8081/$runname
+echo "Run summary: suite=$TEUTH_SUITE|name=$runname|url=$runurl"
 
 function make_teuthology_junit() {
     local logdir=$1
@@ -181,7 +182,7 @@ END
 END
     }
     cat > $report << END
-<a href="$joburl">$joburl</a>
+Results for run <a href="$runurl">$runname</a>
 <table>
 <thead>
 <tr><th>NAME</th><th>TIME</th><th>STATUS</th></tr>
@@ -229,8 +230,8 @@ make_github_report() {
     local logdir=$1
     local report=${2:-"report.txt"}
     cat > $report << END
-tuethology run results for **${TEUTH_SUITE}** suite
-
+Results for [teuthology ${TEUTH_SUITE} suite run]($runurl)
+Run name: $runname
 ---
 
 END
