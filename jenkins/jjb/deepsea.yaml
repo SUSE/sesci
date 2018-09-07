@@ -205,7 +205,10 @@
         - shell: |
             set +x
             source $OVH_CONF
-            bash -x sesci/jenkins/deepsea-pr.sh
+            (ash -x sesci/jenkins/deepsea-pr.sh
+        - description-setter:
+            regexp: "Run summary: suite=([^\s]*)|name=([^\s]*)|url=([^\s]*)"
+            description: 'run for \1 in <a href="\3">pulpito</a>'
 
     publishers:
         - archive:
