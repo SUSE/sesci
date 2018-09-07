@@ -121,6 +121,9 @@ jobname=$(grep 'Job scheduled with name' $TEUTH_LOG | head -1 | \
 teuth=$(grep -m1 'ssh access' $TEUTH_LOG | \
         perl -n -e'/ubuntu@([^ ]+) #/ && CORE::say $1')
 
+joburl=http://$teuth:8081/$jobname
+echo JOBURL=$joburl
+
 function make_teuthology_junit() {
     local logdir=$1
     local junit=${2:-"junit-report.xml"}
@@ -178,7 +181,7 @@ END
 END
     }
     cat > $report << END
-<a href="http://$teuth:8081/$jobname">http://$teuth:8081/$jobname</a>
+<a href="$joburl">$joburl</a>
 <table>
 <thead>
 <tr><th>NAME</th><th>TIME</th><th>STATUS</th></tr>
