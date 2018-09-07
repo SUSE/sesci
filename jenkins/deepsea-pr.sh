@@ -152,7 +152,9 @@ END
 END
             grep "^success:" $summary_yaml | grep -q "true" || {
                 local reason=$(
-                    python -c "import sys, yaml ; print(yaml.load(sys.stdin)['failure_reason'])" < $summary_yaml
+                    python -c "import sys, yaml ; from xml.dom.minidom import Text ; \
+                        t = Text() ; t.data = yaml.load(sys.stdin)['failure_reason'] ; \
+                        print(t.toxml())" < $summary_yaml
                 )
                 cat >> $junit << END
     <failure>$reason</failure>
