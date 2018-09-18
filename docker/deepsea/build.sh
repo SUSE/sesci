@@ -1,4 +1,5 @@
 #!/bin/bash -ex
+DEEPSEADIR=${2:-"deepsea"}
 TARGETPATH=$(cd ${1:-"$PWD"}; echo $PWD)
 TARGETNAME=${TARGETPATH##*/}
 TARGETBASE=${TARGETNAME,,}
@@ -8,7 +9,7 @@ echo TARGET NAME=${TARGETPATH##*/}
 export DHOME=${DHOME:-$(cd $(dirname $BASH_SOURCE); echo $PWD)}
 echo Docker home: $DHOME
 
-[[ -d deepsea ]] ||
+[[ -d ${DEEPSEADIR} ]] ||
     git clone https://github.com/SUSE/DeepSea.git deepsea
 
 BASEIMAGE=$(grep FROM $TARGETPATH/Dockerfile-base | cut -d ' ' -f 2)
@@ -22,7 +23,7 @@ docker build \
 
 [[ "$PWD" == "$TARGETPATH" ]] || {
     rm -rf $TARGETPATH/deepsea
-    cp -a deepsea $TARGETPATH
+    cp -a $DEEPSEADIR $TARGETPATH/deepsea
 }
 
 docker build \
@@ -32,7 +33,10 @@ docker build \
 	$TARGETPATH
 
 rm -rf ./repo
-docker run -v $(pwd):/mnt $TARGETBUILD:latest sh -c 'mkdir -p /mnt/repo && cp -a rpmbuild/RPMS/* /mnt/repo'
-test -d ./repo
-echo "New deepsea RPMs in ./repo"
+
+#docker run -v $(pwd):/mnt $TARGETBUILD:latest sh -c 'mkdir -p /mnt/repo && cp -a rpmbuild/RPMS/* /mnt/repo'
+ID=$(docker create $TARGETBUILD:latest)
+docker cp $ID:/home/jenkins/rpmbuild/RPMS repo
+docker rm $ID
+
 find ./repo

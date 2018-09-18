@@ -1,15 +1,15 @@
 FROM opensuse-15.0:latest
 MAINTAINER Nathan Cutler <ncutler@suse.com>
+ARG usr=jenkins
+RUN useradd -m $usr
+RUN  echo "$usr ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+COPY bashrc /home/$usr/.bashrc
+COPY deepsea /home/$usr/DeepSea
+RUN chown -R $usr: /home/$usr
 
-RUN useradd -m jenkins
-RUN  echo "jenkins ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
-COPY bashrc /home/jenkins/.bashrc
-COPY deepsea /home/jenkins/DeepSea
-RUN chown -R jenkins: /home/jenkins
+USER $usr
 
-USER jenkins
-
-WORKDIR /home/jenkins
+WORKDIR /home/$usr
 
 RUN echo %_topdir $HOME/rpmbuild | tee $HOME/.rpmmacros
 RUN pwd && ls -la && cd DeepSea \
@@ -23,5 +23,5 @@ RUN cd DeepSea && make rpm
 
 RUN sudo zypper --non-interactive --no-gpg-checks install rpmbuild/RPMS/*/*.rpm
 
-RUN source /home/jenkins/.bashrc \
+RUN source /home/$usr/.bashrc \
     && deepsea --version
