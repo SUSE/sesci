@@ -34,5 +34,5 @@ docker build \
 
 docker run -v $(pwd):/mnt $TARGETBUILD:latest sh -c 'mkdir -p /mnt/repo && cp -a rpmbuild/RPMS/* /mnt/repo'
 test -d ./repo
-echo "New deepsea RPMs in ./noarch"
-ls -l ./repo
+echo "New deepsea RPMs in ./repo"
+find ./repo
