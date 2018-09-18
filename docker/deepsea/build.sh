@@ -20,8 +20,10 @@ docker build \
 	-f $TARGETPATH/Dockerfile-base \
 	$TARGETPATH
 
-[[ "$PWD" == "$TARGETPATH" ]] ||
+[[ "$PWD" == "$TARGETPATH" ]] || {
+    rm -rf $TARGETPATH/deepsea
     cp -a deepsea $TARGETPATH
+}
 
 docker build \
 	--no-cache \
@@ -29,9 +31,7 @@ docker build \
 	-f $TARGETPATH/Dockerfile-rpm \
 	$TARGETPATH
 
-[[ "$PWD" == "$TARGETPATH" ]] ||
-    rm -rf $TARGETPATH/deepsea
-
+rm -rf ./repo
 docker run -v $(pwd):/mnt $TARGETBUILD:latest sh -c 'mkdir -p /mnt/repo && cp -a rpmbuild/RPMS/* /mnt/repo'
 test -d ./repo
 echo "New deepsea RPMs in ./repo"
