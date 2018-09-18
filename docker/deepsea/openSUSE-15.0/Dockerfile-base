@@ -1,0 +1,17 @@
+FROM opensuse/leap:15.0
+MAINTAINER Nathan Cutler <ncutler@suse.com>
+
+RUN zypper addrepo https://download.opensuse.org/repositories/filesystems:/ceph:/mimic/openSUSE_Leap_15.0/filesystems:ceph:mimic.repo \
+    && zypper --non-interactive --gpg-auto-import-keys refresh \
+    && zypper --non-interactive update \
+    && zypper --non-interactive install --no-recommends \
+          git-core \
+          make \
+          python3-pip \
+          python3-tox \
+          python3-virtualenv \
+          rpm-build createrepo \
+          salt-master salt-minion salt-api \
+          sudo \
+          tar \
+          vim jq
