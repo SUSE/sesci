@@ -128,11 +128,11 @@ echo "Run summary: suite=$TEUTH_SUITE|name=$runname|url=$runurl"
 function make_brief_deepsea_report() {
     local teuthology_log=$1
 #grep -E "(Running task|Unwinding|Running DeepSea Stage|ERROR:teuthology|Stage.*(completed|failed))"
-    grep -s "Running task deepsea..." $teuthology_log || {
+    grep -s -q "Running task deepsea..." $teuthology_log || {
         echo "The deepsea task hasn't been running. Probably teuthology issue"
         return
     }
-    grep -s "Running DeepSea Stage" $teuthology_log || {
+    grep -s -q "Running DeepSea Stage" $teuthology_log || {
         echo "No DeepSea Stages ran. Looks like salt cluster deployment issue"
         return
     }
