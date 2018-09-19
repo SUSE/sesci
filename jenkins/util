@@ -1,0 +1,27 @@
+#!/bin/bash
+
+function make_brief_deepsea_report() {
+    local teuthology_log=$1
+#grep -E "(Running task|Unwinding|Running DeepSea Stage|ERROR:teuthology|Stage.*(completed|failed))"
+    grep -s -q "Running task deepsea..." $teuthology_log || {
+        echo "The deepsea task hasn't been running. Probably teuthology issue"
+        return
+    }
+    grep -s -q "Running DeepSea Stage" $teuthology_log || {
+        echo "No DeepSea Stages ran. Looks like salt cluster deployment issue"
+        return
+    }
+    grep -E "(Stage.*(completed|failed))" $teuthology_log | sed -E "s/.*\*+ ([^\*]*) \*+.*/\1/g"
+    return
+}
+
+function extract_stack_trace() {
+    sed -E -n '/ERROR:teuthology.run_tasks/,/^....-..-..T..:..:..\.... /p'
+    # | head -n -1
+}
+
+function to_xml() {
+    python -c "import sys; from xml.dom.minidom import Text ; \
+        t = Text() ; t.data = sys.stdin.read() ; \
+        print(t.toxml())"
+}

@@ -2,6 +2,9 @@
 
 mkdir -p logs
 
+export SOURCEPATH=$(cd $(dirname $BASH_SOURCE); echo $PWD)
+source $SOURCEPATH/util
+
 # Job specific variables
 TEUTH_NAME=${TEUTH_NAME:-"ci"}
 TEUTH_BRANCH=${TEUTH_BRANCH:-"master"}
@@ -125,21 +128,6 @@ runname=$jobname
 runurl=http://$teuth:8081/$runname
 echo "Run summary: suite=$TEUTH_SUITE|name=$runname|url=$runurl"
 
-function make_brief_deepsea_report() {
-    local teuthology_log=$1
-#grep -E "(Running task|Unwinding|Running DeepSea Stage|ERROR:teuthology|Stage.*(completed|failed))"
-    grep -s -q "Running task deepsea..." $teuthology_log || {
-        echo "The deepsea task hasn't been running. Probably teuthology issue"
-        return
-    }
-    grep -s -q "Running DeepSea Stage" $teuthology_log || {
-        echo "No DeepSea Stages ran. Looks like salt cluster deployment issue"
-        return
-    }
-    grep -E "(Stage.*(completed|failed))" $teuthology_log | sed -E "s/.*\*+ ([^\*]*) \*+.*/\1/g"
-    return
-}
-
 function make_teuthology_junit() {
     local logdir=$1
     local junit=${2:-"junit-report.xml"}
@@ -177,6 +165,7 @@ END
                 cat >> $junit << END
     <failure>
         $(make_brief_deepsea_report $logdir/$i/teuthology.log | sed 's/$/<br\/>/g')
+        $(cat $logdir/$i/teuthology.log | extract_stack_trace | to_xml)
         $reason
     </failure>
 END
