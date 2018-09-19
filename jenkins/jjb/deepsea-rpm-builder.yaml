@@ -15,7 +15,7 @@
             name: DEEPSEA_REPO_URL
             default: https://github.com/suse/deepsea/
         - string:
-            name: DEEPSEA_BRANCH
+            name: DEEPSEA_TARGET
         - string:
             name: DEEPSEA_REF
         - string:
@@ -29,23 +29,23 @@
                 - '$DEEPSEA_REF'
     builders:
         - shell: |
-            #!/bin/bash -x
-            #virtualenv v
-            #. v/bin/activate
-            #pip install --upgrade pip
-            #pip install tox
-            RPMBUILD=$HOME/rpmbuild
-
-            # Clear any old deepsea rpms
-            rm -rf $RPMBUILD/RPMS/noarch/deepsea*.rpm
-            rm -rf $RPMBUILD
-
-            # setup
-            make rpm || {
-                echo "ERROR: Can't build RPMs"
+            #!/bin/bash -ex
+            if [[ "$DEEPSEA_TARGET" == "master" ]] ; then
+                TARGET="openSUSE-15.0"
+            elif [[ "$DEEPSEA_TARGET" == "SES5" ]] ; then
+                TARGET="openSUSE-42.3"
+            elif [[ "$DEEPSEA_TARGET" == "SES4" ]] ; then
+                TARGET="openSUSE-42.2"
+            else
+                echo "ERROR: Unsupported branch"
                 exit 1
-            }
-            # copy generated rpms and create a repo
+            fi
+
+            git clone https://github.com/suse/sesci -b docker
+
+            sesci/docker/deepsea/build.sh sesci/docker/deepsea/$TARGET
+
             mkdir -p $PUBLISH_DIR
-            cp $RPMBUILD/RPMS/noarch/deepsea*.rpm $PUBLISH_DIR
+            cp -rv repo/* $PUBLISH_DIR
             createrepo --repo deespea_testing $PUBLISH_DIR
+
