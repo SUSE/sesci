@@ -27,6 +27,7 @@
             refspec: '+refs/pull/*:refs/remotes/origin/pr/*'
             branches:
                 - '$DEEPSEA_REF'
+            basedir: 'deepsea'
     builders:
         - shell: |
             #!/bin/bash -ex
