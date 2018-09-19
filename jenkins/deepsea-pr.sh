@@ -125,6 +125,21 @@ runname=$jobname
 runurl=http://$teuth:8081/$runname
 echo "Run summary: suite=$TEUTH_SUITE|name=$runname|url=$runurl"
 
+function make_brief_deepsea_report() {
+    local teuthology_log=$1
+#grep -E "(Running task|Unwinding|Running DeepSea Stage|ERROR:teuthology|Stage.*(completed|failed))"
+    grep -s "Running task deepsea..." $teuthology_log || {
+        echo "The deepsea task hasn't been running. Probably teuthology issue"
+        return
+    }
+    grep -s "Running DeepSea Stage" $teuthology_log || {
+        echo "No DeepSea Stages ran. Looks like salt cluster deployment issue"
+        return
+    }
+    grep -E "(Stage.*(completed|failed))" $teuthology_log | sed -E "s/.*\*+ ([^\*]*) \*+.*/\1/g"
+    return
+}
+
 function make_teuthology_junit() {
     local logdir=$1
     local junit=${2:-"junit-report.xml"}
@@ -148,7 +163,10 @@ END
             cp $logdir/$i/teuthology.log $tlog
             cat >> $junit << END
   <testcase classname="teuthology.$class" name="$name" time="$dura">
-    <system-out>[[ATTACHMENT|$tlog]]</system-out>
+    <system-out>
+        $(make_brief_deepsea_report $logdir/$i/teuthology.log | sed 's/$/<br\/>/g')
+        [[ATTACHMENT|$tlog]]
+    </system-out>
 END
             grep "^success:" $summary_yaml | grep -q "true" || {
                 local reason=$(
@@ -157,7 +175,10 @@ END
                         print(t.toxml())" < $summary_yaml
                 )
                 cat >> $junit << END
-    <failure>$reason</failure>
+    <failure>
+        $(make_brief_deepsea_report $logdir/$i/teuthology.log | sed 's/$/<br\/>/g')
+        $reason
+    </failure>
 END
             }
             cat >> $junit << END
