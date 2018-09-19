@@ -28,10 +28,6 @@
             name: DEEPSEA_REF
             default: "master"
             description: "For example: origin/pr/X/merge, "
-       #- string:
-       #     name: DEEPSEA_BRANCH
-       #     default: "master"
-       #     description: defaults to master, sha1 value if present, ses5, ses6
         - string:
             name: NAME
             default: "ci"
@@ -97,6 +93,7 @@
                   predefined-parameters: |
                     PUBLISH_DIR=$PUBLISH_DIR
                     DEEPSEA_REF=$DEEPSEA_REF
+                    DEEPSEA_TARGET=$TARGET_BRANCH
         - multijob:
             name: Run teuthology suite
             condition: ALWAYS
@@ -225,14 +222,6 @@
     node: storage-compute
     parameters:
         - string:
-            name: DEEPSEA_REF
-            default: "master"
-            description: "For example: origin/pr/X/merge, "
-        - string:
-            name: DEEPSEA_BRANCH
-            default: "master"
-            description: defaults to master, sha1 value if present, ses5, ses6
-        - string:
             name: NAME
             default: "ci"
             description: Teuthology instance name, what should be provided with '--name'
@@ -340,6 +329,7 @@
                   predefined-parameters: |
                     PUBLISH_DIR=$PUBLISH_DIR
                     DEEPSEA_REF=$sha1
+                    DEEPSEA_TARGET=$ghprbTargetBranch
         - multijob:
             name: Build DeepSea RPMs
             condition: ALWAYS
