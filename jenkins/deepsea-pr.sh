@@ -151,9 +151,10 @@ END
             cp $logdir/$i/teuthology.log $tlog
             cat >> $junit << END
   <testcase classname="teuthology.$class" name="$name" time="$dura">
-    <system-out>
-        $(make_brief_deepsea_report $logdir/$i/teuthology.log | sed 's/$/<br\/>/g')
-        [[ATTACHMENT|$tlog]]
+    <system-out>$(make_brief_deepsea_report $logdir/$i/teuthology.log | to_xml)
+
+	[[ATTACHMENT|$tlog]]
+
     </system-out>
 END
             grep "^success:" $summary_yaml | grep -q "true" || {
@@ -164,7 +165,7 @@ END
                 )
                 cat >> $junit << END
     <failure>
-        $(make_brief_deepsea_report $logdir/$i/teuthology.log | sed 's/$/<br\/>/g')
+        $(make_brief_deepsea_report $logdir/$i/teuthology.log | to_xml)
         $(cat $logdir/$i/teuthology.log | extract_stack_trace | to_xml)
         $reason
     </failure>
