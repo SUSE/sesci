@@ -88,6 +88,7 @@ overrides:
                 deb: []
                 rpm: []
     deepsea:
+        install: package
         repo: ''
 
 EOF
