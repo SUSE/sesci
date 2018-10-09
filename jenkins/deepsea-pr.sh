@@ -165,10 +165,9 @@ END
                         print(t.toxml())" < $summary_yaml
                 )
                 cat >> $junit << END
-    <failure>
-        $(make_brief_deepsea_report $logdir/$i/teuthology.log | to_xml)
-        $(cat $logdir/$i/teuthology.log | extract_stack_trace | to_xml)
-        $reason
+    <failure>$reason
+
+$(cat $logdir/$i/teuthology.log | extract_stack_trace | to_xml)
     </failure>
 END
             }
@@ -179,6 +178,33 @@ END
         cat >> $junit << END
 </testsuite>
 END
+}
+function make_message() {
+    local logdir=$1
+    local message=$2
+    for i in $(ls $logdir) ; do
+        local summary_yaml=$logdir/$i/summary.yaml
+        local info_yaml=$logdir/$i/info.yaml
+        local name=$(
+            python -c "import sys, yaml ; print(yaml.load(sys.stdin)['description'])" < $info_yaml
+        )
+        name=${name/"$class"\//}
+        local dura=$(
+            python -c "import sys, yaml ; print(yaml.load(sys.stdin)['duration'])" < $summary_yaml || echo "0"
+        )
+        local tlog=$logdir/teuthology-$i.log
+        cp $logdir/$i/teuthology.log $tlog
+        grep "^success:" $summary_yaml | grep -q "true" || {
+            local reason=$(
+                python -c "import sys, yaml ; from xml.dom.minidom import Text ; \
+                    t = Text() ; t.data = yaml.load(sys.stdin)['failure_reason'] ; \
+                    print(t.toxml())" < $summary_yaml
+            )
+            cat >> $junit << END
+$(make_brief_deepsea_report $logdir/$i/teuthology.log | to_xml)
+END
+        }
+    done
 }
 
 function make_teuthology_html() {
@@ -258,7 +284,11 @@ END
             local dura=$(
                 python -c "import sys, yaml ; print(yaml.load(sys.stdin)['duration'])" < $summary_yaml || echo "0"
             )
-            grep "^success:" $summary_yaml | grep -q "true" || {
+            (grep "^success:" $summary_yaml | grep -q "true") && {
+                cat >> $report << END
+- _PASSED_ - $name :+1:
+END
+            } || {
                 local reason=$(
                     python -c "import sys, yaml ; print(yaml.load(sys.stdin)['failure_reason'])" < $summary_yaml
                 )
@@ -272,10 +302,6 @@ $reason
 \`\`\`
 END
                 fi
-            } && {
-                cat >> $report << END
-- _PASSED_ - $name :+1:
-END
             }
         done
 }
