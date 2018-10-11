@@ -202,12 +202,14 @@
         - shell: |
             set +x
             source $OVH_CONF
-            (ash -x sesci/jenkins/deepsea-pr.sh
-        - description-setter:
-            regexp: "Run\s+summary:\s+suite=([^\s]*)\|name=([^\s]*)\|url=([^\s]*)"
-            description: 'suite \1, see <a href="\3">pulpito</a>'
+            bash -x sesci/jenkins/deepsea-pr.sh
 
     publishers:
+        - description-setter:
+            regexp:            'Run\s+summary:\s+suite=([^\s]*)\|name=([^\s]*)\|url=([^\s]*)'
+            regexp-for-failed: 'Run\s+summary:\s+suite=([^\s]*)\|name=([^\s]*)\|url=([^\s]*)'
+            description:            'suite \1, see <a href="\3">pulpito</a>'
+            description-for-failed: 'suite \1, see <a href="\3">pulpito</a>'
         - archive:
             artifacts: "logs/**,*.log,*.yaml,**/junit*.xml"
             allow-empty: true
