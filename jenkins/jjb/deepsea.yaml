@@ -50,7 +50,7 @@
         - credentials-binding:
             - file:
                 #credential-id: 'storage-os-conf'
-                credential-id: 'ci-sbg1'
+                credential-id: 'ci-bhs1'
                 variable: OVH_CONF
             - file:
                 credential-id: 'storage-automation-secret-file'
@@ -206,8 +206,8 @@
 
     publishers:
         - description-setter:
-            regexp:            'Run\s+summary:\s+suite=([^\s]*)\|name=([^\s]*)\|url=([^\s]*)'
-            regexp-for-failed: 'Run\s+summary:\s+suite=([^\s]*)\|name=([^\s]*)\|url=([^\s]*)'
+            regexp:            '^Run\s+summary:\s+suite=([^\s]*)\|name=([^\s]*)\|url=([^\s]*)'
+            regexp-for-failed: '^Run\s+summary:\s+suite=([^\s]*)\|name=([^\s]*)\|url=([^\s]*)'
             description:            'suite \1, see <a href="\3">pulpito</a>'
             description-for-failed: 'suite \1, see <a href="\3">pulpito</a>'
         - archive:
@@ -301,7 +301,7 @@
             else
                 CEPH_BRANCH="${PRTGT_BRANCH,,}"
                 SUITE_BRANCH="${PRTGT_BRANCH,,}"
-                SUITE="suse:smoke"
+                SUITE="suse:tier1"
             fi
 
             x="^\s*@susebot\s+run\s+teuthology\s+((with|for)\s+)?(suite\s+)?(\S+)\$"
