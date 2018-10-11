@@ -42,7 +42,7 @@
                 exit 1
             fi
 
-            git clone https://github.com/suse/sesci -b docker
+            git clone https://github.com/suse/sesci
 
             sesci/docker/deepsea/build.sh sesci/docker/deepsea/$TARGET
 
