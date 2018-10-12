@@ -8,6 +8,14 @@
     name: 'deepsea-teuthology-rpm-builder'
     node: 'deepsea-teuthology-rpm-builder'
     concurrent: false
+    properties:
+        - build-discarder:
+            num-to-keep: 99
+        - authorization:
+            anonymous:
+                - job-read
+                - job-status
+                - job-discover
     wrappers:
         - workspace-cleanup
     parameters:

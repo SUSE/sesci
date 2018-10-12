@@ -53,6 +53,7 @@
             anonymous:
                 - job-read
                 - job-status
+                - job-discover
     wrappers:
         - workspace-cleanup
         - ansicolor
