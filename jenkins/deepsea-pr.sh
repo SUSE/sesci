@@ -76,7 +76,7 @@ test -f artifacts-$CEPH_BRANCH.yaml && {
     fi
 }
 if [[ "x$DEEPSEA_REPO" != "x" ]] ; then
-    TEST_REPO="$TEST_REPO --test-repo deepsea:$DEEPSEA_REPO"
+    TEST_REPO="$TEST_REPO --test-repo deepsea!1:$DEEPSEA_REPO"
 fi
 
 
