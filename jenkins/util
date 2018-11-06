@@ -11,7 +11,7 @@ function make_brief_deepsea_report() {
         echo "No DeepSea Stages ran. Looks like salt cluster deployment issue"
         return
     }
-    grep -E "(Stage.*(completed|failed))" $teuthology_log | sed -E "s/.*\*+ ([^\*]*) \*+.*/\1/g"
+    grep -E "(orchestration.*(completed|failed))" $teuthology_log | sed -E "s/.*\*+ ([^\*]*) \*+.*/\1/g"
     return
 }
 
