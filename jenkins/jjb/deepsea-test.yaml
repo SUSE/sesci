@@ -75,14 +75,14 @@
         - ansicolor
         - timestamps
         # - build-name: { name: '#$BUILD_NUMBER $chainlevel-$ses_version' }
-        - credentials-binding:
-            - file:
-                #credential-id: 'storage-os-conf'
-                credential-id: 'ci-sbg1'
-                variable: OVH_CONF
-            - file:
-                credential-id: 'storage-automation-secret-file'
-                variable: SECRET_FILE
+        #- credentials-binding:
+        #    #- file:
+        #    #    #credential-id: 'storage-os-conf'
+        #    #    credential-id: 'ci-ecp'
+        #    #    variable: OVH_CONF
+        #    - file:
+        #        credential-id: 'storage-automation-secret-file'
+        #        variable: SECRET_FILE
     triggers:
         - github-pull-request:
             #admin-list:

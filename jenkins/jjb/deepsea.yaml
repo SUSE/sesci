@@ -50,7 +50,8 @@
         - credentials-binding:
             - file:
                 #credential-id: 'storage-os-conf'
-                credential-id: 'ci-bhs1'
+                #credential-id: 'ci-bhs1'
+                credential-id: 'ci-ecp'
                 variable: OVH_CONF
             - file:
                 credential-id: 'storage-automation-secret-file'
@@ -62,7 +63,7 @@
             REPO_NAME=DEEPSEA-PR-${ghprbPullId:-"JOB-$BUILD_ID"}
             REPO_SUBDIR=jenkins/deepsea/pr/$REPO_NAME
             PUBLISH_DIR=/mnt/logs/artifacts/$REPO_SUBDIR
-            ACCESS_URL=http://ceph-ci.suse.de/artifacts/$REPO_SUBDIR
+            ACCESS_URL=http://10.86.0.120/artifacts/$REPO_SUBDIR
 
             DEEPSEA_REF=${sha1:-"$DEEPSEA_REF"}
             PRTGT_BRANCH=${ghprbTargetBranch:-"$TARGET_BRANCH"}
@@ -183,7 +184,8 @@
         - credentials-binding:
             - file:
                 #credential-id: 'storage-os-conf'
-                credential-id: 'ci-sbg1'
+                #credential-id: 'ci-sbg1'
+                credential-id: 'ci-ecp'
                 variable: OVH_CONF
             - file:
                 credential-id: 'storage-automation-secret-file'
@@ -314,7 +316,7 @@
             }
             cat > deepsea-pr.properties << EOF
             PUBLISH_DIR=/mnt/logs/artifacts/jenkins/deepsea-pr/${SUITE}/${BUILD_ID}
-            DEEPSEA_REPO=http://ceph-ci.suse.de/artifacts/jenkins/deepsea-pr/${SUITE}/${BUILD_ID}
+            DEEPSEA_REPO=http://10.86.0.120/artifacts/jenkins/deepsea-pr/${SUITE}/${BUILD_ID}
             CEPH_BRANCH=${CEPH_BRANCH}
             SUITE_BRANCH=${SUITE_BRANCH}
             SUITE=${SUITE}

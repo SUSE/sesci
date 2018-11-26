@@ -54,7 +54,10 @@
 
             sesci/docker/deepsea/build.sh sesci/docker/deepsea/$TARGET
 
-            mkdir -p $PUBLISH_DIR
-            cp -rv repo/* $PUBLISH_DIR
-            createrepo --repo deespea_testing $PUBLISH_DIR
+            #mkdir -p $PUBLISH_DIR
+            #cp -rv repo/* $PUBLISH_DIR
+            #createrepo --repo deespea_testing $PUBLISH_DIR
+            createrepo --repo deespea_testing repo
+            rsync -av --rsync-path "mkdir -p $PUBLISH_DIR && rsync" repo/ teuthology@10.86.0.120:$PUBLISH_DIR
+
 
