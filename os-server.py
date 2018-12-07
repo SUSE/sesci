@@ -98,7 +98,7 @@ def set_name(server_id):
                     # print "Can't lock: ", err
                     if lock_timeout > 0:
                             lock_timeout -= lock_wait
-                            print "Process", os.getpid(), "waits", lock_wait, "seconds..."
+                            print("Process", os.getpid(), "waits", lock_wait, "seconds...")
                             time.sleep(lock_wait)
                     else:
                             raise SystemExit('Unable to obtain file lock: %s' % lockfile)
@@ -141,19 +141,19 @@ def provision_host(hostname, identity):
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     timeout = 300 
     wait = 10
-    print "Connecting to host [" + hostname + "]" 
+    print("Connecting to host [" + hostname + "]")
     while True:
         try:
             client.connect(hostname, username=server_spec['username'], key_filename=identity)
-            print "Connected to the host " + hostname
+            print("Connected to the host " + hostname)
             break
         except (paramiko.ssh_exception.NoValidConnectionsError, socket.error) as e:
-            print "Exeption occured: " + str(e)
+            print("Exeption occured: " + str(e))
             if timeout < 0:
-                print "ERROR: Timeout occured"
+                print("ERROR: Timeout occured")
                 raise e
             else:
-                print "Waiting " + str(wait) + " seconds..."
+                print("Waiting " + str(wait) + " seconds...")
                 timeout -= wait
                 time.sleep(wait)
     provision_node(client)
@@ -168,13 +168,13 @@ def provision_node(client):
       'sudo hostname ' + target_fqdn
       ]
     for command in command_list:
-      print "+ " + command
+      print("+ " + command)
       stdin, stdout, stderr = client.exec_command(command)
       while True:
         l = stdout.readline()
         if not l:
           break
-        print ">>> " + l.rstrip()
+        print(">>> " + l.rstrip())
 
 def create_server(image, flavor, key_name):
     target = conn.compute.create_server(
@@ -195,11 +195,11 @@ def create_server(image, flavor, key_name):
         while target.status != 'ACTIVE':
           print("STATUS:%s" % target.status)
           if timeout > 0: 
-            print 'Server [' + target.name + '] is not active. waiting ' + str(wait) + ' seconds...'
+            print('Server [' + target.name + '] is not active. waiting ' + str(wait) + ' seconds...')
             timeout -= wait
             time.sleep(wait)
           else:
-            print "ERROR: Timeout occured, was not possible to make server active"
+            print("ERROR: Timeout occured, was not possible to make server active")
             break
           target=c.get_server(target_id)
 
