@@ -108,7 +108,7 @@
         - credentials-binding:
             - file:
                 #credential-id: 'storage-os-conf'
-                credential-id: 'ci-sbg1'
+                credential-id: 'ci-ecp'
                 variable: OVH_CONF
             - file:
                 credential-id: 'storage-automation-secret-file'

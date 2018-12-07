@@ -12,7 +12,7 @@ echo Docker home: $DHOME
 [[ -d ${DEEPSEADIR} ]] ||
     git clone https://github.com/SUSE/DeepSea.git deepsea
 
-BASEIMAGE=$(grep FROM $TARGETPATH/Dockerfile-base | cut -d ' ' -f 2)
+BASEIMAGE=$(grep FROM $TARGETPATH/Dockerfile-base | grep -v '^\s*#' | cut -d ' ' -f 2)
 
 docker pull $BASEIMAGE
 

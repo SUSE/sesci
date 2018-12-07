@@ -96,6 +96,8 @@ EOF
 teuthology-openstack -v \
     --name ${TEUTH_NAME} \
     --key-filename $SECRET_FILE \
+    --teuthology-git-url ${TEUTH_REPO} \
+    --teuthology-branch ${TEUTH_BRANCH} \
     --suite-repo ${SUITE_REPO} \
     --suite-branch ${SUITE_BRANCH} \
     --ceph-repo ${CEPH_REPO} \
