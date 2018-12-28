@@ -1,5 +1,5 @@
 - job:
-    name: 'deepsea-make-rpm'
+    name: 'pr-suse-deepsea-rpm'
     concurrent: true
     project-type: multijob
     node: storage-compute

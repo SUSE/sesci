@@ -15,7 +15,7 @@
             test-results: true
             cron: 'H/5 * * * *'
     jobs:
-        - 'ds-test-{test}-tmpl'
+        - 'pr-deepsea-{test}-tmpl'
 - builder:
     name: run-lint
     builders:
@@ -37,8 +37,8 @@
             pip install tox
             make test
 - job-template:
-    id: 'ds-test-{test}-tmpl'
-    name: 'deepsea-test-{test}'
+    id: 'pr-deepsea-{test}-tmpl'
+    name: 'pr-suse-deepsea-{test}'
     concurrent: true
     project-type: multijob
     node: storage-compute

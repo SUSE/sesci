@@ -52,7 +52,7 @@
 
 - job-template:
     id: 'teuthology-{stream}'
-    name: '{stream}-teuthology-pytest'
+    name: 'pr-{stream}-teuthology-pytest'
     concurrent: false
     project-type: multijob
     node: storage-compute
