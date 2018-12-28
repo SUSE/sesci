@@ -220,7 +220,7 @@
             allow-empty-results: true
             junit-attachments: true
 - job:
-    name: 'pr-suse-deepsea'
+    name: 'pr-deepsea'
     concurrent: true
     project-type: multijob
     node: storage-compute
