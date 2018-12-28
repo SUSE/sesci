@@ -8,7 +8,7 @@
             #branch: [ 'NONE']
             test-results: false
             cron: 'H/5 * * * *'
-        - 'py27':
+        - 'test':
             target: 'test'
             branch: ['NONE', 'master', 'SES5']
             #branch: ['SES5']
@@ -27,7 +27,7 @@
             pip install tox
             make lint
 - builder:
-    name: run-py27
+    name: run-test
     builders:
         - shell: |
             #!/bin/bash
@@ -38,7 +38,7 @@
             make test
 - job-template:
     id: 'pr-deepsea-{test}-tmpl'
-    name: 'pr-suse-deepsea-{test}'
+    name: 'pr-deepsea-make-{test}'
     concurrent: true
     project-type: multijob
     node: storage-compute

@@ -1,5 +1,5 @@
 - job:
-    name: 'pr-suse-deepsea-rpm'
+    name: 'pr-deepsea-make-rpm'
     concurrent: true
     project-type: multijob
     node: storage-compute
@@ -85,7 +85,7 @@
                   predefined-parameters: |
                     DEEPSEA_TARGET=${ghprbTargetBranch}
                     DEEPSEA_REF=${sha1}
-                    PUBLISH_DIR=/mnt/logs/artifacts/jenkins/deepsea/target/${ghprbTargetBranch}/pr/${ghprbPullId}/${ghprbActualCommit}.${BUILD_ID}
+                    PUBLISH_DIR=/mnt/logs/artifacts/jenkins/deepsea/rpm/${ghprbTargetBranch}/pr/${ghprbPullId}/${ghprbActualCommit}.${BUILD_ID}
     publishers:
         - archive:
             artifacts: "logs/**,*.log,*.yaml,**/junit*.xml"
