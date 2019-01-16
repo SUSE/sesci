@@ -1,0 +1,26 @@
+FROM opensuse-42.3-deepsea-make:latest
+MAINTAINER Kyr Shatskyy <kshatskyy@suse.com>
+
+RUN useradd -m jenkins
+ARG target=test
+RUN  echo "jenkins ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+COPY bashrc /home/jenkins/.bashrc
+COPY deepsea /home/jenkins/DeepSea
+RUN chown -R jenkins: /home/jenkins
+
+USER jenkins
+
+WORKDIR /home/jenkins
+
+RUN echo %_topdir $HOME/rpmbuild | tee $HOME/.rpmmacros
+RUN pwd && ls -la
+RUN cd DeepSea \
+    && sudo zypper --non-interactive install --no-recommends \
+           $(rpmspec --requires -q deepsea.spec.in 2>/dev/null)
+RUN cd DeepSea \
+    && virtualenv v \
+    && . v/bin/activate \
+    && pip install --upgrade pip \
+    && pip install tox \
+    && . v/bin/activate && make $target
+RUN cd DeepSea && mkdir logs && cp junit*.xml logs

@@ -1,0 +1,19 @@
+FROM opensuse/leap:42.3
+MAINTAINER Kyr Shatskyy <kshatskyy@suse.com>
+
+RUN zypper addrepo --refresh https://download.opensuse.org/repositories/filesystems:/ceph:/luminous/openSUSE_Leap_42.3/filesystems:ceph:luminous.repo \
+    && zypper --non-interactive --gpg-auto-import-keys refresh \
+    && zypper --non-interactive update \
+    && zypper --non-interactive install --no-recommends \
+          git-core \
+          jq \
+          make \
+          python-pip \
+          python-tox \
+          python-virtualenv \
+          python-devel \
+          rpm-build createrepo \
+          salt-master salt-minion salt-api \
+          sudo \
+          tar \
+          vim
