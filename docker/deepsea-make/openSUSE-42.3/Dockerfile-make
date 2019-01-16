@@ -21,6 +21,6 @@ RUN cd DeepSea \
     && virtualenv v \
     && . v/bin/activate \
     && pip install --upgrade pip \
-    && pip install tox \
-    && . v/bin/activate && make $target
+    && pip install tox
+RUN cd DeepSea && . v/bin/activate && make $target || true
 RUN cd DeepSea && mkdir logs && cp junit*.xml logs
