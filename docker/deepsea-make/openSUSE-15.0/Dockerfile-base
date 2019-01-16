@@ -4,18 +4,20 @@ MAINTAINER Kyr Shatskyy <kshatskyy@suse.com>
 RUN zypper addrepo --refresh https://download.opensuse.org/repositories/filesystems:/ceph:/mimic/openSUSE_Leap_15.0/filesystems:ceph:mimic.repo \
     && zypper --non-interactive --gpg-auto-import-keys refresh \
     && zypper --non-interactive update \
-    && zypper --non-interactive install --no-recommends \
+    && zypper --non-interactive install \
+        --no-recommends \
           git-core \
           jq \
           make \
+          python-devel \
           python-pip \
+          python-pyOpenSSL \
           python-tox \
           python-virtualenv \
-          python-devel \
+          python3-devel \
           python3-pip \
           python3-tox \
           python3-virtualenv \
-          python3-devel \
           rpm-build \
           salt-master salt-minion salt-api \
           sudo \
