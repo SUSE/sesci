@@ -8,12 +8,16 @@
             #branch: [ 'NONE']
             test-results: false
             cron: 'H/5 * * * *'
+            node: 'storage-compute'
+            nojunit: true
         - 'test':
             target: 'test'
             branch: ['NONE', 'master', 'SES5']
             #branch: ['SES5']
             test-results: true
             cron: 'H/5 * * * *'
+            node: 'storage-deepsea-builder'
+            nojunit: false
     jobs:
         - 'pr-deepsea-{test}-tmpl'
 - builder:
@@ -25,23 +29,37 @@
             . v/bin/activate
             pip install --upgrade pip
             pip install tox
+            cd deepsea
             make lint
 - builder:
     name: run-test
     builders:
         - shell: |
             #!/bin/bash
-            virtualenv --python python2.7 v
-            . v/bin/activate
-            pip install --upgrade pip
-            pip install tox
-            make test
+            case "$ghprbTargetBranch" in
+                "master")
+                    TARGETDIST="openSUSE-15.0"
+                    ;;
+                "SES5")
+                    TARGETDIST="openSUSE-42.3"
+                    ;;
+                "SES4")
+                    TARGETDIST="openSUSE-42.2"
+                    ;;
+                *)
+                    echo "ERROR: Unsupported branch '$DEEPSEA_TARGET'"
+                    exit 1
+            esac
+
+            git clone https://github.com/suse/sesci
+
+            sesci/docker/deepsea-make/build.sh sesci/docker/deepsea-make/$TARGETDIST
 - job-template:
     id: 'pr-deepsea-{test}-tmpl'
     name: 'pr-deepsea-make-{test}'
-    concurrent: true
+    concurrent: false
     project-type: multijob
-    node: storage-compute
+    node: "{node}"
     parameters:
         - string:
             name: TARGET
@@ -50,6 +68,9 @@
         - string:
             name: DEEPSEA_REF
             default: "${{sha1}}"
+        - string:
+            name: DEEPSEA_TARGET
+            default: "${{ghprbTargetBranch}}"
         - string:
             name: DEEPSEA_REPO_URL
             default: https://github.com/suse/deepsea/
@@ -60,6 +81,7 @@
             refspec: '+refs/pull/*:refs/remotes/origin/pr/*'
             branches:
                 - '$DEEPSEA_REF'
+            basedir: 'deepsea'
     properties:
         - github:
             url: 'https://github.com/suse/deepsea/'
@@ -128,7 +150,7 @@
     publishers:
         - archive:
             artifacts: "logs/**,*.log,*.yaml,**/junit*.xml"
-            allow-empty: true
+            allow-empty: "{nojunit}"
         - junit:
             results: '**/junit*.xml'
             allow-empty-results: true
