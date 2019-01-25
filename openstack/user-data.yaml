@@ -1,8 +1,4 @@
 #cloud-config
-#chpasswd:
-#  list: |
-#    root: '********'
-#  expire: False
 runcmd:
   - [ sh, -c, echo "========= ceph run-make-check =========" ]
   - |
