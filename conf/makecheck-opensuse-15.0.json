@@ -18,7 +18,7 @@
     "Ext-Net"
   ],
   "userdata": "openstack/user-data.yaml",
-  "username": "opensuse",
+  "username": "root",
   "vars": {
     "dependencies": [
       "git",
