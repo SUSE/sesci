@@ -56,7 +56,7 @@
 - job:
     id: 'vagrant'
     name: vagrant
-    node: master
+    node: 'storage-compute'
     project-type: multijob
     concurrent: true
     properties:
@@ -79,7 +79,22 @@
         - github
     builders:
         - shell: "git clone https://github.com/suse/sesci sesci"
-        - shell: "python -u sesci/create-ovh-server.py"
+        - shell: |
+            virtualenv v
+            . v/bin/activate
+            pip install -U pip
+            pip install python-openstackclient openstacksdk docopt PyYaml paramiko
+        - shell: |
+            . v/bin/activate
+            STATUS=$PWD/os-server.status
+            OS_CLOUD=sbg python -u sesci/os-server.py -a create -f sesci/conf/$TARGET_IMAGE.yaml -s $STATUS
+        - shell: |
+            addr=$(jq -r .server.ip os-server.status)
+            name=$(jq -r .server.name os-server.status)
+            cat > ${TARGET_FILE} <<EOF
+            TARGET_IP=$addr
+            TARGET_NAME=$name
+            EOF
         - shell: |
             echo GIT_BRANCH=$GIT_BRANCH >> ${TARGET_FILE}
             echo GIT_COMMIT=$GIT_COMMIT >> ${TARGET_FILE}
@@ -106,13 +121,16 @@
                   enable-condition: '"${GIT_BRANCH}" != "origin/master"'
         - system-groovy:
             command: !include-raw: delete-jenkins-node.groovy
-        - shell: "python -u sesci/delete-ovh-server.py"
+        - shell: |
+            . v/bin/activate
+            STATUS=$PWD/os-server.status
+            OS_CLOUD=sbg python -u sesci/os-server.py -a delete -s $STATUS
     wrappers:
         - workspace-cleanup
         - credentials-binding:
-            - file:
-                credential-id: 'storage-os-conf'
-                variable: OVH_CONF
+            #- file:
+            #    credential-id: 'storage-os-conf'
+            #    variable: OVH_CONF
             - file:
                 credential-id: 'storage-automation-secret-file'
                 variable: SECRET_FILE
@@ -133,7 +151,7 @@
             default: vagrant.properties
         - string:
             name: TARGET_FLAVOR
-            default: hg-30-ssd
+            default: b2-30
         - string:
             name: TARGET_IMAGE
             default: 'makecheck-opensuse-42.3-x86_64'
