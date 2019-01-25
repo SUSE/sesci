@@ -16,8 +16,6 @@ import base64
 import openstack
 import traceback
 
-#openstack.enable_logging(debug=True)
-
 doc = """
 Usage:
     os-server --action <action> [options]
@@ -30,9 +28,15 @@ Options:
   -s <status>, --status <status>        path to status file [default: .os_server_status.json]
   -t <target>, --target <target>        overrides target name
   -f <target>, --spec-file <spec-file>  path to a spec file, optional
+  -d, --debug                           debug mode
 """
 
 args = docopt.docopt(doc, argv=sys.argv[1:])
+
+if args.get('--debug'):
+    openstack.enable_logging(debug=True)
+
+
 action = args.get('--action')
 
 if action not in ['create', 'delete']:
@@ -166,8 +170,9 @@ def host_client(hostname, identity):
     """
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    timeout = 300
     wait = 10
+    timeout = 300
+    start_time = time.time()
     print("Connecting to host [" + hostname + "]")
     while True:
         try:
@@ -176,12 +181,11 @@ def host_client(hostname, identity):
             break
         except (paramiko.ssh_exception.NoValidConnectionsError, socket.error) as e:
             print("Exeption occured: " + str(e))
-            if timeout < 0:
+            if timeout < (time.time() - start_time):
                 print("ERROR: Timeout occured")
                 raise e
             else:
                 print("Waiting " + str(wait) + " seconds...")
-                timeout -= wait
                 time.sleep(wait)
     return client
 
@@ -190,6 +194,7 @@ def provision_host(hostname, identity):
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     timeout = 300 
     wait = 10
+    start_time = time.time()
     print("Connecting to host [" + hostname + "]")
     while True:
         try:
@@ -198,12 +203,11 @@ def provision_host(hostname, identity):
             break
         except (paramiko.ssh_exception.NoValidConnectionsError, socket.error) as e:
             print("Exeption occured: " + str(e))
-            if timeout < 0:
+            if timeout < (time.time() - start_time):
                 print("ERROR: Timeout occured")
                 raise e
             else:
                 print("Waiting " + str(wait) + " seconds...")
-                timeout -= wait
                 time.sleep(wait)
     provision_node(client)
 
@@ -291,11 +295,11 @@ def create_server(image, flavor, key_name, user_data=None):
         timeout = 8 * 60
         wait = 10
         target_id = target.id
+        start_time = time.time()
         while target.status != 'ACTIVE':
           print("STATUS:%s" % target.status)
-          if timeout > 0: 
+          if timeout > (time.time() - start_time):
             print('Server [' + target.name + '] is not active. waiting ' + str(wait) + ' seconds...')
-            timeout -= wait
             time.sleep(wait)
           else:
             print("ERROR: Timeout occured, was not possible to make server active")
@@ -314,8 +318,9 @@ def create_server(image, flavor, key_name, user_data=None):
     except:
         print("ERROR: Failed to create node")
         traceback.print_exc()
-        #print("Cleanup...")
-        #c.delete_server(target.id)
+        if not args.get('--debug'):
+            print("Cleanup...")
+            c.delete_server(target.id)
 
 if action in ['provision']:
     with open(status_path, 'r') as f:
