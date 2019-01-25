@@ -6,7 +6,7 @@ copy:
   mode: '0755'
 flavor: b2-30
 image: makecheck-sle-15.1-x86_64
-keyfile: /home/kyr/.ssh/sa
+keyfile: ~/.ssh/sa
 keyname: storage-automation
 name: mkck%02d
 networks:

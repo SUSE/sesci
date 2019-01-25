@@ -69,7 +69,7 @@ if spec_path:
     with open(spec_path, 'r') as f:
         if spec_path.endswith('.yaml') or spec_path.endswith('.yml'):
             server_spec = yaml.load(f)
-        else
+        else:
             server_spec = json.load(f)
         def override_dict(obj, key, env=None, default=None):
             if env and env in os.environ:

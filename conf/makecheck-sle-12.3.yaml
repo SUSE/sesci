@@ -5,7 +5,6 @@ keyname: storage-automation
 name: mkck%02d
 networks:
 - Ext-Net
-userdata: openstack/user-data.yaml
 username: root
 vars:
   dependencies:
