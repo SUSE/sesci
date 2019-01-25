@@ -1,10 +1,17 @@
+copy:
+- from:
+  - snippets/clone-git-repo.sh
+  - snippets/run.cmd
+  into: bin
+  mode: '0755'
 flavor: b2-30
-image: makecheck-opensuse-42.3-x86_64
+image: teuthology-opensuse-15.0-x86_64
 keyfile: ~/.ssh/sa
 keyname: storage-automation
 name: mkck%02d
 networks:
 - Ext-Net
+userdata: openstack/user-data.yaml
 username: root
 vars:
   dependencies:
