@@ -355,7 +355,9 @@ if action in ['create']:
     if 'userdata' in server_spec:
         path = server_spec['userdata']
         if not path.startswith('/'):
-            path = os.path.dirname(__file__) + '/' + path
+            base = os.path.dirname(__file__)
+            if base:
+                path = base + '/' + path
         with open(path, 'r') as f:
             userdata=f.read()
     create_server(image, flavor, keypair.name, userdata)
