@@ -1,0 +1,29 @@
+#cloud-config
+#chpasswd:
+#  list: |
+#    root: '********'
+#  expire: False
+runcmd:
+  - [ sh, -c, echo "========= ceph run-make-check =========" ]
+  - |
+    su - -c 'cat > /tmp/ifcfg' root << EOF
+    BOOTPROTO=dhcp
+    MTU=
+    REMOTE_IPADDR=
+    STARTMODE=auto
+    ETHTOOL_OPTIONS=
+    USERCONTROL=no
+    EOF
+
+  - |
+    su - -c 'cat > /tmp/fix-ifcfg' root << EOF
+    ETH=\$(ip route list | grep "scope link" | cut -f 3 -d ' ')
+    cp /etc/sysconfig/network/ifcfg-\$ETH /etc/sysconfig/network/ifcfg-\$ETH.backup
+    cp /tmp/ifcfg /etc/sysconfig/network/ifcfg-\$ETH
+    ifdown \$ETH
+    ifup \$ETH
+    EOF
+
+  - bash /tmp/fix-ifcfg
+
+final_message: "MAKECHECK $UPTIME"
