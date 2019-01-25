@@ -353,7 +353,10 @@ if action in ['create']:
     print("Keypair: %s" % keypair.name)
     userdata = None
     if 'userdata' in server_spec:
-        with open(server_spec['userdata'], 'r') as f:
+        path = server_spec['userdata']
+        if not path.startswith('/'):
+            path = os.path.dirname(__file__) + '/' + path
+        with open(path, 'r') as f:
             userdata=f.read()
     create_server(image, flavor, keypair.name, userdata)
 
