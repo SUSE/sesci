@@ -48,7 +48,7 @@
             url: 'https://github.com/suse/ceph/'
             display-name: ceph
         - build-discarder:
-            num-to-keep: 9
+            num-to-keep: 100
         - authorization:
             anonymous:
                 - job-read
@@ -144,7 +144,7 @@
     concurrent: true
     properties:
         - build-discarder:
-            num-to-keep: 10
+            num-to-keep: 100
         - authorization:
             anonymous:
                 - job-read
@@ -251,7 +251,7 @@
     concurrent: true
     properties:
         - build-discarder:
-            num-to-keep: 10
+            num-to-keep: 100
         - authorization:
             anonymous:
                 - job-read
