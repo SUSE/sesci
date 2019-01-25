@@ -1,0 +1,37 @@
+{
+  "flavor": "b2-30",
+  "name": "mkck%02d",
+  "image": "opensuse-42-3-jeos-pristine",
+  "username": "opensuse",
+  "userdata": "openstack/user-data.yaml",
+  "keyfile": "~/.ssh/sa",
+  "keyname": "storage-automation",
+  "networks": [
+    "Ext-Net"
+  ],
+  "vars": {
+    "dependencies": [
+      "git",
+      "java",
+      "htop",
+      "ccache"
+    ]
+  },
+  "copy": [
+        {
+            "into": "bin",
+            "from": [
+                "snippets/clone-git-repo.sh",
+                "snippets/run.cmd"
+            ],
+            "chmod": "0755"
+        }
+  ],
+        "exec": [
+                "sudo ulimit -u 10240 2>&1",
+                "clone-git-repo.sh ceph https://github.com/suse/ceph ses5 2>&1",
+                "cd ceph && run.cmd mkck ./run-make-check.sh -DWITH_LTTNG=false -DWITH_BABELTRACE=false",
+                "tail -f ~/mkck.log --pid $(cat ~/mkck.pid)"
+        ]
+}
+

@@ -1,0 +1,31 @@
+{
+  "flavor": "b2-30",
+  "name": "mkck%02d",
+  "image": "makecheck-sle-15.1-x86_64",
+  "username": "opensuse",
+  "userdata": "openstack/user-data.yaml",
+  "keyfile": "/home/kyr/.ssh/sa",
+  "keyname": "storage-automation",
+  "networks": [
+    "Ext-Net"
+  ],
+  "vars": {
+    "dependencies": [
+      "git",
+      "java",
+      "htop",
+      "ccache"
+    ]
+  },
+  "copy": [
+        {
+            "into": "bin",
+            "from": [
+                "snippets/clone-git-repo.sh",
+                "snippets/run.cmd"
+            ],
+            "mode": "0755"
+        }
+  ]
+}
+

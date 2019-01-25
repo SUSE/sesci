@@ -1,0 +1,14 @@
+flavor: b2-30
+image: makecheck-sle-15.1-x86_64
+keyfile: ~/.ssh/sa
+keyname: storage-automation
+name: mkck%02d
+networks:
+- Ext-Net
+userdata: openstack/user-data.yaml
+username: root
+vars:
+  dependencies:
+  - git
+  - java
+  - ccache

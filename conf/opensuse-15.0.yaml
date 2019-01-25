@@ -1,0 +1,14 @@
+flavor: b2-30
+image: opensuse-15-0-jeos-pristine
+keyfile: ~/.ssh/sa
+keyname: storage-automation
+name: mkck%02d
+networks:
+- Ext-Net
+userdata: openstack/user-data.yaml
+username: opensuse
+vars:
+  dependencies:
+  - git
+  - java
+  - ccache

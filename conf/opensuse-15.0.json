@@ -1,0 +1,20 @@
+{
+  "flavor": "b2-30",
+  "name": "mkck%02d",
+  "image": "opensuse-15-0-jeos-pristine",
+  "username": "opensuse",
+  "userdata": "openstack/user-data.yaml",
+  "keyfile": "~/.ssh/sa",
+  "keyname": "storage-automation",
+  "networks": [
+    "Ext-Net"
+  ],
+  "vars": {
+    "dependencies": [
+      "git",
+      "java",
+      "ccache"
+    ]
+  }
+}
+

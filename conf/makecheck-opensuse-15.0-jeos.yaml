@@ -1,0 +1,26 @@
+copy:
+- from:
+  - snippets/clone-git-repo.sh
+  - snippets/run.cmd
+  into: bin
+  mode: '0755'
+exec:
+- ulimit -u 10240 2>&1
+- clone-git-repo.sh ceph https://github.com/suse/ceph ses6 2>&1
+- mkck.sh
+- tail -f ~/mkck.log --pid $(cat ~/mkck.pid)
+flavor: b2-30
+image: opensuse-15-0-jeos-pristine
+keyfile: /home/kyr/.ssh/sa
+keyname: storage-automation
+name: mkck%02d
+networks:
+- Ext-Net
+userdata: openstack/user-data.yaml
+username: opensuse
+vars:
+  dependencies:
+  - git
+  - java
+  - htop
+  - ccache

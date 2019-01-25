@@ -1,0 +1,26 @@
+copy:
+- chmod: '0755'
+  from:
+  - snippets/clone-git-repo.sh
+  into: bin
+exec:
+- sudo ulimit -u 10240 2>&1
+- clone-git-repo.sh ceph https://github.com/suse/ceph ses5 2>&1
+- cd ceph && ./run-make-check.sh -DWITH_LTTNG=false -DWITH_BABELTRACE=false </dev/null
+  >~/mkck.log 2>&1 & echo $! > ~/mkck.pid
+- tail -f ~/mkck.log --pid $(cat ~/mkck.pid)
+flavor: b2-30
+image: makecheck-opensuse-42.3-x86_64
+keyfile: /home/kyr/.ssh/sa
+keyname: storage-automation
+name: mkck%02d
+networks:
+- Ext-Net
+userdata: openstack/user-data.yaml
+username: opensuse
+vars:
+  dependencies:
+  - git
+  - java
+  - htop
+  - ccache

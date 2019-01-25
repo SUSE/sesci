@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # Create ovh server
 import os
+import os.path
 import yaml
 import time
 import paramiko
@@ -10,6 +11,7 @@ import json
 import sys
 import docopt
 import fcntl
+import base64
 
 import openstack
 import traceback
@@ -27,6 +29,7 @@ Options:
   -a <action>, --action <action>        create, provision, delete action
   -s <status>, --status <status>        path to status file [default: .os_server_status.json]
   -t <target>, --target <target>        overrides target name
+  -f <target>, --spec-file <spec-file>  path to a spec file, optional
 """
 
 args = docopt.docopt(doc, argv=sys.argv[1:])
@@ -52,6 +55,7 @@ server_spec = {
     'name':     target_mask,
     'image':    target_image,
     'username': target_user,
+    'userdata': 'openstack/user-data.yaml',
     'keyfile':   secret_file, 
     'keyname': 'storage-automation',
     'networks': ['Ext-Net'],
@@ -59,6 +63,24 @@ server_spec = {
         'dependencies': ['git', 'java', 'ccache'],
     }
 }
+
+spec_path = args.get('--spec-file')
+if spec_path:
+    with open(spec_path, 'r') as f:
+        if spec_path.endswith('.yaml') or spec_path.endswith('.yml'):
+            server_spec = yaml.load(f)
+        else
+            server_spec = json.load(f)
+        def override_dict(obj, key, env=None, default=None):
+            if env and env in os.environ:
+                obj[key] = os.environ.get(env, default)
+            elif default and key not in obj:
+                obj[key] = default
+        override_dict(server_spec, 'keyfile', env='SECRET_FILE')
+        override_dict(server_spec, 'name', default=target_mask)
+        override_dict(server_spec, 'flavor', default=target_flavor)
+
+print(json.dumps(server_spec, indent=2))
 
 status = {
   'server': {
@@ -104,6 +126,7 @@ def set_name(server_id):
                             raise SystemExit('Unable to obtain file lock: %s' % lockfile)
     
 def set_server_name(server_id):
+    print("Update name for server %s" % server_id)
     server_list = conn.compute.servers()
     existing_servers = [i.name for i in server_list]
     for n in range(99):
@@ -112,7 +135,10 @@ def set_server_name(server_id):
         except:
           target = target_mask
         if not target in existing_servers:
-            conn.compute.update_server(server_id, name=target)
+            print("Setting server name to %s" % target)
+            #conn.compute.update_server(server_id, name=target)
+            #s = conn.update_server(server_id, name=target)
+            c.update_server(server_id, name=target)
             return target
     print("ERROR: Can't allocate name")
     print("TODO: Add wait loop for name allocation")
@@ -120,7 +146,6 @@ def set_server_name(server_id):
 def provision_server():
     ip = status['server']['ip']
     provision_host(ip, secret_file)
-
 
 if action in ['provision']:
     provision_server()
@@ -135,6 +160,30 @@ def delete_server(target_id):
     except Exception as e:
         print("WARNING: %s" % e)
     
+def host_client(hostname, identity):
+    """
+        returns ssh client object
+    """
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    timeout = 300
+    wait = 10
+    print("Connecting to host [" + hostname + "]")
+    while True:
+        try:
+            client.connect(hostname, username=server_spec['username'], key_filename=identity)
+            print("Connected to the host " + hostname)
+            break
+        except (paramiko.ssh_exception.NoValidConnectionsError, socket.error) as e:
+            print("Exeption occured: " + str(e))
+            if timeout < 0:
+                print("ERROR: Timeout occured")
+                raise e
+            else:
+                print("Waiting " + str(wait) + " seconds...")
+                timeout -= wait
+                time.sleep(wait)
+    return client
 
 def provision_host(hostname, identity):
     client = paramiko.SSHClient()
@@ -158,15 +207,7 @@ def provision_host(hostname, identity):
                 time.sleep(wait)
     provision_node(client)
 
-def provision_node(client):
-    target_fqdn = status['server']['name'] + ".suse.de"
-    target_addr = status['server']['ip']
-    command_list = [
-      'sudo zypper --no-gpg-checks ref 2>&1',
-      'sudo zypper install -y %s 2>&1' % ' '.join(server_spec['vars']['dependencies']),
-      'echo "' + target_addr + '\t' + target_fqdn + '" | sudo tee -a /etc/hosts',
-      'sudo hostname ' + target_fqdn
-      ]
+def client_run(client, command_list):
     for command in command_list:
       print("+ " + command)
       stdin, stdout, stderr = client.exec_command(command)
@@ -176,19 +217,71 @@ def provision_node(client):
           break
         print(">>> " + l.rstrip())
 
-def create_server(image, flavor, key_name):
-    target = conn.compute.create_server(
+def host_run(host, command_list):
+    cli = host_client(host, secret_file)
+    client_run(cli, command_list)
+
+def provision_node(client):
+    target_fqdn = status['server']['name'] + ".suse.de"
+    target_addr = status['server']['ip']
+    command_list = [
+      'sudo zypper --no-gpg-checks ref 2>&1',
+      'sudo zypper install -y %s 2>&1' % ' '.join(server_spec['vars']['dependencies']),
+      'echo "' + target_addr + '\t' + target_fqdn + '" | sudo tee -a /etc/hosts',
+      'sudo hostname ' + target_fqdn,
+      'cat /etc/os-release',
+      ]
+    if 'copy' in server_spec:
+        print("Copying file to host...")
+        copy_files(client, server_spec['copy'])
+    client_run(client, command_list)
+    if 'exec' in server_spec:
+        client_run(client, server_spec['exec'])
+
+def copy_files(client, copy_spec):
+    if copy_spec:
+        with client.open_sftp() as sftp:
+            for i in copy_spec:
+                for path in i['from']:
+                    print('Upload file %s' % path)
+                    name = os.path.basename(path)
+                    dest = i['into'].rstrip('/') + '/' + name
+                    sftp.put(path, dest)
+                    for x in ['mode', 'chmod']:
+                        if x in i:
+                            sftp.chmod(dest, int(i[x], 8))
+
+def create_server(image, flavor, key_name, user_data=None):
+    print("Creating target using flavor %s" % flavor)
+    print("Image=%s" % image.name)
+    print("Data:\n%s" % user_data)
+    #if user_data:
+    #    user_data=base64.b64encode(user_data.encode('utf-8')).decode('utf-8')
+    #target = conn.compute.create_server(
+    #    name=status['server']['name'],
+    #    image_id=image.id,
+    #    flavor_id=flavor.id,
+    #    key_name=key_name,
+    #    user_data=user_data,
+    #)
+    target = conn.create_server(
         name=status['server']['name'],
-        image_id=image.id,
-        flavor_id=flavor.id,
+        image=image.id,
+        flavor=flavor.id,
         key_name=key_name,
+        userdata=user_data,
     )
     print("Created target: %s" % target.id)
     update_server_status(id=target.id)
     print(target)
-    try:
-        set_name(target.id)
+    # for some big nodes sometimes rename does not happen
+    # and some pause is required for doing this
+    grace_wait = 3
+    print("Graceful wait %s sec before rename..." % grace_wait)
+    time.sleep(grace_wait)
+    set_name(target.id)
 
+    try:
         timeout = 8 * 60
         wait = 10
         target_id = target.id
@@ -215,8 +308,18 @@ def create_server(image, flavor, key_name):
     except:
         print("ERROR: Failed to create node")
         traceback.print_exc()
-        print("Cleanup...")
-        c.delete_server(target.id)
+        #print("Cleanup...")
+        #c.delete_server(target.id)
+
+if action in ['provision']:
+    with open(status_path, 'r') as f:
+        status = json.load(f)
+        print(status)
+    target_id = status['server']['id']
+    target_ip = status['server']['ip']
+    print("Provisioning target %s" % status['server']['name'])
+    provision_host(target_ip, secret_file)
+    exit(0)
 
 if action in ['delete']:
     with open(status_path, 'r') as f:
@@ -230,8 +333,12 @@ if action in ['create']:
     server_list = c.servers()
     print("SERVERS: %s" % ", ".join([i.name for i in server_list]))
 
-    image  = next(x for x in conn.image.images()
-                    if x.name==server_spec['image'])
+    print("Looking up image %s... " % server_spec['image'],)
+    image  = next((x for x in conn.image.images()
+                    if x.name==server_spec['image']), None)
+    if not image:
+        raise Exception("Can't find image %s" % server_spec['image'])
+    print("found %s" % image.id)
     flavor = next(x for x in c.flavors()
                     if x.name==server_spec['flavor'])
     flavors = sorted(i.name for i in c.flavors())
@@ -244,6 +351,9 @@ if action in ['create']:
     print("Image:   %s" % image.name)
     print("Flavor:  %s" % flavor.name)
     print("Keypair: %s" % keypair.name)
-    create_server(image, flavor, keypair.name)
-
+    userdata = None
+    if 'userdata' in server_spec:
+        with open(server_spec['userdata'], 'r') as f:
+            userdata=f.read()
+    create_server(image, flavor, keypair.name, userdata)
 
