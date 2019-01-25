@@ -243,6 +243,12 @@ def copy_files(client, copy_spec):
         with client.open_sftp() as sftp:
             for i in copy_spec:
                 for path in i['from']:
+                    if not path.startswith('/'):
+                        if not os.path.isfile(path):
+                            base = os.path.dirname(__file__)
+                            if base:
+                                path = base + '/' + path
+                    path = os.path.abspath(path)
                     print('Upload file %s' % path)
                     name = os.path.basename(path)
                     dest = i['into'].rstrip('/') + '/' + name
