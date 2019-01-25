@@ -1,14 +1,24 @@
 {
+  "copy": [
+    {
+      "from": [
+        "snippets/clone-git-repo.sh",
+        "snippets/run.cmd"
+      ],
+      "into": "bin",
+      "mode": "0755"
+    }
+  ],
   "flavor": "b2-30",
-  "name": "mkck%02d",
   "image": "makecheck-sle-15.1-x86_64",
-  "username": "opensuse",
-  "userdata": "openstack/user-data.yaml",
-  "keyfile": "/home/kyr/.ssh/sa",
+  "keyfile": "~/.ssh/sa",
   "keyname": "storage-automation",
+  "name": "mkck%02d",
   "networks": [
     "Ext-Net"
   ],
+  "userdata": "openstack/user-data.yaml",
+  "username": "opensuse",
   "vars": {
     "dependencies": [
       "git",
@@ -16,16 +26,5 @@
       "htop",
       "ccache"
     ]
-  },
-  "copy": [
-        {
-            "into": "bin",
-            "from": [
-                "snippets/clone-git-repo.sh",
-                "snippets/run.cmd"
-            ],
-            "mode": "0755"
-        }
-  ]
+  }
 }
-

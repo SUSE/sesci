@@ -11,7 +11,7 @@ exec:
 - tail -f ~/mkck.log --pid $(cat ~/mkck.pid)
 flavor: b2-30
 image: opensuse-15-0-jeos-pristine
-keyfile: /home/kyr/.ssh/sa
+keyfile: ~/.ssh/sa
 keyname: storage-automation
 name: mkck%02d
 networks:

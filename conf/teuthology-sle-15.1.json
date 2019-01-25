@@ -1,14 +1,14 @@
 {
   "flavor": "s1-2",
-  "name": "mkck%02d",
   "image": "teuthology-sle-15.1-x86_64",
-  "username": "root",
-  "userdata": "openstack/user-data.yaml",
   "keyfile": "~/.ssh/sa",
   "keyname": "storage-automation",
+  "name": "mkck%02d",
   "networks": [
     "Ext-Net"
   ],
+  "userdata": "openstack/user-data.yaml",
+  "username": "root",
   "vars": {
     "dependencies": [
       "git",
@@ -17,4 +17,3 @@
     ]
   }
 }
-

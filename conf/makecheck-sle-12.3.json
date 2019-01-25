@@ -1,14 +1,13 @@
 {
   "flavor": "b2-30",
-  "name": "mkck%02d",
   "image": "makecheck-sle-12.3-x86_64",
-  "username": "root",
-  "userdata": "openstack/user-data.yaml",
   "keyfile": "~/.ssh/sa",
   "keyname": "storage-automation",
+  "name": "mkck%02d",
   "networks": [
     "Ext-Net"
   ],
+  "username": "root",
   "vars": {
     "dependencies": [
       "git",
@@ -17,4 +16,3 @@
     ]
   }
 }
-
