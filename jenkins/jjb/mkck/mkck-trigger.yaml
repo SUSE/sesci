@@ -2,7 +2,7 @@
     name: 'mkck-trigger'
     concurrent: true
     project-type: matrix
-    node: master
+    node: storage-compute
     axes:
         - axis:
             name: DIST
@@ -62,7 +62,8 @@
             #admin-list:
             #white-list:
             org-list: ['suse', 'SUSE']
-            cron: 'H/5 * * * *'
+            #cron: 'H/5 * * * *'
+            cron: 'H/2 * * * *'
             #build-desc-template: "Ceph Pull Request"
             trigger-phrase: 'ok to test'
             #only-trigger-phrase: false
@@ -104,11 +105,21 @@
             leap_ses4="leap42_2"
             leap_ses3="leap42_1"
             leap_master="leap42_3"
+            conf_sles_ses6="makecheck-sle-15.1"
+            conf_sles_ses5="makecheck-sle-12.3"
+            conf_sles_ses4="makecheck-sle-12.2"
+            conf_sles_master="makecheck-sle-15.1"
+            conf_leap_ses6="makecheck-opensuse-15.0"
+            conf_leap_ses5="makecheck-opensuse-42.3"
+            conf_leap_ses4="makecheck-opensuse-42.2"
+            conf_leap_master="makecheck-opensuse-15.0"
 
             eval "export dst=\$${DIST}_${tgt}"
+            eval "export cfg=\$conf_${DIST}_${tgt}"
 
             echo TARGET_IMAGE=${!dst}   > target.properties
             echo DIST=${dst}           >> target.properties
+            echo CONF=${cfg}           >> target.properties
             cat target.properties
 
         - inject:
@@ -121,12 +132,14 @@
                   CEPH_REPO_URL=https://github.com/suse/ceph.git
                   CEPH_BRANCH=${ghprbTargetBranch}
                   CEPH_REF=${sha1}
+                  PR=${ghprbPullId}
                   DIST=$DIST
+                  CONF=$CONF
 
               block: true
 - job:
     name: mkck
-    node: master
+    node: storage-compute
     project-type: multijob
     concurrent: true
     properties:
@@ -137,9 +150,24 @@
                 - job-read
                 - job-status
     builders:
-        - shell: "git clone https://github.com/suse/sesci ."
-        - shell: "python -u create-ovh-server.py"
-        - shell: "cat ${TARGET_FILE}"
+        - shell: "git clone https://github.com/suse/sesci"
+        - shell: |
+            virtualenv v
+            . v/bin/activate
+            pip install -U pip
+            pip install python-openstackclient openstacksdk docopt PyYaml paramiko
+        - shell: |
+            . v/bin/activate
+            STATUS=$PWD/mkck.status
+            cd sesci && OS_CLOUD=sbg python -u os-server.py -a create -f conf/$CONF.yaml -s $STATUS
+        - shell: |
+            addr=$(jq -r .server.ip mkck.status) 
+            name=$(jq -r .server.name mkck.status) 
+            cat > ${TARGET_FILE} <<EOF
+            TARGET_IP=$addr
+            TARGET_NAME=$name
+            EOF
+
         - inject:
             properties-file: ${TARGET_FILE}
         - system-groovy:
@@ -154,28 +182,32 @@
                   property-file: '${TARGET_FILE}'
         - system-groovy:
             command: !include-raw: delete-jenkins-node.groovy
-        - shell: "python -u delete-ovh-server.py"
         - copyartifact:
             project: mkck-run
             filter: 'build/**, src/**/*.log, src/**/*.trs'
             optional: true
             which-build: multijob-build
         - shell: |
+            . v/bin/activate
+            STATUS=$PWD/mkck.status
+            cd sesci && OS_CLOUD=sbg python -u os-server.py -a delete -s $STATUS
+        - shell: |
             case $CEPH_BRANCH in
             ses3|ses4|jewel)
-                python convert-trs-to-junit.py src res
+                python sesci/convert-trs-to-junit.py src res
                 ;;
             *)
-                python convert-ctest-to-junit.py
+                python sesci/convert-ctest-to-junit.py
                 ;;
             esac
 
     wrappers:
         - workspace-cleanup
+        - build-name: { name: '#$BUILD_NUMBER PR$PR $DIST $CEPH_BRANCH' }
         - credentials-binding:
-            - file:
-                credential-id: 'storage-os-conf'
-                variable: OVH_CONF
+            #- file:
+            #    credential-id: 'storage-os-conf'
+            #    variable: OVH_CONF
             - file:
                 credential-id: 'storage-automation-secret-file'
                 variable: SECRET_FILE
@@ -188,6 +220,10 @@
     parameters:
         - string:
             name: DIST
+        - string:
+            name: PR
+        - string:
+            name: CONF
         - string:
             name: CEPH_REF
         - string:
