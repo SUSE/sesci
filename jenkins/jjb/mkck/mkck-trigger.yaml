@@ -260,14 +260,17 @@
             script: 'binding.getVariables().get("TARGET_NAME")'
     wrappers:
         - workspace-cleanup
+        - timestamps
         - timeout:
             timeout: 240
+        - build-name: { name:  '#$BUILD_NUMBER PR#$PR $DIST $CEPH_BRANCH' }
     scm:
         - git:
             url: '$CEPH_REPO_URL'
             refspec: '+refs/pull/*:refs/remotes/origin/pr/*'
             branches:
                 - '$CEPH_REF'
+            timeout: 15
     builders:
         - shell: |
             echo $(hostname -i) $(hostname -f)
