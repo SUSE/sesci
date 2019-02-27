@@ -4,6 +4,10 @@ copy:
   - snippets/run.cmd
   into: bin
   mode: '0755'
+exec:
+- sudo zypper --non-interactive --gpg-auto-import-keys addrepo https://download.opensuse.org/repositories/home:/jbrielmaier/openSUSE_Leap_15.0/ jbrielmaier
+- sudo zypper --non-interactive --gpg-auto-import-keys ref
+- sudo zypper --non-interactive --gpg-auto-import-keys in --no-recommends rabbitmq-c rabbitmq-c-devel
 flavor: b2-30
 image: makecheck-opensuse-15.0-x86_64
 keyfile: ~/.ssh/sa
