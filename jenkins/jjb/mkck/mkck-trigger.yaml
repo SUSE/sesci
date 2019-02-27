@@ -181,7 +181,8 @@
             name: DESTROY_ENVIRONMENT
             default: true
         - string:
-            name: sha1
+            name: PR
+            default: '${{ghprbPullId}}'
         - string:
             name: leap42_1
             default: 'makecheck-opensuse-42.1-x86_64'
@@ -265,7 +266,6 @@
             export tgt=${{ghprbTargetBranch:-'master'}}
             export CEPH_BRANCH=${{ghprbTargetBranch}}
             export CEPH_REF=${{sha1}}
-            export PR=${{ghprbPullId}}
 
             sles_ses6="sle15"
             sles_ses5="sle12_sp3"
