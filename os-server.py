@@ -211,7 +211,7 @@ def provision_host(hostname, identity):
                 time.sleep(wait)
     provision_node(client)
 
-def client_run(client, command_list):
+def client_run(client, command_list, fail_on_error=True):
     for command in command_list:
       print("+ " + command)
       stdin, stdout, stderr = client.exec_command(command)
@@ -220,6 +220,14 @@ def client_run(client, command_list):
         if not l:
           break
         print(">>> " + l.rstrip())
+      exit_status = stdout.channel.recv_exit_status()
+      if exit_status:
+        print("ERROR: %s returned from command: %s", (exit_status, command))
+        if fail_on_error:
+            raise Exception(
+                "Failed command [%s] failed with exit code %s" %
+                    (command, exit_status))
+
 
 def host_run(host, command_list):
     cli = host_client(host, secret_file)
