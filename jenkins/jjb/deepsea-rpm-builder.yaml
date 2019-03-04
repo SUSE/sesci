@@ -18,6 +18,7 @@
                 - job-discover
     wrappers:
         - workspace-cleanup
+        - build-name: { name: '#${BUILD_NUMBER} ${DEEPSEA_REF}' }
     parameters:
         - string:
             name: DEEPSEA_REPO_URL
@@ -60,4 +61,19 @@
             createrepo --repo deespea_testing repo
             rsync -av --rsync-path "mkdir -p $PUBLISH_DIR && rsync" repo/ teuthology@10.86.0.120:$PUBLISH_DIR
 
+
+- job:
+    id: 'ds-rpm-builder-cleanup'
+    name: 'deepsea-teuthology-rpm-builder-cleanup'
+    node: 'deepsea-teuthology-rpm-builder'
+    concurrent: false
+    properties:
+        - build-discarder:
+            num-to-keep: 3
+    triggers:
+        - timed: '45 4 * * 7'
+    builders:
+        - shell: |
+            #!/bin/bash -ex
+            docker system prune -f
 
