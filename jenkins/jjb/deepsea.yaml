@@ -299,11 +299,11 @@
             PRTGT_BRANCH=${ghprbTargetBranch:-"ses5"}
             if [[ "$PRTGT_BRANCH" == "master" ]] ; then
                 CEPH_BRANCH="ses6"
-                SUITE_BRANCH="ses6"
+                SUITE_BRANCH="ses6-deepsea-pr"
                 SUITE="suse:tier1"
             else
                 CEPH_BRANCH="${PRTGT_BRANCH,,}"
-                SUITE_BRANCH="${PRTGT_BRANCH,,}"
+                SUITE_BRANCH="${PRTGT_BRANCH,,}-deepsea-pr"
                 SUITE="suse:tier1"
             fi
 
