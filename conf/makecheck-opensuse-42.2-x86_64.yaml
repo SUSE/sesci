@@ -1,0 +1,15 @@
+flavor: b2-30
+image: makecheck-opensuse-42.2-x86_64
+keyfile: ~/.ssh/sa
+keyname: storage-automation
+name: mkck%02d
+networks:
+- Ext-Net
+username: root
+userdata: openstack/user-data.yaml
+vars:
+  dependencies:
+  - git
+  - java
+  - htop
+  - ccache
