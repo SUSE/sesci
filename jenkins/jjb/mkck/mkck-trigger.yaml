@@ -10,6 +10,60 @@
     jobs:
         - 'mkck-{dist}'
 
+- project:
+    name: run-make-check-nightly
+    dist_ceph:
+        - 'leap-ses4':
+            dist_name: 'leap'
+            dist_ver: '42.2'
+            disabled: false
+            target: b2-60
+            branch: 'ses4'
+            ref: 'ses4'
+            repo: 'https://github.com/suse/ceph.git'
+        - 'leap-ses5':
+            dist_name: 'leap'
+            dist_ver: '42.3'
+            disabled: false
+            target: b2-60
+            branch: 'ses5'
+            ref: 'ses5'
+            repo: 'https://github.com/suse/ceph.git'
+        - 'leap-ses6':
+            dist_name: 'leap'
+            dist_ver: '15.0'
+            disabled: false
+            target: b2-60
+            branch: 'ses6'
+            ref: 'ses6'
+            repo: 'https://github.com/suse/ceph.git'
+        - 'leap-ceph':
+            dist_name: 'leap'
+            dist_ver: '15.0'
+            disabled: false
+            target: b2-60
+            branch: 'master'
+            ref: 'master'
+            repo: 'https://github.com/ceph/ceph.git'
+        - 'sles-ses5':
+            dist_name: 'sles'
+            dist_ver: '12.3'
+            disabled: false
+            target: b2-60
+            branch: 'ses5'
+            ref: 'ses5'
+            repo: 'https://github.com/suse/ceph.git'
+        - 'sles-ses6':
+            dist_name: 'sles'
+            dist_ver: '15.1'
+            disabled: false
+            target: b2-60
+            branch: 'ses6'
+            ref: 'ses6'
+            repo: 'https://github.com/suse/ceph.git'
+    jobs:
+        - 'mkck-dist-branch'
+
 - job:
     name: 'mkck-trigger'
     concurrent: true
@@ -493,7 +547,7 @@
         - timestamps
         - timeout:
             timeout: 240
-        - build-name: { name: '#$BUILD_NUMBER PR#$PR $DIST $CEPH_BRANCH' }
+        - build-name: { name: '#$BUILD_NUMBER $DIST $CEPH_BRANCH $PR' }
     scm:
         - git:
             url: '$CEPH_REPO_URL'
@@ -551,5 +605,187 @@
             name: TARGET_NAME
         - string:
             name: DIST
+        - string:
+            name: PR
 
 
+- job-template:
+    id: 'mkck-dist-branch'
+    name: 'mkck-{dist_ceph}'
+    concurrent: true
+    disabled: '{obj:disabled}'
+    project-type: multijob
+    node: storage-compute
+    parameters:
+        - string:
+            name: TARGET_FLAVOR
+            default: b2-60
+            description: "OVH flavor"
+        - string:
+            name: TARGET_FILE
+            default: 'mkck_{dist_ceph}.properties'
+        - string:
+            name: DIST
+            default: '{dist_name}'
+        - string:
+            name: CEPH_REF
+            default: '{ref}'
+        - string:
+            name: CEPH_REPO_URL
+            default: '{repo}'
+        - string:
+            name: CEPH_BRANCH
+            default: '{branch}'
+        - bool:
+            name: DESTROY_ENVIRONMENT
+            default: true
+        - string:
+            name: leap42_1
+            default: 'makecheck-opensuse-42.1-x86_64'
+        - string:
+            name: leap42_2
+            default: 'makecheck-opensuse-42.2-x86_64'
+        - string:
+            name: leap42_3
+            default: 'makecheck-opensuse-42.3-x86_64'
+        - string:
+            name: leap15_0
+            default: 'makecheck-opensuse-15.0-x86_64'
+        - string:
+            name: leap15_1
+            default: 'makecheck-opensuse-15.1-x86_64'
+        - string:
+            name: sle15_sp1
+            default: 'makecheck-sle-15.1-x86_64'
+        - string:
+            name: sle15
+            default: 'makecheck-sle-15.0-x86_64'
+        - string:
+            name: sle12_sp1
+            default: 'makecheck-sle-12.1-x86_64'
+        - string:
+            name: sle12_sp2
+            default: 'makecheck-sle-12.2-x86_64'
+        - string:
+            name: sle12_sp3
+            default: 'makecheck-sle-12.3-x86_64'
+    properties:
+        - github:
+            url: 'https://github.com/suse/ceph/'
+            display-name: ceph
+        - build-discarder:
+            num-to-keep: 100
+        - authorization:
+            anonymous:
+                - job-read
+                - job-status
+                - job-discover
+    wrappers:
+        - workspace-cleanup
+        - ansicolor
+    builders:
+        - shell: |
+            #!/bin/bash
+            #export tgt=${{ghprbTargetBranch:-'master'}}
+            #export CEPH_BRANCH=${{ghprbTargetBranch}}
+            #export CEPH_REF=${{sha1}}
+            export tgt=$CEPH_BRANCH
+
+            sles_ses6="sle15"
+            sles_ses5="sle12_sp3"
+            sles_ses4="sle12_sp2"
+            sles_ses3="sle12_sp1"
+            sles_master="sle12_sp3"
+            leap_ses6="leap15_0"
+            leap_ses5="leap42_3"
+            leap_ses4="leap42_2"
+            leap_ses3="leap42_1"
+            leap_master="leap42_3"
+            conf_sles_ses6="makecheck-sle-15.1"
+            conf_sles_ses5="makecheck-sle-12.3"
+            conf_sles_ses4="makecheck-sle-12.2"
+            conf_sles_master="makecheck-sle-15.1"
+            conf_leap_ses6="makecheck-opensuse-15.0"
+            conf_leap_ses5="makecheck-opensuse-42.3"
+            conf_leap_ses4="makecheck-opensuse-42.2"
+            conf_leap_master="makecheck-opensuse-15.0"
+
+            eval "export dst=\$${{DIST}}_${{tgt}}"
+            eval "export cfg=\$conf_${{DIST}}_${{tgt}}"
+
+            echo TARGET_IMAGE=${{!dst}}   > target.properties
+            echo TARGET_MASK=$JOB_NAME-$BUILD_NUMBER \
+                                         >> target.properties
+            echo DIST=${{dst}}           >> target.properties
+            echo CONF=${{cfg}}           >> target.properties
+            echo PR=PR#${{PR}}              >> target.properties
+            echo CEPH_REF=${{CEPH_REF}}           >> target.properties
+            echo CEPH_BRANCH=${{CEPH_BRANCH}}     >> target.properties
+            echo CEPH_REPO_URL=${{CEPH_REPO_URL}} >> target.properties
+            cat target.properties
+
+        - inject:
+            properties-file: 'target.properties'
+        - shell: "git clone https://github.com/suse/sesci"
+        - shell: |
+            virtualenv v
+            . v/bin/activate
+            pip install -U pip
+            pip install python-openstackclient openstacksdk docopt PyYaml paramiko
+        - shell: |
+            . v/bin/activate
+            STATUS=$PWD/mkck.status
+            cd sesci && OS_CLOUD=sbg python -u os-server.py -a create -f conf/$CONF.yaml -s $STATUS
+        - shell: |
+            addr=$(jq -r .server.ip mkck.status)
+            name=$(jq -r .server.name mkck.status)
+            cat > $TARGET_FILE <<EOF
+            TARGET_IP=$addr
+            TARGET_NAME=$name
+            EOF
+
+        - inject:
+            properties-file: $TARGET_FILE
+        - system-groovy:
+            command: !include-raw-escape: create-jenkins-node.groovy
+        - multijob:
+            name: Ceph run-make-check
+            condition: ALWAYS
+            projects:
+                - name: mkck-run
+                  current-parameters: true
+                  abort-all-job: true
+                  property-file: '${{TARGET_FILE}}'
+        - system-groovy:
+            command: !include-raw-escape: delete-jenkins-node.groovy
+        - copyartifact:
+            project: mkck-run
+            filter: 'build/**, src/**/*.log, src/**/*.trs'
+            optional: true
+            which-build: multijob-build
+        - shell: |
+            . v/bin/activate
+            STATUS=$PWD/mkck.status
+            cd sesci && OS_CLOUD=sbg python -u os-server.py -a delete -s $STATUS
+        - shell: |
+            case $CEPH_BRANCH in
+            ses3|ses4|jewel)
+                python sesci/convert-trs-to-junit.py src res
+                ;;
+            *)
+                python sesci/convert-ctest-to-junit.py
+                ;;
+            esac
+
+    wrappers:
+        - workspace-cleanup
+        - build-name: { name: '#$BUILD_NUMBER $DIST $CEPH_BRANCH' }
+        - credentials-binding:
+            - file:
+                credential-id: 'storage-automation-secret-file'
+                variable: SECRET_FILE
+    publishers:
+        - junit:
+            results: 'res/make-check.xml'
+            allow-empty-results: true
+            junit-attachments: true
