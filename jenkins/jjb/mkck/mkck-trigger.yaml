@@ -37,6 +37,14 @@
             branch: 'ses6'
             ref: 'ses6'
             repo: 'https://github.com/suse/ceph.git'
+        - 'tumbleweed-ceph':
+            dist_name: 'tumbleweed'
+            dist_ver: 'xxxx'
+            disabled: false
+            target: b2-60
+            branch: 'master'
+            ref: 'master'
+            repo: 'https://github.com/ceph/ceph.git'
         - 'leap-ceph':
             dist_name: 'leap'
             dist_ver: '15.0'
@@ -45,6 +53,14 @@
             branch: 'master'
             ref: 'master'
             repo: 'https://github.com/ceph/ceph.git'
+        - 'sles-ses4':
+            dist_name: 'sles'
+            dist_ver: '12.2'
+            disabled: false
+            target: b2-60
+            branch: 'ses4'
+            ref: 'ses4'
+            repo: 'https://github.com/suse/ceph.git'
         - 'sles-ses5':
             dist_name: 'sles'
             dist_ver: '12.3'
@@ -701,6 +717,7 @@
             leap_ses4="leap42_2"
             leap_ses3="leap42_1"
             leap_master="leap42_3"
+            tumbleweed_master="tumbleweed"
             conf_sles_ses6="makecheck-sle-15.1"
             conf_sles_ses5="makecheck-sle-12.3"
             conf_sles_ses4="makecheck-sle-12.2"
@@ -709,6 +726,7 @@
             conf_leap_ses5="makecheck-opensuse-42.3"
             conf_leap_ses4="makecheck-opensuse-42.2"
             conf_leap_master="makecheck-opensuse-15.0"
+            conf_tumbleweed_master="makecheck-opensuse-tumbleweed"
 
             eval "export dst=\$${{DIST}}_${{tgt}}"
             eval "export cfg=\$conf_${{DIST}}_${{tgt}}"
