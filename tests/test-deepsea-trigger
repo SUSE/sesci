@@ -1,0 +1,56 @@
+#!/bin/bash
+export ROOT=$(cd $(dirname $BASH_SOURCE)/..; echo $PWD)
+source $ROOT/snippets/deepsea-trigger.bash
+
+function check_parse_comment() {
+    local case=$1
+    local message=$2
+    shift 2
+    parse_comment "$message"
+    while true ; do
+        [[ $@ ]] || { break ; }
+        eval "v=\$$1"
+        echo -n "Checking value for $1=\"$v\":"
+        [[ "$v" == "$2" ]] && {
+            echo -e " $v == $2 - \033[0;32mPASSED\033[0m"
+        } || {
+            echo -e " $v <> $2 - \033[0;31mFAILED\033[0m"
+            echo -e "\033[0;32mFAILED: test $case\033[0m"
+            return 1
+        }
+        shift 2
+    done
+    echo -e "\033[0;32mPASSED: test $case\033[0m"
+    return 0
+}
+
+function test_parse_comment() {
+    export SUITE=""
+    x="  @susebot  run teuthology  with suite:tier0"
+    check_parse_comment "test1" "$x" SUITE "suite:tier0"
+    check_parse_comment "test2" "
+        @susebot  run teuthology suite:test1
+    " SUITE "suite:test1"
+    SUITE=default check_parse_comment "test_default_suite" "
+        @susebot  run teuthology
+    " SUITE "default"
+    check_parse_comment "test_on_site_1" "
+        @susebot  run teuthology  on ovh
+    " SITE "ovh"
+    check_parse_comment "test_on_site_2" "
+        @susebot  run teuthology  on ovh
+    " SITE "ovh"
+    SITE=unset check_parse_comment "test_in_site_should_fail" \
+        "@susebot  run teuthology in ovh" SITE "unset"
+    check_parse_comment "test_run_teuthology" \
+        "@susebot run teuthology"
+    SUITE=unset check_parse_comment "test_multiline" \
+        "this is multi line example 
+	   @susebot run teuthology suite:name
+	   ^ this should trigger the build
+	   " SUITE "unset"
+    check_parse_comment minimal '@susebot run teuthology'
+}
+
+test_parse_comment
+

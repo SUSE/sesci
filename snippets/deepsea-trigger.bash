@@ -39,6 +39,7 @@ function parse_comment() {
         echo "Comment: $comment" > /dev/stderr
         echo "Does not match the regex: $x" > /dev/stderr
     fi
+    return 0
 }
 
 ### END OF FILE snippets/deepsea-trigger.bash ###
