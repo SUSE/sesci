@@ -294,33 +294,11 @@
         - shell: |
             mkdir -p logs
             touch logs/report.txt
-        - shell: |
-            #!/bin/bash -x
-            PRTGT_BRANCH=${ghprbTargetBranch:-"ses5"}
-            if [[ "$PRTGT_BRANCH" == "master" ]] ; then
-                CEPH_BRANCH="ses6"
-                SUITE_BRANCH="ses6-deepsea-pr"
-                SUITE="suse:tier1"
-            else
-                CEPH_BRANCH="${PRTGT_BRANCH,,}"
-                SUITE_BRANCH="${PRTGT_BRANCH,,}-deepsea-pr"
-                SUITE="suse:tier1"
-            fi
-
-            x="^\s*@susebot\s+run\s+teuthology\s+((with|for)\s+)?(suite\s+)?(\S+)\$"
-            [[ $ghprbCommentBody =~ $x ]] && {
-                SUITE=${BASH_REMATCH[4]}
-            } || {
-                echo "Comment: $ghprbCommentBody"
-                echo "Does not match the regex: $x"
-            }
-            cat > deepsea-pr.properties << EOF
-            PUBLISH_DIR=/mnt/logs/artifacts/jenkins/deepsea-pr/${SUITE}/${BUILD_ID}
-            DEEPSEA_REPO=http://10.86.0.120/artifacts/jenkins/deepsea-pr/${SUITE}/${BUILD_ID}
-            CEPH_BRANCH=${CEPH_BRANCH}
-            SUITE_BRANCH=${SUITE_BRANCH}
-            SUITE=${SUITE}
-            EOF
+        - shell:
+            !include-raw:
+                - snippets/bash-ex.bash
+                - snippets/deepsea-trigger.bash
+                - snippets/deepsea-pr-properties.sh
         - inject:
             properties-file: 'deepsea-pr.properties'
         - multijob:
