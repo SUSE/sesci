@@ -410,6 +410,7 @@
             optional: true
             which-build: multijob-build
         - shell: |
+            [[ $DESTROY_ENVIRONMENT != true ]] && exit 0
             . v/bin/activate
             STATUS=$PWD/mkck.status
             cd sesci && OS_CLOUD=sbg python -u os-server.py -a delete -s $STATUS
