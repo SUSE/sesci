@@ -16,7 +16,7 @@
         - 'leap-ses4':
             dist_name: 'leap'
             dist_ver: '42.2'
-            disabled: false
+            disabled: true
             target: b2-60
             branch: 'ses4'
             ref: 'ses4'
@@ -56,7 +56,7 @@
         - 'sles-ses4':
             dist_name: 'sles'
             dist_ver: '12.2'
-            disabled: false
+            disabled: true
             target: b2-60
             branch: 'ses4'
             ref: 'ses4'
@@ -697,6 +697,8 @@
                 - job-read
                 - job-status
                 - job-discover
+    triggers:
+        - timed: "15 1 * * 1-5"
     wrappers:
         - workspace-cleanup
         - ansicolor
