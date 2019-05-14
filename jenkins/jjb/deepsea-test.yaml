@@ -38,7 +38,7 @@
             #!/bin/bash
             case "$ghprbTargetBranch" in
                 "master")
-                    TARGETDIST="openSUSE-15.0"
+                    TARGETDIST="openSUSE-15.1"
                     ;;
                 "SES5")
                     TARGETDIST="openSUSE-42.3"
