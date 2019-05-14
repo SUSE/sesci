@@ -1,0 +1,20 @@
+FROM opensuse-15.1-deepsea-make:latest
+MAINTAINER Kyr Shatskyy <kshatskyy@suse.com>
+ARG usr=jenkins
+ARG target=test
+RUN useradd -m $usr
+RUN  echo "$usr ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+COPY bashrc /home/$usr/.bashrc
+COPY deepsea /home/$usr/DeepSea
+RUN chown -R $usr: /home/$usr
+
+USER $usr
+
+WORKDIR /home/$usr
+
+RUN echo %_topdir $HOME/rpmbuild | tee $HOME/.rpmmacros
+RUN pwd && ls -la && cd DeepSea \
+    && sudo zypper --non-interactive install --no-recommends \
+           $(rpmspec --requires -q deepsea.spec.in 2>/dev/null)
+RUN cd DeepSea && make $target || true
+RUN cd DeepSea && mkdir logs && cp junit*.xml logs

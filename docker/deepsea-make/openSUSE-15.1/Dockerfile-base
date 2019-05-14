@@ -1,0 +1,25 @@
+FROM opensuse/leap:15.1
+MAINTAINER Kyr Shatskyy <kshatskyy@suse.com>
+
+RUN zypper addrepo --refresh https://download.opensuse.org/repositories/filesystems:/ceph:/nautilus/openSUSE_Leap_15.1/filesystems:ceph:nautilus.repo \
+    && zypper --non-interactive --gpg-auto-import-keys refresh \
+    && zypper --non-interactive update \
+    && zypper --non-interactive install \
+        --no-recommends \
+          git-core \
+          jq \
+          make \
+          python-devel \
+          python-pip \
+          python-pyOpenSSL \
+          python-tox \
+          python-virtualenv \
+          python3-devel \
+          python3-pip \
+          python3-tox \
+          python3-virtualenv \
+          rpm-build \
+          salt-master salt-minion salt-api \
+          sudo \
+          tar \
+          vim
