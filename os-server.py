@@ -78,7 +78,7 @@ if spec_path:
         def override_dict(obj, key, env=None, default=None):
             if env and env in os.environ:
                 obj[key] = os.environ.get(env, default)
-            elif default and key not in obj:
+            elif default:
                 obj[key] = default
         override_dict(server_spec, 'keyfile', env='SECRET_FILE')
         override_dict(server_spec, 'name', default=target_mask)
