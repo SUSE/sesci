@@ -321,6 +321,7 @@ def create_server(image, flavor, key_name, user_data=None):
         if not args.get('--debug'):
             print("Cleanup...")
             c.delete_server(target.id)
+        exit(1)
 
 if action in ['provision']:
     with open(status_path, 'r') as f:
@@ -372,4 +373,5 @@ if action in ['create']:
         with open(path, 'r') as f:
             userdata=f.read()
     create_server(image, flavor, keypair.name, userdata)
+    exit(0)
 
