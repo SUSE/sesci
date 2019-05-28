@@ -92,6 +92,11 @@
             values:
                 - sles
                 - leap
+        - axis:
+            name: WORKER
+            type: label-expression
+            values:
+                - storage-compute
     parameters:
         - string:
             name: TARGET_FLAVOR
