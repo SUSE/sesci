@@ -298,6 +298,13 @@ def create_server(image, flavor, key_name, user_data=None):
         start_time = time.time()
         while target.status != 'ACTIVE':
           print("STATUS:%s" % target.status)
+          if target.status == 'ERROR':
+            # only get_server_by_id can return 'fault' for a server
+            x=conn.get_server_by_id(target_id)
+            if 'fault' in x and 'message' in x['fault']:
+                raise Exception("Server creation unexpectedly failed with message: %s" % x['fault']['message'])
+            else:
+                raise Exception("Unknown failure while creating server: %s" % x)
           if timeout > (time.time() - start_time):
             print('Server [' + target.name + '] is not active. waiting ' + str(wait) + ' seconds...')
             time.sleep(wait)
