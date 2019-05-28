@@ -229,6 +229,10 @@
     node: storage-compute
     parameters:
         - string:
+            name: TARGET_CLOUD
+            default: 'sbg'
+            description: "OVH region"
+        - string:
             name: TARGET_FLAVOR
             default: b2-60
             description: "OVH flavor"
@@ -381,7 +385,7 @@
         - shell: |
             . v/bin/activate
             STATUS=$PWD/mkck.status
-            cd sesci && OS_CLOUD=sbg python -u os-server.py -a create -f conf/$CONF.yaml -s $STATUS
+            cd sesci && OS_CLOUD=$TARGET_CLOUD python -u os-server.py -a create -f conf/$CONF.yaml -s $STATUS
         - shell: |
             addr=$(jq -r .server.ip mkck.status)
             name=$(jq -r .server.name mkck.status)
@@ -413,7 +417,7 @@
             [[ $DESTROY_ENVIRONMENT != true ]] && exit 0
             . v/bin/activate
             STATUS=$PWD/mkck.status
-            cd sesci && OS_CLOUD=sbg python -u os-server.py -a delete -s $STATUS
+            cd sesci && OS_CLOUD=$TARGET_CLOUD python -u os-server.py -a delete -s $STATUS
         - shell: |
             case $CEPH_BRANCH in
             ses3|ses4|jewel)
@@ -460,7 +464,7 @@
         - shell: |
             . v/bin/activate
             STATUS=$PWD/mkck.status
-            cd sesci && OS_CLOUD=sbg python -u os-server.py -a create -f conf/$CONF.yaml -s $STATUS
+            cd sesci && OS_CLOUD=$TARGET_CLOUD python -u os-server.py -a create -f conf/$CONF.yaml -s $STATUS
         - shell: |
             addr=$(jq -r .server.ip mkck.status)
             name=$(jq -r .server.name mkck.status)
@@ -491,7 +495,7 @@
         - shell: |
             . v/bin/activate
             STATUS=$PWD/mkck.status
-            cd sesci && OS_CLOUD=sbg python -u os-server.py -a delete -s $STATUS
+            cd sesci && OS_CLOUD=$TARGET_CLOUD python -u os-server.py -a delete -s $STATUS
         - shell: |
             case $CEPH_BRANCH in
             ses3|ses4|jewel)
@@ -532,6 +536,9 @@
         - string:
             name: TARGET_FILE
             default: mkck.properties
+        - string:
+            name: TARGET_CLOUD
+            default: sbg
         - string:
             name: TARGET_FLAVOR
             #default: hg-15-ssd
@@ -634,6 +641,9 @@
     project-type: multijob
     node: storage-compute
     parameters:
+        - string:
+            name: TARGET_CLOUD
+            default: 'sbg'
         - string:
             name: TARGET_FLAVOR
             default: b2-60
@@ -756,7 +766,7 @@
         - shell: |
             . v/bin/activate
             STATUS=$PWD/mkck.status
-            cd sesci && OS_CLOUD=sbg python -u os-server.py -a create -f conf/$CONF.yaml -s $STATUS
+            cd sesci && OS_CLOUD=$TARGET_CLOUD python -u os-server.py -a create -f conf/$CONF.yaml -s $STATUS
         - shell: |
             addr=$(jq -r .server.ip mkck.status)
             name=$(jq -r .server.name mkck.status)
@@ -787,7 +797,7 @@
         - shell: |
             . v/bin/activate
             STATUS=$PWD/mkck.status
-            cd sesci && OS_CLOUD=sbg python -u os-server.py -a delete -s $STATUS
+            cd sesci && OS_CLOUD=$TARGET_CLOUD python -u os-server.py -a delete -s $STATUS
         - shell: |
             case $CEPH_BRANCH in
             ses3|ses4|jewel)
