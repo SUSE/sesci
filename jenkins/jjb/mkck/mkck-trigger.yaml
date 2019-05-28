@@ -13,14 +13,14 @@
 - project:
     name: run-make-check-nightly
     dist_ceph:
-        - 'leap-ses4':
-            dist_name: 'leap'
-            dist_ver: '42.2'
-            disabled: true
-            target: b2-60
-            branch: 'ses4'
-            ref: 'ses4'
-            repo: 'https://github.com/suse/ceph.git'
+        #- 'leap-ses4':
+        #    dist_name: 'leap'
+        #    dist_ver: '42.2'
+        #    disabled: true
+        #    target: b2-60
+        #    branch: 'ses4'
+        #    ref: 'ses4'
+        #    repo: 'https://github.com/suse/ceph.git'
         - 'leap-ses5':
             dist_name: 'leap'
             dist_ver: '42.3'
@@ -53,14 +53,14 @@
             branch: 'master'
             ref: 'master'
             repo: 'https://github.com/ceph/ceph.git'
-        - 'sles-ses4':
-            dist_name: 'sles'
-            dist_ver: '12.2'
-            disabled: true
-            target: b2-60
-            branch: 'ses4'
-            ref: 'ses4'
-            repo: 'https://github.com/suse/ceph.git'
+        #- 'sles-ses4':
+        #    dist_name: 'sles'
+        #    dist_ver: '12.2'
+        #    disabled: true
+        #    target: b2-60
+        #    branch: 'ses4'
+        #    ref: 'ses4'
+        #    repo: 'https://github.com/suse/ceph.git'
         - 'sles-ses5':
             dist_name: 'sles'
             dist_ver: '12.3'
@@ -92,6 +92,11 @@
             values:
                 - sles
                 - leap
+        - axis:
+            name: WORKER
+            type: label-expression
+            values:
+                - storage-compute
     parameters:
         - string:
             name: TARGET_FLAVOR
@@ -228,6 +233,10 @@
     project-type: multijob
     node: storage-compute
     parameters:
+        - string:
+            name: TARGET_CLOUD
+            default: 'sbg'
+            description: "OVH region"
         - string:
             name: TARGET_FLAVOR
             default: b2-60
@@ -381,7 +390,7 @@
         - shell: |
             . v/bin/activate
             STATUS=$PWD/mkck.status
-            cd sesci && OS_CLOUD=sbg python -u os-server.py -a create -f conf/$CONF.yaml -s $STATUS
+            cd sesci && OS_CLOUD=$TARGET_CLOUD python -u os-server.py -a create -f conf/$CONF.yaml -s $STATUS
         - shell: |
             addr=$(jq -r .server.ip mkck.status)
             name=$(jq -r .server.name mkck.status)
@@ -413,7 +422,7 @@
             [[ $DESTROY_ENVIRONMENT != true ]] && exit 0
             . v/bin/activate
             STATUS=$PWD/mkck.status
-            cd sesci && OS_CLOUD=sbg python -u os-server.py -a delete -s $STATUS
+            cd sesci && OS_CLOUD=$TARGET_CLOUD python -u os-server.py -a delete -s $STATUS
         - shell: |
             case $CEPH_BRANCH in
             ses3|ses4|jewel)
@@ -460,7 +469,7 @@
         - shell: |
             . v/bin/activate
             STATUS=$PWD/mkck.status
-            cd sesci && OS_CLOUD=sbg python -u os-server.py -a create -f conf/$CONF.yaml -s $STATUS
+            cd sesci && OS_CLOUD=$TARGET_CLOUD python -u os-server.py -a create -f conf/$CONF.yaml -s $STATUS
         - shell: |
             addr=$(jq -r .server.ip mkck.status)
             name=$(jq -r .server.name mkck.status)
@@ -491,7 +500,7 @@
         - shell: |
             . v/bin/activate
             STATUS=$PWD/mkck.status
-            cd sesci && OS_CLOUD=sbg python -u os-server.py -a delete -s $STATUS
+            cd sesci && OS_CLOUD=$TARGET_CLOUD python -u os-server.py -a delete -s $STATUS
         - shell: |
             case $CEPH_BRANCH in
             ses3|ses4|jewel)
@@ -532,6 +541,9 @@
         - string:
             name: TARGET_FILE
             default: mkck.properties
+        - string:
+            name: TARGET_CLOUD
+            default: sbg
         - string:
             name: TARGET_FLAVOR
             #default: hg-15-ssd
@@ -634,6 +646,9 @@
     project-type: multijob
     node: storage-compute
     parameters:
+        - string:
+            name: TARGET_CLOUD
+            default: 'sbg'
         - string:
             name: TARGET_FLAVOR
             default: b2-60
@@ -756,7 +771,7 @@
         - shell: |
             . v/bin/activate
             STATUS=$PWD/mkck.status
-            cd sesci && OS_CLOUD=sbg python -u os-server.py -a create -f conf/$CONF.yaml -s $STATUS
+            cd sesci && OS_CLOUD=$TARGET_CLOUD python -u os-server.py -a create -f conf/$CONF.yaml -s $STATUS
         - shell: |
             addr=$(jq -r .server.ip mkck.status)
             name=$(jq -r .server.name mkck.status)
@@ -787,7 +802,7 @@
         - shell: |
             . v/bin/activate
             STATUS=$PWD/mkck.status
-            cd sesci && OS_CLOUD=sbg python -u os-server.py -a delete -s $STATUS
+            cd sesci && OS_CLOUD=$TARGET_CLOUD python -u os-server.py -a delete -s $STATUS
         - shell: |
             case $CEPH_BRANCH in
             ses3|ses4|jewel)

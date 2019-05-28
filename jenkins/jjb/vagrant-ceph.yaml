@@ -26,6 +26,12 @@
             values:
                 - 'opensuse/openSUSE-42.3-x86_64'
                 - 'opensuse/openSUSE-15.0-x86_64'
+        # needed next to restrict matrix subjobs to conquer other workers
+        - axis:
+            name: WORKER_LABEL
+            type: label-expression
+            values:
+                - 'storage-compute'
     wrappers:
         - workspace-cleanup
     triggers:
@@ -87,7 +93,7 @@
         - shell: |
             . v/bin/activate
             STATUS=$PWD/os-server.status
-            OS_CLOUD=sbg python -u sesci/os-server.py -a create -f sesci/conf/$TARGET_IMAGE.yaml -s $STATUS
+            OS_CLOUD=$TARGET_CLOUD python -u sesci/os-server.py -a create -f sesci/conf/$TARGET_IMAGE.yaml -s $STATUS
         - shell: |
             addr=$(jq -r .server.ip os-server.status)
             name=$(jq -r .server.name os-server.status)
@@ -124,7 +130,7 @@
         - shell: |
             . v/bin/activate
             STATUS=$PWD/os-server.status
-            OS_CLOUD=sbg python -u sesci/os-server.py -a delete -s $STATUS
+            OS_CLOUD=$TARGET_CLOUD python -u sesci/os-server.py -a delete -s $STATUS
     wrappers:
         - workspace-cleanup
         - credentials-binding:
@@ -152,6 +158,9 @@
         - string:
             name: TARGET_FLAVOR
             default: b2-30
+        - string:
+            name: TARGET_CLOUD
+            default: 'sbg'
         - string:
             name: TARGET_IMAGE
             default: 'makecheck-opensuse-42.3-x86_64'

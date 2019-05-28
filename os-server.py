@@ -78,7 +78,7 @@ if spec_path:
         def override_dict(obj, key, env=None, default=None):
             if env and env in os.environ:
                 obj[key] = os.environ.get(env, default)
-            elif default and key not in obj:
+            elif default:
                 obj[key] = default
         override_dict(server_spec, 'keyfile', env='SECRET_FILE')
         override_dict(server_spec, 'name', default=target_mask)
@@ -298,6 +298,13 @@ def create_server(image, flavor, key_name, user_data=None):
         start_time = time.time()
         while target.status != 'ACTIVE':
           print("STATUS:%s" % target.status)
+          if target.status == 'ERROR':
+            # only get_server_by_id can return 'fault' for a server
+            x=conn.get_server_by_id(target_id)
+            if 'fault' in x and 'message' in x['fault']:
+                raise Exception("Server creation unexpectedly failed with message: %s" % x['fault']['message'])
+            else:
+                raise Exception("Unknown failure while creating server: %s" % x)
           if timeout > (time.time() - start_time):
             print('Server [' + target.name + '] is not active. waiting ' + str(wait) + ' seconds...')
             time.sleep(wait)
@@ -321,6 +328,7 @@ def create_server(image, flavor, key_name, user_data=None):
         if not args.get('--debug'):
             print("Cleanup...")
             c.delete_server(target.id)
+        exit(1)
 
 if action in ['provision']:
     with open(status_path, 'r') as f:
@@ -372,4 +380,5 @@ if action in ['create']:
         with open(path, 'r') as f:
             userdata=f.read()
     create_server(image, flavor, keypair.name, userdata)
+    exit(0)
 
