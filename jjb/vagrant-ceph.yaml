@@ -164,10 +164,7 @@
             default: 'sbg'
         - string:
             name: TARGET_IMAGE
-            default: 'makecheck-opensuse-15.1-x86_64'
-        - string:
-            name: TARGET_MASK
-            default: 'vagrant%02d'
+            default: 'makecheck-opensuse-15.0-x86_64'
         - string:
             name: GIT_URL
         - string:
