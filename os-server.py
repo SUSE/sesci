@@ -143,6 +143,7 @@ def set_server_name(server_id):
             #conn.compute.update_server(server_id, name=target)
             #s = conn.update_server(server_id, name=target)
             c.update_server(server_id, name=target)
+
             return target
     print("ERROR: Can't allocate name")
     print("TODO: Add wait loop for name allocation")
@@ -286,7 +287,7 @@ def create_server(image, flavor, key_name, user_data=None):
     print(target)
     # for some big nodes sometimes rename does not happen
     # and some pause is required for doing this
-    grace_wait = 3
+    grace_wait = 5
     print("Graceful wait %s sec before rename..." % grace_wait)
     time.sleep(grace_wait)
     set_name(target.id)

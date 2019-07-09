@@ -86,12 +86,21 @@
     builders:
         - shell: "git clone https://github.com/suse/sesci sesci"
         - shell: |
+            virtualenv v
+            . v/bin/activate
+            pip install -U pip
+            pip install python-openstackclient openstacksdk docopt PyYaml paramiko
+        - shell: |
+            . v/bin/activate
+            STATUS=$PWD/os-server.status
+            export TARGET_MASK=$JOB_NAME-$BUILD_NUMBER
+            OS_CLOUD=$TARGET_CLOUD python -u sesci/os-server.py -a create -f sesci/conf/$TARGET_IMAGE.yaml -s $STATUS
+        - shell: |
             addr=$(jq -r .server.ip os-server.status)
             name=$(jq -r .server.name os-server.status)
             cat > ${TARGET_FILE} <<EOF
             TARGET_IP=$addr
             TARGET_NAME=$name
-            TARGET_MASK=$JOB_NAME-$BUILD_NUMBER
             EOF
         - shell: |
             echo GIT_BRANCH=$GIT_BRANCH >> ${TARGET_FILE}
@@ -101,15 +110,6 @@
         - shell: "cat ${TARGET_FILE}"
         - inject:
             properties-file: ${TARGET_FILE}
-        - shell: |
-            virtualenv v
-            . v/bin/activate
-            pip install -U pip
-            pip install python-openstackclient openstacksdk docopt PyYaml paramiko
-        - shell: |
-            . v/bin/activate
-            STATUS=$PWD/os-server.status
-            OS_CLOUD=$TARGET_CLOUD python -u sesci/os-server.py -a create -f sesci/conf/$TARGET_IMAGE.yaml -s $STATUS
         - system-groovy:
             command: !include-raw: create-jenkins-node.groovy
         - multijob:
