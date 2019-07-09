@@ -142,8 +142,15 @@ def set_server_name(server_id):
             print("Setting server name to %s" % target)
             #conn.compute.update_server(server_id, name=target)
             #s = conn.update_server(server_id, name=target)
-            c.update_server(server_id, name=target)
-
+            tries=5
+            while tries > 0:
+                conn.compute.update_server(server_id, name=target)
+                time.sleep(1) # wait a sec
+                s=conn.get_server_by_id(server_id)
+                if s.name and s.name != target:
+                    break
+                tries -= 1
+                print("Left %s tries to rename the server" % tries)
             return target
     print("ERROR: Can't allocate name")
     print("TODO: Add wait loop for name allocation")
