@@ -1,0 +1,21 @@
+copy:
+- from:
+  - snippets/clone-git-repo.sh
+  - snippets/run.cmd
+  into: bin
+  mode: '0755'
+flavor: b2-30
+image: teuthology-opensuse-15.1-x86_64
+keyfile: ~/.ssh/sa
+keyname: storage-automation
+name: mkck%02d
+networks:
+- Ext-Net
+userdata: openstack/user-data.yaml
+username: root
+vars:
+  dependencies:
+  - git
+  - java
+  - htop
+  - ccache
