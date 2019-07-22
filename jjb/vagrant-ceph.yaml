@@ -19,13 +19,11 @@
             type: user-defined
             values:
                 - 'teuthology-opensuse-15.1-x86_64'
-                - 'teuthology-opensuse-15.0-x86_64'
         - axis:
             name: BOX
             type: user-defined
             values:
-                - 'opensuse/openSUSE-15.1-x86_64'
-                - 'opensuse/openSUSE-15.0-x86_64'
+                - 'sub0/leap151'
         # needed next to restrict matrix subjobs to conquer other workers
         - axis:
             name: WORKER_LABEL
@@ -164,7 +162,7 @@
             default: 'sbg'
         - string:
             name: TARGET_IMAGE
-            default: 'makecheck-opensuse-15.0-x86_64'
+            default: 'makecheck-opensuse-15.1-x86_64'
         - string:
             name: GIT_URL
         - string:
