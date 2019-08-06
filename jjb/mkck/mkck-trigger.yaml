@@ -13,14 +13,6 @@
 - project:
     name: run-make-check-nightly
     dist_ceph:
-        #- 'leap-ses4':
-        #    dist_name: 'leap'
-        #    dist_ver: '42.2'
-        #    disabled: true
-        #    target: b2-60
-        #    branch: 'ses4'
-        #    ref: 'ses4'
-        #    repo: 'https://github.com/suse/ceph.git'
         - 'leap-ses5':
             dist_name: 'leap'
             dist_ver: '42.3'
@@ -45,22 +37,46 @@
             branch: 'master'
             ref: 'master'
             repo: 'https://github.com/ceph/ceph.git'
-        - 'leap-ceph':
+        - 'leap-ceph-master':
             dist_name: 'leap'
-            dist_ver: '15.0'
+            dist_ver: '15.1'
             disabled: false
             target: b2-60
             branch: 'master'
             ref: 'master'
             repo: 'https://github.com/ceph/ceph.git'
-        #- 'sles-ses4':
-        #    dist_name: 'sles'
-        #    dist_ver: '12.2'
-        #    disabled: true
-        #    target: b2-60
-        #    branch: 'ses4'
-        #    ref: 'ses4'
-        #    repo: 'https://github.com/suse/ceph.git'
+        - 'leap-ceph-luminous':
+            dist_name: 'leap'
+            dist_ver: '15.1'
+            disabled: false
+            target: b2-60
+            branch: 'luminous'
+            ref: 'luminous'
+            repo: 'https://github.com/ceph/ceph.git'
+        - 'leap-ceph-mimic':
+            dist_name: 'leap'
+            dist_ver: '15.1'
+            disabled: false
+            target: b2-60
+            branch: 'mimic'
+            ref: 'mimic'
+            repo: 'https://github.com/ceph/ceph.git'
+        - 'leap-ceph-nautilus':
+            dist_name: 'leap'
+            dist_ver: '15.1'
+            disabled: false
+            target: b2-60
+            branch: 'nautilus'
+            ref: 'nautilus'
+            repo: 'https://github.com/ceph/ceph.git'
+        - 'leap-ceph-octopus':
+            dist_name: 'leap'
+            dist_ver: '15.1'
+            disabled: false
+            target: b2-60
+            branch: 'master'
+            ref: 'master'
+            repo: 'https://github.com/ceph/ceph.git'
         - 'sles-ses5':
             dist_name: 'sles'
             dist_ver: '12.3'
@@ -78,7 +94,7 @@
             ref: 'ses6'
             repo: 'https://github.com/suse/ceph.git'
     jobs:
-        - 'mkck-dist-branch'
+        - 'mkck_dist_branch'
 
 - job:
     name: 'mkck-trigger'
@@ -118,6 +134,9 @@
         - string:
             name: leap15_0
             default: 'makecheck-opensuse-15.0-x86_64'
+        - string:
+            name: leap15_1
+            default: 'makecheck-opensuse-15.1-x86_64'
         - string:
             name: sle15
             default: 'makecheck-sle-15.0-x86_64'
@@ -639,7 +658,7 @@
 
 
 - job-template:
-    id: 'mkck-dist-branch'
+    id: 'mkck_dist_branch'
     name: 'mkck-{dist_ceph}'
     concurrent: true
     disabled: '{obj:disabled}'
@@ -671,39 +690,39 @@
         - bool:
             name: DESTROY_ENVIRONMENT
             default: true
-        - string:
-            name: leap42_1
-            default: 'makecheck-opensuse-42.1-x86_64'
-        - string:
-            name: leap42_2
-            default: 'makecheck-opensuse-42.2-x86_64'
-        - string:
-            name: leap42_3
-            default: 'makecheck-opensuse-42.3-x86_64'
-        - string:
-            name: leap15_0
-            default: 'makecheck-opensuse-15.0-x86_64'
-        - string:
-            name: leap15_1
-            default: 'makecheck-opensuse-15.1-x86_64'
-        - string:
-            name: sle15_sp1
-            default: 'makecheck-sle-15.1-x86_64'
-        - string:
-            name: sle15
-            default: 'makecheck-sle-15.0-x86_64'
-        - string:
-            name: sle12_sp1
-            default: 'makecheck-sle-12.1-x86_64'
-        - string:
-            name: sle12_sp2
-            default: 'makecheck-sle-12.2-x86_64'
-        - string:
-            name: sle12_sp3
-            default: 'makecheck-sle-12.3-x86_64'
+        #- string:
+        #    name: leap42_1
+        #    default: 'makecheck-opensuse-42.1-x86_64'
+        #- string:
+        #    name: leap42_2
+        #    default: 'makecheck-opensuse-42.2-x86_64'
+        #- string:
+        #    name: leap42_3
+        #    default: 'makecheck-opensuse-42.3-x86_64'
+        #- string:
+        #    name: leap15_0
+        #    default: 'makecheck-opensuse-15.0-x86_64'
+        #- string:
+        #    name: leap15_1
+        #    default: 'makecheck-opensuse-15.1-x86_64'
+        #- string:
+        #    name: sle15_sp1
+        #    default: 'makecheck-sle-15.1-x86_64'
+        #- string:
+        #    name: sle15
+        #    default: 'makecheck-sle-15.0-x86_64'
+        #- string:
+        #    name: sle12_sp1
+        #    default: 'makecheck-sle-12.1-x86_64'
+        #- string:
+        #    name: sle12_sp2
+        #    default: 'makecheck-sle-12.2-x86_64'
+        #- string:
+        #    name: sle12_sp3
+        #    default: 'makecheck-sle-12.3-x86_64'
     properties:
         - github:
-            url: 'https://github.com/suse/ceph/'
+            url: '{repo}'
             display-name: ceph
         - build-discarder:
             num-to-keep: 100
@@ -730,7 +749,7 @@
             sles_ses4="sle12_sp2"
             sles_ses3="sle12_sp1"
             sles_master="sle12_sp3"
-            leap_ses6="leap15_0"
+            leap_ses6="leap15_1"
             leap_ses5="leap42_3"
             leap_ses4="leap42_2"
             leap_ses3="leap42_1"
@@ -743,7 +762,11 @@
             conf_leap_ses6="makecheck-opensuse-15.0"
             conf_leap_ses5="makecheck-opensuse-42.3"
             conf_leap_ses4="makecheck-opensuse-42.2"
-            conf_leap_master="makecheck-opensuse-15.0"
+            conf_leap_master="makecheck-opensuse-15.1"
+            conf_leap_luminous="makecheck-opensuse-15.1"
+            conf_leap_mimic="makecheck-opensuse-15.1"
+            conf_leap_nautilus="makecheck-opensuse-15.1"
+            conf_leap_octopus="makecheck-opensuse-15.1"
             conf_tumbleweed_master="makecheck-opensuse-tumbleweed"
 
             eval "export dst=\$${{DIST}}_${{tgt}}"
