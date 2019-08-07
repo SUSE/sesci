@@ -147,7 +147,7 @@ def set_server_name(server_id):
                 conn.compute.update_server(server_id, name=target)
                 time.sleep(10) # wait count to 10
                 s=conn.get_server_by_id(server_id)
-                if s.name and s.name != target:
+                if s.name and s.name == target:
                     break
                 else:
                     print("Server name is '%s', should be '%s'" %(s.name, target))
