@@ -149,6 +149,8 @@ def set_server_name(server_id):
                 s=conn.get_server_by_id(server_id)
                 if s.name and s.name != target:
                     break
+                else:
+                    print("Server name is '%s', should be '%s'" %(s.name, target))
                 tries -= 1
                 print("Left %s tries to rename the server" % tries)
             return target
