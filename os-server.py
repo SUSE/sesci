@@ -145,7 +145,7 @@ def set_server_name(server_id):
             tries=5
             while tries > 0:
                 conn.compute.update_server(server_id, name=target)
-                time.sleep(1) # wait a sec
+                time.sleep(3) # wait a sec
                 s=conn.get_server_by_id(server_id)
                 if s.name and s.name != target:
                     break
