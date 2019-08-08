@@ -8,7 +8,7 @@
             disabled: false
             target: b2-60
     jobs:
-        - 'mkck-{dist}'
+        - 'mkck_dist'
 
 - project:
     name: run-make-check-nightly
@@ -23,7 +23,7 @@
             repo: 'https://github.com/suse/ceph.git'
         - 'leap-ses6':
             dist_name: 'leap'
-            dist_ver: '15.0'
+            dist_ver: '15.1'
             disabled: false
             target: b2-60
             branch: 'ses6'
@@ -98,6 +98,7 @@
 
 - job:
     name: 'mkck-trigger'
+    disabled: true
     concurrent: true
     project-type: matrix
     node: storage-compute
@@ -122,33 +123,6 @@
             description: "OVH flavor"
         - string:
             name: sha1
-        - string:
-            name: leap42_1
-            default: 'makecheck-opensuse-42.1-x86_64'
-        - string:
-            name: leap42_2
-            default: 'makecheck-opensuse-42.2-x86_64'
-        - string:
-            name: leap42_3
-            default: 'makecheck-opensuse-42.3-x86_64'
-        - string:
-            name: leap15_0
-            default: 'makecheck-opensuse-15.0-x86_64'
-        - string:
-            name: leap15_1
-            default: 'makecheck-opensuse-15.1-x86_64'
-        - string:
-            name: sle15
-            default: 'makecheck-sle-15.0-x86_64'
-        - string:
-            name: sle12_sp1
-            default: 'makecheck-sle-12.1-x86_64'
-        - string:
-            name: sle12_sp2
-            default: 'makecheck-sle-12.2-x86_64'
-        - string:
-            name: sle12_sp3
-            default: 'makecheck-sle-12.3-x86_64'
     properties:
         - github:
             url: 'https://github.com/suse/ceph/'
@@ -215,10 +189,10 @@
             conf_sles_ses5="makecheck-sle-12.3"
             conf_sles_ses4="makecheck-sle-12.2"
             conf_sles_master="makecheck-sle-15.1"
-            conf_leap_ses6="makecheck-opensuse-15.0"
+            conf_leap_ses6="makecheck-opensuse-15.1"
             conf_leap_ses5="makecheck-opensuse-42.3"
             conf_leap_ses4="makecheck-opensuse-42.2"
-            conf_leap_master="makecheck-opensuse-15.0"
+            conf_leap_master="makecheck-opensuse-15.1"
 
             eval "export dst=\$${DIST}_${tgt}"
             eval "export cfg=\$conf_${DIST}_${tgt}"
@@ -245,7 +219,7 @@
               block: true
 
 - job-template:
-    id: 'mkck-{dist}'
+    id: 'mkck_dist'
     name: 'mkck-{dist}'
     concurrent: true
     disabled: '{obj:disabled}'
@@ -281,36 +255,6 @@
         - string:
             name: PR
             default: '${{ghprbPullId}}'
-        - string:
-            name: leap42_1
-            default: 'makecheck-opensuse-42.1-x86_64'
-        - string:
-            name: leap42_2
-            default: 'makecheck-opensuse-42.2-x86_64'
-        - string:
-            name: leap42_3
-            default: 'makecheck-opensuse-42.3-x86_64'
-        - string:
-            name: leap15_0
-            default: 'makecheck-opensuse-15.0-x86_64'
-        - string:
-            name: leap15_1
-            default: 'makecheck-opensuse-15.1-x86_64'
-        - string:
-            name: sle15_sp1
-            default: 'makecheck-sle-15.1-x86_64'
-        - string:
-            name: sle15
-            default: 'makecheck-sle-15.0-x86_64'
-        - string:
-            name: sle12_sp1
-            default: 'makecheck-sle-12.1-x86_64'
-        - string:
-            name: sle12_sp2
-            default: 'makecheck-sle-12.2-x86_64'
-        - string:
-            name: sle12_sp3
-            default: 'makecheck-sle-12.3-x86_64'
     properties:
         - github:
             url: 'https://github.com/suse/ceph/'
@@ -365,7 +309,7 @@
             export CEPH_BRANCH=${{ghprbTargetBranch}}
             export CEPH_REF=${{sha1}}
 
-            sles_ses6="sle15"
+            sles_ses6="sle15_sp1"
             sles_ses5="sle12_sp3"
             sles_ses4="sle12_sp2"
             sles_ses3="sle12_sp1"
@@ -379,10 +323,13 @@
             conf_sles_ses5="makecheck-sle-12.3"
             conf_sles_ses4="makecheck-sle-12.2"
             conf_sles_master="makecheck-sle-15.1"
-            conf_leap_ses6="makecheck-opensuse-15.0"
+            conf_leap_ses6="makecheck-opensuse-15.1"
             conf_leap_ses5="makecheck-opensuse-42.3"
             conf_leap_ses4="makecheck-opensuse-42.2"
-            conf_leap_master="makecheck-opensuse-15.0"
+            conf_leap_master="makecheck-opensuse-15.1"
+            conf_leap_luminous="makecheck-opensuse-15.1"
+            conf_leap_mimic="makecheck-opensuse-15.1"
+            conf_leap_nautilus="makecheck-opensuse-15.1"
 
             eval "export dst=\$${{DIST}}_${{tgt}}"
             eval "export cfg=\$conf_${{DIST}}_${{tgt}}"
@@ -420,25 +367,41 @@
 
         - inject:
             properties-file: $TARGET_FILE
-        - system-groovy:
-            command: !include-raw-escape: create-jenkins-node.groovy
+        #- system-groovy:
+        #    command: !include-raw-escape: create-jenkins-node.groovy
         - multijob:
-            name: Ceph run-make-check
+            name: Create jenkins executor
+            condition: ALWAYS
+            projects:
+                - name: jenkins-executor-create
+                  current-parameters: true
+                  abort-all-job: true
+                  property-file: '${{TARGET_FILE}}'
+        - multijob:
+            name: Run make check
             condition: ALWAYS
             projects:
                 - name: mkck-run
                   current-parameters: true
                   abort-all-job: true
                   property-file: '${{TARGET_FILE}}'
-        - system-groovy:
-            command: !include-raw-escape: delete-jenkins-node.groovy
+        - multijob:
+            name: Delete jenkins executor
+            condition: ALWAYS
+            projects:
+                - name: jenkins-executor-delete
+                  current-parameters: true
+                  abort-all-job: true
+                  property-file: '${{TARGET_FILE}}'
+        #- system-groovy:
+        #    command: !include-raw-escape: delete-jenkins-node.groovy
         - copyartifact:
             project: mkck-run
             filter: 'build/**, src/**/*.log, src/**/*.trs'
             optional: true
             which-build: multijob-build
         - shell: |
-            [[ $DESTROY_ENVIRONMENT != true ]] && exit 0
+            if ! $DESTROY_ENVIRONMENT ; then exit 0 ; fi
             . v/bin/activate
             STATUS=$PWD/mkck.status
             cd sesci && OS_CLOUD=$TARGET_CLOUD python -u os-server.py -a delete -s $STATUS
@@ -690,36 +653,6 @@
         - bool:
             name: DESTROY_ENVIRONMENT
             default: true
-        #- string:
-        #    name: leap42_1
-        #    default: 'makecheck-opensuse-42.1-x86_64'
-        #- string:
-        #    name: leap42_2
-        #    default: 'makecheck-opensuse-42.2-x86_64'
-        #- string:
-        #    name: leap42_3
-        #    default: 'makecheck-opensuse-42.3-x86_64'
-        #- string:
-        #    name: leap15_0
-        #    default: 'makecheck-opensuse-15.0-x86_64'
-        #- string:
-        #    name: leap15_1
-        #    default: 'makecheck-opensuse-15.1-x86_64'
-        #- string:
-        #    name: sle15_sp1
-        #    default: 'makecheck-sle-15.1-x86_64'
-        #- string:
-        #    name: sle15
-        #    default: 'makecheck-sle-15.0-x86_64'
-        #- string:
-        #    name: sle12_sp1
-        #    default: 'makecheck-sle-12.1-x86_64'
-        #- string:
-        #    name: sle12_sp2
-        #    default: 'makecheck-sle-12.2-x86_64'
-        #- string:
-        #    name: sle12_sp3
-        #    default: 'makecheck-sle-12.3-x86_64'
     properties:
         - github:
             url: '{repo}'
@@ -759,7 +692,7 @@
             conf_sles_ses5="makecheck-sle-12.3"
             conf_sles_ses4="makecheck-sle-12.2"
             conf_sles_master="makecheck-sle-15.1"
-            conf_leap_ses6="makecheck-opensuse-15.0"
+            conf_leap_ses6="makecheck-opensuse-15.1"
             conf_leap_ses5="makecheck-opensuse-42.3"
             conf_leap_ses4="makecheck-opensuse-42.2"
             conf_leap_master="makecheck-opensuse-15.1"
@@ -805,18 +738,30 @@
 
         - inject:
             properties-file: $TARGET_FILE
-        - system-groovy:
-            command: !include-raw-escape: create-jenkins-node.groovy
         - multijob:
-            name: Ceph run-make-check
+            name: Create jenkins executor
+            condition: ALWAYS
+            projects:
+                - name: jenkins-executor-create
+                  current-parameters: true
+                  abort-all-job: true
+                  property-file: '${{TARGET_FILE}}'
+        - multijob:
+            name: Run make check
             condition: ALWAYS
             projects:
                 - name: mkck-run
                   current-parameters: true
                   abort-all-job: true
                   property-file: '${{TARGET_FILE}}'
-        - system-groovy:
-            command: !include-raw-escape: delete-jenkins-node.groovy
+        - multijob:
+            name: Delete jenkins executor
+            condition: ALWAYS
+            projects:
+                - name: jenkins-executor-delete
+                  current-parameters: true
+                  abort-all-job: true
+                  property-file: '${{TARGET_FILE}}'
         - copyartifact:
             project: mkck-run
             filter: 'build/**, src/**/*.log, src/**/*.trs'
@@ -848,3 +793,42 @@
             results: 'res/make-check.xml'
             allow-empty-results: true
             junit-attachments: true
+- project:
+    name: jenkins-executor
+    action:
+        - 'create':
+            script: 'create-jenkins-node.groovy'
+        - 'delete':
+            script: 'delete-jenkins-node.groovy'
+    jobs:
+        - 'jenkins_executor'
+
+- job-template:
+    id: 'jenkins_executor'
+    name: 'jenkins-executor-{action}'
+    concurrent: true
+    project-type: freestyle
+    node: storage-compute
+    parameters:
+        - string:
+            name: TARGET_NAME
+            default: ''
+            description: "Jenkins Node Name"
+        - string:
+            name: TARGET_IP
+            default: ''
+            description: "Jenkins Node IP address"
+    properties:
+        - build-discarder:
+            num-to-keep: 100
+        - authorization:
+            anonymous:
+                - job-read
+                - job-status
+                - job-discover
+    builders:
+        - system-groovy:
+            command: !include-raw-escape: '{script}'
+    wrappers:
+        - workspace-cleanup
+        - build-name: { name: '#$BUILD_NUMBER $TARGET_NAME:$TARGET_IP' }
