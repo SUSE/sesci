@@ -770,6 +770,7 @@
         - shell: |
             . v/bin/activate
             STATUS=$PWD/mkck.status
+            if ! $DESTROY_ENVIRONMENT ; then exit 0 ; fi
             cd sesci && OS_CLOUD=$TARGET_CLOUD python -u os-server.py -a delete -s $STATUS
         - shell: |
             case $CEPH_BRANCH in
@@ -793,6 +794,17 @@
             results: 'res/make-check.xml'
             allow-empty-results: true
             junit-attachments: true
+        - rocket:
+            channel: '#ceph-build'
+            failure: true
+            #success: true
+            unstable: true
+            #not-built: true
+            back-to-normal: true
+            repeated-failure: true
+            include-test-summary: true
+            build-server: 'http://ci.ses.suse.de:8080/'
+
 - project:
     name: jenkins-executor
     action:
