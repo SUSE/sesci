@@ -151,6 +151,10 @@
             default: "ses6"
             description: "Test suite branch name, usually coresponds to ceph branch"
         - string:
+            name: SUITE_REPO
+            default: ""
+            description: "Test suite git repo url"
+        - string:
             name: DEEPSEA_REPO
             default: ""
             description: "URL to DeepSea rpm repo"
@@ -328,6 +332,7 @@
                     DEEPSEA_REPO=$DEEPSEA_REPO
                     CEPH_BRANCH=$CEPH_BRANCH
                     SUITE_BRANCH=$SUITE_BRANCH
+                    SUITE_REPO=$SUITE_REPO
                     TEUTH_NAME=$NAME
                     SUITE=$SUITE
         - copyartifact:

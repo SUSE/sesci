@@ -18,6 +18,7 @@ PUBLISH_DIR=/mnt/logs/artifacts/jenkins/deepsea-pr/${SUITE}/${BUILD_ID}
 DEEPSEA_REPO=http://10.86.0.120/artifacts/jenkins/deepsea-pr/${SUITE}/${BUILD_ID}
 CEPH_BRANCH=${CEPH_BRANCH}
 SUITE_BRANCH=${SUITE_BRANCH}
+SUITE_REPO=${SUITE_REPO}
 SUITE=${SUITE}
 EOF
 

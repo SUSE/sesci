@@ -1,13 +1,14 @@
 ### BEGIN OF FILE snippets/deepsea-trigger.bash ###
 
 function parse_comment_help() {
-    echo "Usage: @susebot run teuthology [[with|for] [suite] SUITE] [using|via SUITE_BRANCH] [against ARTIFACT_LABEL] [on SITE]"
+    echo "Usage: @susebot run teuthology [[with|for] [suite] SUITE] [using|via SUITE_BRANCH] [from SUITE_REPO] [against ARTIFACT_LABEL] [on SITE]"
 }
 function parse_comment() {
     local comment="$1"
     x="^\s*@susebot\s+run\s+teuthology\
 (\s+((with|for)\s+)?(suite\s+)?(\S+))?\
 (\s+(using|via)\s+(\S+))?\
+(\s+(from)\s+(\S+))?\
 (\s+(against)\s+(\S+))?\
 (\s+(on)\s+(\S+))?\
 \s*\$"
@@ -24,15 +25,21 @@ function parse_comment() {
             echo "Detected phrase '${BASH_REMATCH[7]} ${BASH_REMATCH[8]}'" > /dev/stderr
             export SUITE_BRANCH="$branch"
         }
-        # against artifact_label
-        local artifact=${BASH_REMATCH[11]}
-        [[ "$artifact" ]] && {
+        # from suite_repo
+        local branch="${BASH_REMATCH[11]}"
+        [[ "$branch" ]] && {
             echo "Detected phrase '${BASH_REMATCH[10]} ${BASH_REMATCH[11]}'" > /dev/stderr
+            export SUITE_REPO="$branch"
+        }
+        # against artifact_label
+        local artifact=${BASH_REMATCH[14]}
+        [[ "$artifact" ]] && {
+            echo "Detected phrase '${BASH_REMATCH[13]} ${BASH_REMATCH[14]}'" > /dev/stderr
         }
         # on site
-        local site="${BASH_REMATCH[14]}"
+        local site="${BASH_REMATCH[17]}"
         [[ "$site" ]] && {
-            echo "Detected phrase '${BASH_REMATCH[13]} ${site}'" > /dev/stderr
+            echo "Detected phrase '${BASH_REMATCH[16]} ${site}'" > /dev/stderr
             export SITE="$site"
         }
     else
