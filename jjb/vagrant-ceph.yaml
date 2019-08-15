@@ -115,7 +115,7 @@
                 - name: jenkins-executor-create
                   current-parameters: true
                   abort-all-job: true
-                  property-file: '${{TARGET_FILE}}'
+                  property-file: '${TARGET_FILE}'
         - multijob:
             name: run tests for vagrant-ceph 
             condition: ALWAYS
@@ -137,7 +137,7 @@
                 - name: jenkins-executor-delete
                   current-parameters: true
                   abort-all-job: true
-                  property-file: '${{TARGET_FILE}}'
+                  property-file: '${TARGET_FILE}'
         - shell: |
             if ! $DESTROY_ENVIRONMENT ; then exit 0 ; fi
             . v/bin/activate
