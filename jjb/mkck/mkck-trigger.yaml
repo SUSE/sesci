@@ -47,7 +47,7 @@
             repo: 'https://github.com/ceph/ceph.git'
         - 'leap-ceph-luminous':
             dist_name: 'leap'
-            dist_ver: '15.1'
+            dist_ver: '42.3'
             disabled: false
             target: b2-60
             branch: 'luminous'
@@ -55,7 +55,7 @@
             repo: 'https://github.com/ceph/ceph.git'
         - 'leap-ceph-mimic':
             dist_name: 'leap'
-            dist_ver: '15.1'
+            dist_ver: '15.0'
             disabled: false
             target: b2-60
             branch: 'mimic'
@@ -301,8 +301,6 @@
 
         - inject:
             properties-file: $TARGET_FILE
-        #- system-groovy:
-        #    command: !include-raw-escape: create-jenkins-node.groovy
         - multijob:
             name: Create jenkins executor
             condition: ALWAYS
@@ -327,8 +325,6 @@
                   current-parameters: true
                   abort-all-job: true
                   property-file: '${{TARGET_FILE}}'
-        #- system-groovy:
-        #    command: !include-raw-escape: delete-jenkins-node.groovy
         - copyartifact:
             project: mkck-run
             filter: 'build/**, src/**/*.log, src/**/*.trs'
@@ -414,6 +410,7 @@
             optional: true
             which-build: multijob-build
         - shell: |
+            if ! $DESTROY_ENVIRONMENT ; then exit 0 ; fi
             . v/bin/activate
             STATUS=$PWD/mkck.status
             cd sesci && OS_CLOUD=$TARGET_CLOUD python -u os-server.py -a delete -s $STATUS
