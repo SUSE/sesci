@@ -108,8 +108,14 @@
         - shell: "cat ${TARGET_FILE}"
         - inject:
             properties-file: ${TARGET_FILE}
-        - system-groovy:
-            command: !include-raw: create-jenkins-node.groovy
+        - multijob:
+            name: Create jenkins executor
+            condition: ALWAYS
+            projects:
+                - name: jenkins-executor-create
+                  current-parameters: true
+                  abort-all-job: true
+                  property-file: '${{TARGET_FILE}}'
         - multijob:
             name: run tests for vagrant-ceph 
             condition: ALWAYS
@@ -124,9 +130,16 @@
                   abort-all-job: true
                   property-file: '${TARGET_FILE}'
                   enable-condition: '"${GIT_BRANCH}" != "origin/master"'
-        - system-groovy:
-            command: !include-raw: delete-jenkins-node.groovy
+        - multijob:
+            name: Delete jenkins executor
+            condition: ALWAYS
+            projects:
+                - name: jenkins-executor-delete
+                  current-parameters: true
+                  abort-all-job: true
+                  property-file: '${{TARGET_FILE}}'
         - shell: |
+            if ! $DESTROY_ENVIRONMENT ; then exit 0 ; fi
             . v/bin/activate
             STATUS=$PWD/os-server.status
             OS_CLOUD=$TARGET_CLOUD python -u sesci/os-server.py -a delete -s $STATUS
