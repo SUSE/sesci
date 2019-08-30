@@ -1,0 +1,172 @@
+#jenkins-jobs --conf storage-ci.suse.de.ini update deepsea-teuthology.yaml 
+
+- job:
+    name: 'teuthology-deploy'
+    concurrent: true
+    project-type: multijob
+    node: storage-compute
+    parameters:
+        - string:
+            name: TEUTH_NAME
+            default: "ci"
+            description: Teuthology instance name, what should be provided with '--name'
+        - string:
+            name: TEUTH_BRANCH
+            default: "master"
+            description: Teuthology branch'
+    properties:
+        - build-discarder:
+            num-to-keep: 20
+        - authorization:
+            anonymous:
+                - job-read
+                - job-status
+    wrappers:
+        - workspace-cleanup
+        - ansicolor
+        - timestamps
+        # - build-name: { name: '#$BUILD_NUMBER $chainlevel-$ses_version' }
+        - credentials-binding:
+            - file:
+                credential-id: 'teuthology-deploy-libcloud-ovh-yaml'
+                variable: LIBCLOUD_YAML
+            - file:
+                credential-id: 'teuthology-deploy-github-pull-request-opensuse-ovh-config'
+                variable: TEUTH_CONF
+            - file:
+                credential-id: 'storage-automation-secret-file'
+                variable: SECRET_FILE
+    builders:
+        - shell: "git clone https://github.com/kshtsk/teuthology-deploy"
+        # do not include-raw the source because jjb requires {} escaped
+        # variables if there are used templates
+        - shell: |
+            set -ex
+            cd teuthology-deploy
+            virtualenv v
+            . v/bin/activate
+            pip install ansible python-openstackclient
+            git clone https://github.com/suse/ceph-cm-ansible -b suse
+            cp openstack/userdata-ovh.yaml.orig openstack/userdata-ovh.yaml
+            export LOGIN_USER=opensuse
+            RESULT=0
+            ./deploy-teuthology --debug --name $TEUTH_NAME --cloud ovh --rebuild --ns --workers 8 --targets 50 --ref $TEUTH_BRANCH || RESULT=$?
+            ./deploy-teuthology --debug --name $TEUTH_NAME --cloud ovh --cleanup
+            exit $RESULT
+
+    publishers:
+        - description-setter:
+            regexp:            '^Run\s+summary:\s+suite=([^\s]*)\|name=([^\s]*)\|url=([^\s]*)'
+            regexp-for-failed: '^Run\s+summary:\s+suite=([^\s]*)\|name=([^\s]*)\|url=([^\s]*)'
+            description:            'suite \1, see <a href="\3">pulpito</a>'
+            description-for-failed: 'suite \1, see <a href="\3">pulpito</a>'
+        - archive:
+            artifacts: "logs/**,*.log,*.yaml,**/junit*.xml"
+            allow-empty: true
+        - junit:
+            results: '**/junit*.xml'
+            allow-empty-results: true
+            junit-attachments: true
+- job:
+    name: 'pr-teuthology-deploy'
+    concurrent: true
+    project-type: multijob
+    node: storage-compute
+    parameters:
+        - string:
+            name: NAME
+            default: "ci"
+            description: Teuthology instance name, what should be provided with '--name'
+    properties:
+        - github:
+            url: 'https://github.com/ceph/teuthology/'
+            display-name: suse-deepsea
+        - build-discarder:
+            num-to-keep: 20
+        - authorization:
+            anonymous:
+                - job-read
+                - job-status
+                - job-discover
+    wrappers:
+        - workspace-cleanup
+        - ansicolor
+        - timestamps
+    triggers:
+        - github-pull-request:
+            #admin-list:
+            #    - susebot
+            #    - kshtsk
+            #white-list:
+            #    - jan--f
+            #    - votdev 
+            #    - mogeb 
+            org-list: ['suse', 'SUSE']
+            cron: 'H/2 * * * *'
+            #build-desc-template: "Ceph Pull Request"
+            #trigger-phrase: 'ok to test'
+            trigger-phrase: '\W*@susebot\W+run\W+deploy(\W+.*)?'
+            only-trigger-phrase: true
+            permit-all: true
+            allow-whitelist-orgs-as-admins: true
+            #auto-close-on-fail: false
+            #!!!!!!!!!!!! Add at least one NONE target branch if 'only-trigger-phrase' == true
+            # so newly created jobs will not be scheduled for all PRs.
+            white-list-target-branches:
+                - NONE
+                - master
+            auth-id: 'susebot'
+            status-add-test-results: false
+            #status-context: 'storage-ci/deepsea-make-rpm'
+            status-context: '--none--'
+            triggered-status: '--none--'
+            started-status: '--none--'
+            error-status: '--none--'
+            success-status: '--none--'
+            failure-status: '--none--'
+            #error-comment: "Unexpected error in the make check"
+            success-comment: |
+                Commit $ghprbActualCommit is *OK*.
+                Check tests results in the Jenkins job: $BUILD_URL
+            failure-comment: |
+                Commit $ghprbActualCommit is *NOT OK*.
+                Check tests results in the Jenkins job: $BUILD_URL
+            # don't cancel build, because it aborts the top level job
+            # and that does not allow cleanup ovh resources
+            cancel-builds-on-update: true
+            #comment-file: 'logs/report.txt'
+    builders:
+        - shell: "git clone https://github.com/suse/sesci"
+        #- shell: |
+        #    mkdir -p logs
+        #    touch logs/report.txt
+        #- shell:
+        #    !include-raw:
+        #        - snippets/bash-ex.bash
+        #        - snippets/deepsea-trigger.bash
+        #        - snippets/deepsea-pr-properties.sh
+        #- inject:
+        #    properties-file: 'deepsea-pr.properties'
+        - multijob:
+            name: Deploy teuthology
+            condition: ALWAYS
+            #condition: SUCCESSFUL
+            #execution-type: 'PARALLEL'
+            #execution-type: 'SEQUENTIALLY'
+            projects:
+                - name: teuthology-deploy
+                  current-parameters: false
+                  abort-all-job: true
+                  #property-file: '${TARGET_FILE}'
+                  predefined-parameters: |
+                    TEUTH_NAME=pr-$ghprbPullId
+                    TEUTH_BRANCH=$sha1
+                    TEUTH_TARGET=$ghprbTargetBranch
+    publishers:
+        - archive:
+            artifacts: "logs/**,*.log,*.yaml,**/junit*.xml"
+            allow-empty: true
+        - junit:
+            results: '**/junit*.xml'
+            allow-empty-results: true
+            junit-attachments: true
