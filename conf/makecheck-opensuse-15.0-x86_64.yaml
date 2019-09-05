@@ -19,3 +19,4 @@ vars:
   - java
   - htop
   - ccache
+  - python
