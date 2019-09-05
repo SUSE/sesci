@@ -4,7 +4,7 @@
     test:
         - 'lint':
             target: 'lint'
-            branch: ['NONE', 'master']
+            branch: ['NONE', 'master', 'next']
             #branch: [ 'NONE']
             test-results: false
             cron: 'H/5 * * * *'
@@ -12,7 +12,7 @@
             nojunit: true
         - 'test':
             target: 'test'
-            branch: ['NONE', 'master', 'SES5']
+            branch: ['NONE', 'master', 'next', 'SES5']
             #branch: ['SES5']
             test-results: true
             cron: 'H/5 * * * *'
@@ -38,6 +38,9 @@
             #!/bin/bash
             case "$ghprbTargetBranch" in
                 "master")
+                    TARGETDIST="openSUSE-15.1"
+                    ;;
+                "next")
                     TARGETDIST="openSUSE-15.1"
                     ;;
                 "SES5")

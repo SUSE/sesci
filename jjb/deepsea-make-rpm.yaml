@@ -49,6 +49,7 @@
             # so newly created jobs will not be scheduled for all PRs.
             white-list-target-branches:
                 - NONE
+                - next
                 - master
                 - SES5
                 - SES4
