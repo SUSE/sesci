@@ -581,6 +581,9 @@
         - string:
             name: CEPH_BRANCH
             default: '{branch}'
+        - string:
+            name: CI_BRANCH
+            default: 'master'
         - bool:
             name: DESTROY_ENVIRONMENT
             default: true
@@ -606,7 +609,7 @@
                 - snippets/mkck-target-properties.bash
         - inject:
             properties-file: 'target.properties'
-        - shell: "git clone https://github.com/suse/sesci"
+        - shell: "git clone https://github.com/suse/sesci -b $CI_BRANCH"
         - shell: |
             virtualenv v
             . v/bin/activate
