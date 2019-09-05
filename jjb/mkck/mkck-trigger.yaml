@@ -201,7 +201,7 @@
     parameters:
         - string:
             name: TARGET_CLOUD
-            default: 'de'
+            default: 'sbg'
             description: "OVH region"
         - string:
             name: TARGET_FLAVOR
@@ -456,7 +456,7 @@
             default: mkck.properties
         - string:
             name: TARGET_CLOUD
-            default: 'de'
+            default: 'sbg'
         - string:
             name: TARGET_FLAVOR
             #default: hg-15-ssd
@@ -561,7 +561,7 @@
     parameters:
         - string:
             name: TARGET_CLOUD
-            default: 'de'
+            default: 'sbg'
         - string:
             name: TARGET_FLAVOR
             default: b2-60
