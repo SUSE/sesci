@@ -44,6 +44,8 @@
                 TARGET="openSUSE-15.1"
             elif [[ "$DEEPSEA_TARGET" == "next" ]] ; then
                 TARGET="openSUSE-15.1"
+            elif [[ "$DEEPSEA_TARGET" == "SES6" ]] ; then
+                TARGET="openSUSE-15.1"
             elif [[ "$DEEPSEA_TARGET" == "SES5" ]] ; then
                 TARGET="openSUSE-42.3"
             elif [[ "$DEEPSEA_TARGET" == "SES4" ]] ; then

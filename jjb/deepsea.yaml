@@ -271,6 +271,7 @@
             white-list-target-branches:
                 - NONE
                 - master
+                - SES6
                 - SES5
                 - SES4
             auth-id: 'susebot'

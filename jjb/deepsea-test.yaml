@@ -4,16 +4,14 @@
     test:
         - 'lint':
             target: 'lint'
-            branch: ['NONE', 'master', 'next']
-            #branch: [ 'NONE']
+            branch: ['NONE', 'master', 'SES6', 'next']
             test-results: false
             cron: 'H/5 * * * *'
             node: 'storage-compute'
             nojunit: true
         - 'test':
             target: 'test'
-            branch: ['NONE', 'master', 'next', 'SES5']
-            #branch: ['SES5']
+            branch: ['NONE', 'master', 'next', 'SES5', 'SES6']
             test-results: true
             cron: 'H/5 * * * *'
             node: 'storage-deepsea-builder'
@@ -41,6 +39,9 @@
                     TARGETDIST="openSUSE-15.1"
                     ;;
                 "next")
+                    TARGETDIST="openSUSE-15.1"
+                    ;;
+                "SES6")
                     TARGETDIST="openSUSE-15.1"
                     ;;
                 "SES5")

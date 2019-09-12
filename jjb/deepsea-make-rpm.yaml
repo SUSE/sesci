@@ -51,13 +51,9 @@
                 - NONE
                 - next
                 - master
+                - SES6
                 - SES5
                 - SES4
-            #    - ses3
-            #    - ses4
-            #    - ses5
-            #    - ses6
-            #    - jewel
             auth-id: 'susebot'
             status-add-test-results: false
             status-context: 'storage-ci/deepsea-make-rpm'
