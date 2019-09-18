@@ -75,18 +75,22 @@ body, html {
 <body>
 <div class="header" id="myHeader">
 {% for task in tasks %}
-<button class="tablink" onclick="openPage('{{ task.id }}', this, '{{ status }}')" id="defaultOpen">&gt; {{ task.name }}</button>
+<button class="tablink" onclick="openPage('{{ task.id }}', this, '{{ status }}')"
+        id="button_task_{{ task.id }}">&gt; {{ task.name }}</button>
 {% endfor %}
 </div>
 {% for task in tasks %}
 <div id="{{ task.id }}" class="tabcontent">
 <span><div class="header" id="myHeader2">
-<button class="tablink2" onclick="openPage2('{{ task.id }}.running', this, '{{ status }}')" id="{{ task.id }}defaultOpen">Running</button>
-<button class="tablink2" onclick="openPage2('{{ task.id }}.cleanup', this, '{{ status }}')">Cleanup</button>
+<button class="tablink2"
+        onclick="openPage2('{{ task.id }}.running', this, '{{ status }}')"
+        id="button_task_{{ task.id }}_running">Running</button>
+<button class="tablink2"
+        onclick="openPage2('{{ task.id }}.cleanup', this, '{{ status }}')">Cleanup</button>
 </div></span>
   <!-- <h2> Running log</h2>-->
   <div id="{{ task.id }}.running" class="tabcontent2">
-  <h3>{{ task.name }} running log</h3>
+      <h3>{{ task.name }} running log</h3>
   <p><pre>{{ include_file("logs/" + task.running_log_name) }}</pre></p>
   </div>
   <!-- <h2> Cleanup log</h2> -->
@@ -110,9 +114,10 @@ function openPage(pageName,elmnt,color) {
   }
   document.getElementById(pageName).style.display = "block";
   elmnt.style.backgroundColor = color;
-  document.getElementById(pageName + "defaultOpen").click();
- 
+  document.getElementById("button_task_" + pageName + "_running").click();
+  window.scrollTo(0, 0);
 }
+
 function openPage2(pageName,elmnt,color) {
   var i, tabcontent, tablinks;
   tabcontent = document.getElementsByClassName("tabcontent2");
@@ -127,8 +132,6 @@ function openPage2(pageName,elmnt,color) {
   elmnt.style.backgroundColor = color;
 }
 
-// Get the element with id="defaultOpen" and click on it
-document.getElementById("defaultOpen").click();
 window.onscroll = function() {myFunction()};
 
 var header = document.getElementById("myHeader");
@@ -141,6 +144,12 @@ function myFunction() {
     header.classList.remove("sticky");
   }
 }
+
+// Get the last task button element with id="defaultOpen{ID}" and click on it
+{% set last_task = tasks|last %}
+e=document.getElementById("button_task_{{ last_task.id }}");
+e.click();
+window.scrollBy(0, document.body.scrollHeight);
 
 </script>
    
