@@ -6,6 +6,8 @@ import json
 import os
 import shutil
 
+import jinja2
+
 doc = """
 Usage:
     saw-teuthology-logs <path> [options]
@@ -32,8 +34,7 @@ if not os.path.isdir(templates_dir):
 
 shutil.copyfile(os.path.dirname(os.path.abspath(__file__)) + '/jinja2/saw-job-log.jinja2', templates_root_dir + '/saw-job-log.jinja2')
 def saw_log(line, number, obj):
-    if 'teuthology.run_tasks:' in line:
-        if 'Running task' in line:
+    if 'teuthology.run_tasks:' in line and 'Running task' in line:
             obj.set_running()
             m = re.match(r".*Running task (?P<task>[\w.-]+)\.\.\..*", line)
             task = m.group('task')
@@ -48,7 +49,7 @@ def saw_log(line, number, obj):
                 'cleanup_log': open(cleanup_log, 'w'),
                 'running_log_name': running_log[running_log.rfind('/'):],
                 'cleanup_log_name': cleanup_log[cleanup_log.rfind('/'):],
-                'running': {'start': number, 'end': None},
+                'running': {'start': number, 'end': number},
                 'cleanup': {'start': None, 'end': None},
             }]
             obj.stack.append(task)
@@ -56,14 +57,16 @@ def saw_log(line, number, obj):
             if len(obj.stack)>0:
                 print(obj.stack[-1])
             obj.task_index = len(obj.stack)-1
-        elif 'Unwinding manager' in line:
+    elif 'teuthology.run_tasks:' in line and 'Unwinding manager' in line:
+            if obj.cleanup_task:
+                print("===============> Found the end of task '%s' cleanup on line %s" % (obj.tasks[obj.cleanup_task]['name'], number - 1))
+                obj.tasks[obj.cleanup_task]['cleanup']['end'] = number-1
             obj.set_cleanup()
             m = re.match(r".*Unwinding manager (?P<task>[\w.-]+).*", line)
             task = m.group('task')
-            print("Cleanup %s" % task, x, line, end='')
             tip_index = len(obj.stack) - 1
             tip = obj.stack[tip_index]
-            obj.tasks[tip_index]['cleanup']['end'] = number
+            print("===> Cleanning up task %s" % task, x, line, end='')
             if tip == task:
                 pos=tip_index
                 obj.stack.pop()
@@ -71,13 +74,19 @@ def saw_log(line, number, obj):
                 def rindex(mylist, myvalue):
                     return len(mylist) - mylist[::-1].index(myvalue) - 1
                 pos=rindex(obj.stack, task)
-                print("===========> Tip %s does not match task %s" % (tip, task))
+                print("====> Tip %s does not match task %s" % (tip, task))
+                print("======> Found task %s at position %s in stack" % (task, pos))
                 print("WARNNIG: No cleanup for tasks: %s" % obj.stack[pos+1:])
                 obj.stack=obj.stack[:pos]
+            print("======> Found task '%s' cleanup start at %s line" % (obj.tasks[pos]['name'], number))
             obj.tasks[pos]['cleanup']['start'] = number
             obj.cleanup_task = pos
             print("STACK: %s" % ' -> '.join(obj.stack))
     elif 'teuthology.run:Summary' in line:
+        #task = obj.tasks[obj.cleanup_task]
+        #print("DEBUG: cleanup task %s finished in the end" % task['name'])
+        #obj.tasks[obj.cleanup_task]['cleanup']['end'] = number
+
         obj.set_finish()
     else:
         if 'teuthology.run:pass' in line:
@@ -137,8 +146,6 @@ with open(input_path) as f:
                        'cleanup': i['cleanup']} for i in obj.tasks], indent='  '))
     print(obj.stack)
 
-import jinja2
-
 # logs teuthology log directory
 # it contains subdirectories corresponding to jobs
 
@@ -146,12 +153,12 @@ import jinja2
 @jinja2.contextfunction
 def include_file(ctx, name):
     env = ctx.environment
-    return jinja2.Markup(env.loader.get_source(env, name)[0])
+    return jinja2.Markup.escape(env.loader.get_source(env, name)[0])
 
 #loader = jinja2.PackageLoader(__name__, templates_root_dir)
 loader = jinja2.FileSystemLoader(templates_root_dir)
 
-env = jinja2.Environment(loader=loader, autoescape=(['html','xml']))
+env = jinja2.Environment(loader=loader, autoescape=jinja2.select_autoescape(['html','xml','htm']))
 env.globals['include_file'] = include_file
 #with open('saw-job-log.jinja2') as f:
 #    t = env.get_template(f.readlines())
