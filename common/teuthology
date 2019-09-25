@@ -1,5 +1,9 @@
 #!/bin/bash
 
+export COMMON=${CI:-$(cd $(dirname $BASH_SOURCE); echo $PWD)}
+
+source $COMMON/util
+
 function make_teuthology_junit() {
     local logdir=$1
     local junit=${2:-"junit-report.xml"}
@@ -42,7 +46,8 @@ END
 $(cat $logdir/$i/teuthology.log | extract_stack_trace | to_xml)
     </failure>
 END
-            }            cat >> $junit << END
+            }
+            cat >> $junit << END
   </testcase>
 END
         done
