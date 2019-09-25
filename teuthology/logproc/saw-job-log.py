@@ -15,6 +15,9 @@ Usage:
 Options:
 
   -o <path>, --output <path>            save report to a file
+  -r <run>, --run <run>                 run name
+  -j <job>, --job <job>                 job name
+  -d <desc>, --desc <desc>              job description
 """
 
 args = docopt.docopt(doc, argv=sys.argv[1:])
@@ -165,7 +168,15 @@ env.globals['include_file'] = include_file
 #    r = t.render(tasks=obj.tasks)
 #    print(r)
 t = env.get_template('saw-job-log.jinja2')
-r = t.generate(tasks=obj.tasks, passed=obj.result)
+r = t.generate(
+        tasks=obj.tasks,
+        passed=obj.result,
+        run_name=args.get('--run') or "^",
+        job_log=os.path.relpath(os.path.abspath(input_path), start=os.path.abspath(os.path.dirname(output_path))),
+        job_name=args.get('--job') or "",
+        job_archive=args.get('--archive') or "",
+        job_description=args.get('--desc') or "",
+        )
 print("Saving report to %s" % output_path)
 with open(output_path, 'w') as o:
     for i in r:

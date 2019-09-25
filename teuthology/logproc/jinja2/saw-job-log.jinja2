@@ -13,7 +13,7 @@ body, html {
 }
 
 /* Style tab links */
-.tablink {
+.tablink1 {
   background-color: #555;
   color: white;
   float: left;
@@ -25,7 +25,7 @@ body, html {
 /*  width: 10%; */
 }
 
-.tablink:hover {
+.tablink1:hover {
   background-color: #777;
 }
 
@@ -49,8 +49,14 @@ body, html {
 .tabcontent {
   color: black;
   display: none;
-  padding: 100px 20px;
+  padding: 20px 20px;
   height: 100%;
+}
+
+.tabcontentAlwaysOnTop {
+  color: black;
+  display: block;
+  padding: 20px 20px 0px 20px;
 }
 
 #Home {background-color: red;}
@@ -65,20 +71,29 @@ body, html {
 }
 </style>
 {% if passed %}
-<title>Passed</title>
+<title>Passed &bull; {{ job_description }}</title>
 {% set status = 'green' %}
 {% else %}
-<title>Failed</title>
+<title>Failed &bull; {{ job_description }}</title>
 {% set status = 'red' %}
 {% endif %}
 </head>
 <body>
 <div class="header" id="myHeader">
 {% for task in tasks %}
-<button class="tablink" onclick="openPage('{{ task.id }}', this, '{{ status }}')"
+<button class="tablink1" onclick="openPage('{{ task.id }}', this, '{{ status }}')"
         id="button_task_{{ task.id }}">&gt; {{ task.name }}</button>
 {% endfor %}
 </div>
+<div class="tabcontentAlwaysOnTop" id="headerJobInfo">
+    <span color="{{ status }}">
+    <h4> Job: {{ job_description }} </h4>
+    <a href="../index.html" title="Go to job summary for the run {{ run_name }}">All Jobs</a> &bull;
+    <a href="{{ job_log }}">Full Log</a> &bull;
+    <a href="{{ job_archive }}">Job Archive</a>
+</span>
+</div>
+
 {% for task in tasks %}
 <div id="{{ task.id }}" class="tabcontent">
 <span><div class="header" id="myHeader2">
@@ -102,13 +117,14 @@ body, html {
 {% endfor %}
 
 <script>
+
 function openPage(pageName,elmnt,color) {
   var i, tabcontent, tablinks;
   tabcontent = document.getElementsByClassName("tabcontent");
   for (i = 0; i < tabcontent.length; i++) {
     tabcontent[i].style.display = "none";
   }
-  tablinks = document.getElementsByClassName("tablink");
+  tablinks = document.getElementsByClassName("tablink1");
   for (i = 0; i < tablinks.length; i++) {
     tablinks[i].style.backgroundColor = "";
   }
@@ -116,11 +132,14 @@ function openPage(pageName,elmnt,color) {
   elmnt.style.backgroundColor = color;
   document.getElementById("button_task_" + pageName + "_running").click();
   window.scrollTo(0, 0);
+ 
+  var headerAoT = document.getElementById("headerJobInfo");
+  headerAoT.style.paddingTop = headH() + 'px';
 }
 
 function openPage2(pageName,elmnt,color) {
   var i, tabcontent, tablinks;
-  tabcontent = document.getElementsByClassName("tabcontent2");
+    tabcontent = document.getElementsByClassName("tabcontent2");
   for (i = 0; i < tabcontent.length; i++) {
     tabcontent[i].style.display = "none";
   }
@@ -132,10 +151,38 @@ function openPage2(pageName,elmnt,color) {
   elmnt.style.backgroundColor = color;
 }
 
+
 window.onscroll = function() {myFunction()};
+window.onresize = function() {myOnResize()};
 
 var header = document.getElementById("myHeader");
 var sticky = header.offsetTop;
+
+function headH() {
+  var header = document.getElementById("myHeader");
+  var len = 0;
+  var maxHeight = 0;
+  var tabs = document.getElementsByClassName("tablink1");
+  for (i=0; i < tabs.length; i++) {
+      t = tabs[i];
+      rect = t.getBoundingClientRect();
+      h = rect.height;
+      if (h > maxHeight) {
+          maxHeight = h;
+      }
+      w = rect.width;
+      // tab_style = document.defaultView.getComputedStyle(t,"");
+      // l = tab_style.paddingLeft;
+      // r = tab_style.paddingRight;
+      // len = len + w + parseInt(l) + parseInt(r);
+      len += w;
+  }
+  var height = maxHeight * Math.ceil(len / header.getBoundingClientRect().width);
+  return height;
+}
+
+var headerAoT = document.getElementById("headerJobInfo");
+headerAoT.style.paddingTop = headH() + 'px';
 
 function myFunction() {
   if (window.pageYOffset > sticky) {
@@ -144,7 +191,10 @@ function myFunction() {
     header.classList.remove("sticky");
   }
 }
-
+function myOnResize() {
+  var headerAoT = document.getElementById("headerJobInfo");
+  headerAoT.style.paddingTop = headH() + 'px';
+}
 // Get the last task button element with id="defaultOpen{ID}" and click on it
 {% set last_task = tasks|last %}
 e=document.getElementById("button_task_{{ last_task.id }}");
