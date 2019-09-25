@@ -18,6 +18,7 @@ Options:
   -r <run>, --run <run>                 run name
   -j <job>, --job <job>                 job name
   -d <desc>, --desc <desc>              job description
+  -a <path>, --archive <path>           relative path to job archive
 """
 
 args = docopt.docopt(doc, argv=sys.argv[1:])
