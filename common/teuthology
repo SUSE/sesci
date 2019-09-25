@@ -1,0 +1,139 @@
+#!/bin/bash
+
+function make_teuthology_junit() {
+    local logdir=$1
+    local junit=${2:-"junit-report.xml"}
+    local suitename=${3:-"suse"}
+    local classname=${4:-"teuthology"}
+    cat > $junit << END
+<?xml version="1.0" ?>
+<testsuite name="${suitename//[:\/]/.}">
+END
+        for i in $(ls $logdir) ; do
+            [ ! -d $logdir/$i ] && continue
+            local summary_yaml=$logdir/$i/summary.yaml
+            local config=$logdir/$i/config.yaml
+            local info_yaml=$logdir/$i/info.yaml
+            local name=$(
+                python -c "import sys, yaml ; print(yaml.safe_load(sys.stdin)['description'])" < $info_yaml
+            )
+            local dura=$(
+                python -c "import sys, yaml ; print(yaml.safe_load(sys.stdin)['duration'])" < $summary_yaml || echo "0"
+            )
+            local tlog=$logdir/teuthology-$suitename-$i.log
+            cp $logdir/$i/teuthology.log $tlog
+            cat >> $junit << END
+  <testcase classname="$classname" name="$name" time="$dura">
+    <system-out>
+$(make_brief_deepsea_report $logdir/$i/teuthology.log | to_xml)
+
+[[ATTACHMENT|$tlog]]
+    </system-out>
+END
+            grep "^success:" $summary_yaml | grep -q "true" || {
+                local reason=$(
+                    python -c "import sys, yaml ; from xml.dom.minidom import Text ; \
+                        t = Text() ; t.data = yaml.safe_load(sys.stdin)['failure_reason'] ; \
+                        print(t.toxml())" < $summary_yaml
+                )
+                cat >> $junit << END
+    <failure>$reason
+
+$(cat $logdir/$i/teuthology.log | extract_stack_trace | to_xml)
+    </failure>
+END
+            }            cat >> $junit << END
+  </testcase>
+END
+        done
+        cat >> $junit << END
+</testsuite>
+END
+}
+
+function make_teuthology_report() {
+    local runname=$1 # run name
+    local archive=$2 # run archive path, include job directories
+    local pulpito=$3 # run hyperlink at pulpito
+    alljobs=( $(find $archive -mindepth 1 -maxdepth 1 -type d) )
+    total=${#alljobs[@]}
+
+    local index_html=$archive/index.html
+
+    cat > $index_html << EOF
+<html>
+    <title>$runname</title>
+    <style>
+    table {
+        border-spacing: 0;
+        display: table;
+        table-layout: auto;
+        vertical-align: top;
+        box-sizing: border-box;
+        border: 1px solid #dddddd;
+    }
+    td {
+        border-spacing: 0;
+        border-bottom: 1px solid #dddddd;
+        border-right: 1px solid #dddddd;
+    }
+    tr.fail {
+        background-color: #f2dede;
+    }
+    tr.fail:hover {
+        background-color: #ebcccc;
+    }
+    tr.pass {
+        background-color: #dff0d8;
+    }
+    tr.pass:hover {
+        background-color: #d0e9c6;
+    }
+    tr a {
+        text-decoration: none;
+        padding: 5px;
+    }
+    </style>
+    <body>
+        <h3><a href="$pulpito" title="Go to Pulpito">Run $runname</a></h3>
+        <table>
+            <tbody>
+EOF
+        for i in $(ls $archive) ; do
+            local job_archive=$archive/$i
+            if [ -d $job_archive ] ; then
+
+                local info_yaml=$job_archive/info.yaml
+                local summary_yaml=$job_archive/summary.yaml
+
+                local name=$(cat $info_yaml | yj | jq -r .description)
+                local dura=$(cat $summary_yaml | yj | jq -r .duration || echo "0")
+                local success=$(cat $summary_yaml | yj | jq -r .success)
+                if [ "$success" == "true" ] ; then
+                    res=pass
+                else
+                    res=fail
+                fi
+
+                python sesci/teuthology/logproc/saw-job-log.py logs/run/$i/teuthology.log \
+                    --output logs/run/teuthology-job-$i.html \
+                    --archive $i \
+                    --desc "$name"
+
+                cat >> $index_html << EOF
+                <tr class="$res">
+                    <td><a href="teuthology-job-$i.html">$i</a></td>
+                    <td><a href="teuthology-job-$i.html">$name</a></td>
+                    <td>$dura</td>
+                    <td><a href="teuthology-job-$i.html">$res</a></td>
+                </tr>
+EOF
+            fi
+        done
+        cat >> $index_html << EOF
+            </tbody>
+        </table>
+    </body>
+</html>
+EOF
+}
