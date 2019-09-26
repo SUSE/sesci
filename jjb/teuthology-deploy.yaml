@@ -37,29 +37,104 @@
                 credential-id: 'storage-automation-secret-file'
                 variable: SECRET_FILE
     builders:
+        - shell: "git clone https://github.com/suse/sesci"
         - shell: "git clone https://github.com/kshtsk/teuthology-deploy"
         # do not include-raw the source because jjb requires {} escaped
         # variables if there are used templates
         - shell: |
+            export SESCI=$PWD/sesci
+            export LOGS=$PWD/logs
+            . $SESCI/common/teuthology
+
+            export LOGPROCVENV=$PWD/logproc-env
+            virtualenv -p python3 $LOGPROCVENV
+            (
+                . $LOGPROCVENV/bin/activate
+                pip install docopt jinja2 pyyaml
+                deactivate
+            )
             set -ex
             cd teuthology-deploy
             virtualenv v
             . v/bin/activate
-            pip install ansible python-openstackclient
+            pip install ansible==2.8.4 python-openstackclient
             git clone https://github.com/suse/ceph-cm-ansible -b suse
             cp openstack/userdata-ovh.yaml.orig openstack/userdata-ovh.yaml
             export LOGIN_USER=opensuse
             RESULT=0
+            mkdir -p $LOGS
+            TEUTH_SUITE_LOG=$LOGS/teuthology-suite.log
+            TEUTH_DEPLOY_LOG=$LOGS/teuthology-deploy.log
+            TEUTH_CLEANUP_LOG=$LOGS/teuthology-cleanup.log
+            export TEUTH_ARCHIVE=/home/worker/archive
+            export TEUTH_IDENTITY=$SECRET_FILE
+            export TERRAFORM_STATE=$LOGS/$TEUTH_NAME.tfstate
             ./deploy-teuthology --debug --name $TEUTH_NAME --cloud ovh --rebuild --ns --workers 8 --targets 50 --ref $TEUTH_BRANCH || RESULT=$?
+            if (( RESULT==0 )) ; then
+            (
+                export TEUTH_HOST=$(terraform output -state=$TERRAFORM_STATE ip)
+                #export TEUTH_HOST=$(grep 'teuthology admin: ssh -i' $TEUTH_DEPLOY_LOG | \
+                #    sed -E 's/.* (.*\@[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+) \#.*/\1/')
+                #ssh runner@teuth-$EUTH_NAME "source .profile ; teuthology-suite -s smoke --ceph nautilus -D 7.4 -d centos -v -m ovh -w --limit 1"
+                TEUTH_SUITE=smoke
+                ssh -i $SECRET_FILE runner@$TEUTH_HOST "
+                [[ -f .profile ]]           && source .profile
+                [[ -f .bashrc_teuthology ]] && source .bashrc_teuthology
+                teuthology-suite -v \
+                    --machine-type ovh \
+                    --ceph nautilus \
+                    --suite $TEUTH_SUITE \
+                    -D 7.4 \
+                    -d centos \
+                    --limit 1 \
+                    --newest 10 \
+                    --w 2>&1" | tee $TEUTH_SUITE_LOG
+                runname=$(grep 'Job scheduled with name' $TEUTH_SUITE_LOG | head -1 | \
+                          perl -n -e'/name ([^ ]+)/ && CORE::say $1')
+                pulpito=$(grep 'Test results' $TEUTH_SUITE_LOG | \
+                          sed -E 's/.* viewable at ([^\w]*)$/\1/g')
+                failed=$(grep -sc 'teuthology.suite:fail' $TEUTH_SUITE_LOG)
+                passed=$(grep -sc 'teuthology.suite:pass' $TEUTH_SUITE_LOG)
+                dead=$(grep -sc 'teuthology.suite:dead' $TEUTH_SUITE_LOG)
+
+                runpath=$LOGS/run
+                mkdir -p $runpath
+                scp -r -i $SECRET_FILE worker@$TEUTH_HOST:$TEUTH_ARCHIVE/$runname/* $runpath
+
+                alljobs=( $(find $runpath -mindepth 1 -maxdepth 1 -type d) )
+                total=${#alljobs[@]}
+
+                make_teuthology_junit $runpath $LOGS/junit-report.xml $TEUTH_SUITE "teuthology"
+                (
+                  source $LOGPROCVENV/bin/activate
+                  make_teuthology_report "$runname" "$runpath" "$pulpito"
+                )
+
+                echo TOTAL: $total
+                echo PASS: $passed
+                echo FAIL: $failed
+                echo DEAD: $dead
+                echo JOBS: ${alljobs[@]##*/}
+            ) || RESULT=$?
+            fi
             ./deploy-teuthology --debug --name $TEUTH_NAME --cloud ovh --cleanup
+
             exit $RESULT
 
     publishers:
         - description-setter:
-            regexp:            '^Run\s+summary:\s+suite=([^\s]*)\|name=([^\s]*)\|url=([^\s]*)'
-            regexp-for-failed: '^Run\s+summary:\s+suite=([^\s]*)\|name=([^\s]*)\|url=([^\s]*)'
-            description:            'suite \1, see <a href="\3">pulpito</a>'
-            description-for-failed: 'suite \1, see <a href="\3">pulpito</a>'
+            regexp: 'Test results viewable at ([^\s]*)'
+            description:
+                <a href="/job/$JOB_NAME/$BUILD_NUMBER/testReport" title="Go to Test Results">Test Results</a> &bull;
+                <a href="/job/$JOB_NAME/$BUILD_NUMBER/artifact" title="Go to Jenkins build artifacts">Build Artifacts</a> &bull;
+                <a href="/job/$JOB_NAME/$BUILD_NUMBER/artifact/logs/run/index.html" title="Go to Teuthology Run Report">Run Report</a> &bull;
+                <a href="\1" title="Go to Pulpito Run Page">Pulpito</a>
+            regexp-for-failed: 'Test results viewable at ([^\s]*)'
+            description-for-failed:
+                <a href="/job/$JOB_NAME/$BUILD_NUMBER/testReport" title="Go to Test Results">Test Results</a> &bull;
+                <a href="/job/$JOB_NAME/$BUILD_NUMBER/artifact" title="Go to Jenkins build artifacts">Build Artifacts</a> &bull;
+                <a href="/job/$JOB_NAME/$BUILD_NUMBER/artifact/logs/run/index.html" title="Go to Teuthology Run Report">Run Report</a> &bull;
+                <a href="\1" title="Go to Pulpito Run Page">Pulpito</a>
         - archive:
             artifacts: "logs/**,*.log,*.yaml,**/junit*.xml"
             allow-empty: true
