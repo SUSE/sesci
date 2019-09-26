@@ -5,6 +5,11 @@ export SESCI=${SESCI:-$(cd $(dirname $BASH_SOURCE)/..; echo $PWD)}
 
 source $COMMON/util
 
+function extract_stack_trace() {
+    sed -E -n '/ERROR:teuthology.run_tasks/,/^....-..-..T..:..:..\.... /p'
+    # | head -n -1
+}
+
 function make_teuthology_junit() {
     local logdir=$1
     local junit=${2:-"junit-report.xml"}
