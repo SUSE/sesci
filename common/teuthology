@@ -1,6 +1,7 @@
 #!/bin/bash
 
-export COMMON=${CI:-$(cd $(dirname $BASH_SOURCE); echo $PWD)}
+export COMMON=${COMMON:-$(cd $(dirname $BASH_SOURCE); echo $PWD)}
+export SESCI=${SESCI:-$(cd $(dirname $BASH_SOURCE)/..; echo $PWD)}
 
 source $COMMON/util
 
@@ -120,7 +121,7 @@ EOF
                     res=fail
                 fi
 
-                python sesci/teuthology/logproc/saw-job-log.py logs/run/$i/teuthology.log \
+                python $SESCI/teuthology/logproc/saw-job-log.py logs/run/$i/teuthology.log \
                     --output logs/run/teuthology-job-$i.html \
                     --archive $i \
                     --desc "$name"
