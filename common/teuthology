@@ -121,8 +121,8 @@ EOF
                     res=fail
                 fi
 
-                python $SESCI/teuthology/logproc/saw-job-log.py logs/run/$i/teuthology.log \
-                    --output logs/run/teuthology-job-$i.html \
+                python $SESCI/teuthology/logproc/saw-job-log.py $job_archive/teuthology.log \
+                    --output $archive/teuthology-job-$i.html \
                     --archive $i \
                     --desc "$name"
 
