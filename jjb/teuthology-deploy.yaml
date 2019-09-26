@@ -87,8 +87,9 @@
                     -D 7.4 \
                     -d centos \
                     --limit 1 \
-                    --newest 10 \
-                    --w 2>&1" | tee $TEUTH_SUITE_LOG
+                    --newest 100 \
+                    --wait \
+                    " 2>&1 | tee $TEUTH_SUITE_LOG
                 runname=$(grep 'Job scheduled with name' $TEUTH_SUITE_LOG | head -1 | \
                           perl -n -e'/name ([^ ]+)/ && CORE::say $1')
                 pulpito=$(grep 'Test results' $TEUTH_SUITE_LOG | \
@@ -106,6 +107,7 @@
 
                 make_teuthology_junit $runpath $LOGS/junit-report.xml $TEUTH_SUITE "teuthology"
                 (
+                  export LC_ALL=en_US.UTF-8
                   source $LOGPROCVENV/bin/activate
                   make_teuthology_report "$runname" "$runpath" "$pulpito"
                 )
