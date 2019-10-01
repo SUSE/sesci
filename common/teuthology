@@ -10,6 +10,15 @@ function extract_stack_trace() {
     # | head -n -1
 }
 
+function teuth_job_duration() {
+    local $summary_yaml=$1
+    printf "%.*f" 1 $(cat $summary_yaml | yj | jq -r .duration || echo "0")
+}
+function teuth_job_description() {
+    local $info_yaml=$1
+    cat $info_yaml | yj | jq -r .description
+}
+
 function make_teuthology_junit() {
     local logdir=$1
     local junit=${2:-"junit-report.xml"}
@@ -24,12 +33,8 @@ END
             local summary_yaml=$logdir/$i/summary.yaml
             local config=$logdir/$i/config.yaml
             local info_yaml=$logdir/$i/info.yaml
-            local name=$(
-                python -c "import sys, yaml ; print(yaml.safe_load(sys.stdin)['description'])" < $info_yaml
-            )
-            local dura=$(
-                python -c "import sys, yaml ; print(yaml.safe_load(sys.stdin)['duration'])" < $summary_yaml || echo "0"
-            )
+            local name=$(teuth_job_description $info_yaml)
+            local dura=$(teuth_job_duration $summary_yaml)
             local tlog=$logdir/teuthology-$suitename-$i.log
             cp $logdir/$i/teuthology.log $tlog
             cat >> $junit << END
@@ -117,8 +122,8 @@ EOF
                 local info_yaml=$job_archive/info.yaml
                 local summary_yaml=$job_archive/summary.yaml
 
-                local name=$(cat $info_yaml | yj | jq -r .description)
-                local dura=$(cat $summary_yaml | yj | jq -r .duration || echo "0")
+                local name=$(teuth_job_description $info_yaml)
+                local dura=$(teuth_job_duration $summary_yaml)
                 local success=$(cat $summary_yaml | yj | jq -r .success)
                 if [ "$success" == "true" ] ; then
                     res=pass
