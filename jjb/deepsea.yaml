@@ -370,6 +370,7 @@
         - workspace-cleanup
         - ansicolor
         - timestamps
+        - build-name: { name: '#$BUILD_NUMBER $CEPH_BRANCH' }
     builders:
         - shell: |
             echo "$ARTIFACTS" >> artifacts-$CEPH_BRANCH.yaml
