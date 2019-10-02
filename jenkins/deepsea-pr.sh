@@ -2,8 +2,9 @@
 
 mkdir -p logs
 
-export SOURCEPATH=$(cd $(dirname $BASH_SOURCE); echo $PWD)
-source $SOURCEPATH/util
+export SOURCEPATH=$(cd $(dirname $BASH_SOURCE)/..; echo $PWD)
+source $SOURCEPATH/common/util
+source $SOURCEPATH/common/teuthology
 
 # Job specific variables
 TEUTH_NAME=${TEUTH_NAME:-"ci"}
