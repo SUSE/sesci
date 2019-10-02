@@ -129,56 +129,6 @@ runname=$jobname
 runurl=http://$teuth:8081/$runname
 echo "Run summary: suite=$TEUTH_SUITE|name=$runname|url=$runurl"
 
-function make_teuthology_junit() {
-    local logdir=$1
-    local junit=${2:-"junit-report.xml"}
-    local suite=${3:-"run"}
-    local class="${suite//[:\/]/\:}"
-    cat > $junit << END
-<?xml version="1.0" ?>
-<testsuite name="$suite">
-END
-        for i in $(ls $logdir) ; do
-            local summary_yaml=$logdir/$i/summary.yaml
-            local info_yaml=$logdir/$i/info.yaml
-            local name=$(
-                python -c "import sys, yaml ; print(yaml.load(sys.stdin)['description'])" < $info_yaml
-            )
-            name=${name/"$class"\//}
-            local dura=$(
-                python -c "import sys, yaml ; print(yaml.load(sys.stdin)['duration'])" < $summary_yaml || echo "0"
-            )
-            local tlog=$logdir/teuthology-$i.log
-            cp $logdir/$i/teuthology.log $tlog
-            cat >> $junit << END
-  <testcase classname="teuthology.$class" name="$name" time="$dura">
-    <system-out>$(make_brief_deepsea_report $logdir/$i/teuthology.log | to_xml)
-
-	[[ATTACHMENT|$tlog]]
-
-    </system-out>
-END
-            grep "^success:" $summary_yaml | grep -q "true" || {
-                local reason=$(
-                    python -c "import sys, yaml ; from xml.dom.minidom import Text ; \
-                        t = Text() ; t.data = yaml.load(sys.stdin)['failure_reason'] ; \
-                        print(t.toxml())" < $summary_yaml
-                )
-                cat >> $junit << END
-    <failure>$reason
-
-$(cat $logdir/$i/teuthology.log | extract_stack_trace | to_xml)
-    </failure>
-END
-            }
-            cat >> $junit << END
-  </testcase>
-END
-        done
-        cat >> $junit << END
-</testsuite>
-END
-}
 function make_message() {
     local logdir=$1
     local message=$2
@@ -319,7 +269,7 @@ else
     make_github_report logs/$jobname logs/report.txt
     make_teuthology_html logs/$jobname logs/$HTML_REPORT
     (cd logs ; ln -s $HTML_REPORT teuthology-report.html)
-    make_teuthology_junit logs/$jobname logs/junit-report.xml $TEUTH_SUITE
+    make_teuthology_junit logs/$jobname logs/junit-report.xml $TEUTH_SUITE "teuthology.${TEUTH_SUITE//[:\/]/\:}"
 fi
 
 echo PASS: $passed
