@@ -14,6 +14,9 @@
             name: TEUTH_BRANCH
             default: "master"
             description: Teuthology branch'
+        - bool:
+            name: DESTROY_ENVIRONMENT
+            default: true
     properties:
         - build-discarder:
             num-to-keep: 20
@@ -119,8 +122,9 @@
                 echo JOBS: ${alljobs[@]##*/}
             ) || RESULT=$?
             fi
-            ./deploy-teuthology --debug --name $TEUTH_NAME --cloud ovh --cleanup
-
+            if $DESTROY_ENVIRONMENT ; then
+                ./deploy-teuthology --debug --name $TEUTH_NAME --cloud ovh --cleanup
+            fi
             exit $RESULT
 
     publishers:
