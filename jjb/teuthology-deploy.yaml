@@ -1,14 +1,22 @@
 #jenkins-jobs --conf storage-ci.suse.de.ini update deepsea-teuthology.yaml 
+- project:
+    name: teuthology-deploy
+    cloud:
+        - 'ovh'
+        - 'ecp'
+    jobs:
+        - 'teuthology_deploy'
 
-- job:
-    name: 'teuthology-deploy'
+- job-template:
+    id: 'teuthology_deploy'
+    name: 'teuthology-deploy-{cloud}'
     concurrent: true
     project-type: multijob
     node: storage-compute
     parameters:
         - string:
             name: TEUTH_NAME
-            default: "ci"
+            default: "libcloud"
             description: Teuthology instance name, what should be provided with '--name'
         - string:
             name: TEUTH_BRANCH
@@ -31,10 +39,10 @@
         # - build-name: { name: '#$BUILD_NUMBER $chainlevel-$ses_version' }
         - credentials-binding:
             - file:
-                credential-id: 'teuthology-deploy-libcloud-ovh-yaml'
+                credential-id: 'teuthology-deploy-libcloud-{cloud}-yaml'
                 variable: LIBCLOUD_YAML
             - file:
-                credential-id: 'teuthology-deploy-github-pull-request-opensuse-ovh-config'
+                credential-id: 'teuthology-deploy-github-pull-request-opensuse-{cloud}-config'
                 variable: TEUTH_CONF
             - file:
                 credential-id: 'storage-automation-secret-file'
@@ -62,7 +70,7 @@
             . v/bin/activate
             pip install ansible==2.8.4 python-openstackclient
             git clone https://github.com/suse/ceph-cm-ansible -b suse
-            cp openstack/userdata-ovh.yaml.orig openstack/userdata-ovh.yaml
+            cp openstack/userdata-{cloud}.yaml.orig openstack/userdata-{cloud}.yaml
             export LOGIN_USER=opensuse
             RESULT=0
             mkdir -p $LOGS
@@ -72,7 +80,7 @@
             export TEUTH_ARCHIVE=/home/worker/archive
             export TEUTH_IDENTITY=$SECRET_FILE
             export TERRAFORM_STATE=$LOGS/$TEUTH_NAME.tfstate
-            ./deploy-teuthology --debug --name $TEUTH_NAME --cloud ovh --rebuild --ns --workers 8 --targets 50 --ref $TEUTH_BRANCH || RESULT=$?
+            ./deploy-teuthology --debug --name $TEUTH_NAME --cloud {cloud} --rebuild --ns --workers 8 --targets 50 --ref $TEUTH_BRANCH || RESULT=$?
             if (( RESULT==0 )) ; then
             (
                 export TEUTH_HOST=$(terraform output -state=$TERRAFORM_STATE ip)
@@ -84,7 +92,7 @@
                 [[ -f .profile ]]           && source .profile
                 [[ -f .bashrc_teuthology ]] && source .bashrc_teuthology
                 teuthology-suite -v \
-                    --machine-type ovh \
+                    --machine-type {cloud} \
                     --ceph nautilus \
                     --suite $TEUTH_SUITE \
                     -D 7.4 \
@@ -106,7 +114,7 @@
                 scp -r -i $SECRET_FILE worker@$TEUTH_HOST:$TEUTH_ARCHIVE/$runname/* $runpath
 
                 alljobs=( $(find $runpath -mindepth 1 -maxdepth 1 -type d) )
-                total=${#alljobs[@]}
+                total=${{#alljobs[@]}}
 
                 make_teuthology_junit $runpath $LOGS/junit-report.xml $TEUTH_SUITE "teuthology"
                 (
@@ -119,11 +127,11 @@
                 echo PASS: $passed
                 echo FAIL: $failed
                 echo DEAD: $dead
-                echo JOBS: ${alljobs[@]##*/}
+                echo JOBS: ${{alljobs[@]##*/}}
             ) || RESULT=$?
             fi
             if $DESTROY_ENVIRONMENT ; then
-                ./deploy-teuthology --debug --name $TEUTH_NAME --cloud ovh --cleanup
+                ./deploy-teuthology --debug --name $TEUTH_NAME --cloud {cloud} --cleanup
             fi
             exit $RESULT
 
@@ -235,7 +243,7 @@
             #execution-type: 'PARALLEL'
             #execution-type: 'SEQUENTIALLY'
             projects:
-                - name: teuthology-deploy
+                - name: teuthology-deploy-ovh
                   current-parameters: false
                   abort-all-job: true
                   #property-file: '${TARGET_FILE}'
