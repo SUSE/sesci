@@ -24,6 +24,7 @@
             type: user-defined
             values:
                 - 'virt-appl/openSUSE-Leap-15.1'
+                - 'opensuse/Tumbleweed.x86_64'
         # needed next to restrict matrix subjobs to conquer other workers
         - axis:
             name: WORKER_LABEL
@@ -223,7 +224,18 @@
             ./openSUSE_vagrant_setup.sh
 
         - shell: |
-            vagrant box add --provider libvirt --name $BOX https://download.opensuse.org/repositories/Virtualization:/Appliances:/Images:/openSUSE-Leap-15.1/images/Leap-15.1.x86_64-libvirt.box
+
+            case "$BOX" in \
+              "virt-appl/openSUSE-Leap-15.1") \
+                vagrant box add --provider libvirt --name "$BOX" \
+                https://download.opensuse.org/repositories/Virtualization:/Appliances:/Images:/openSUSE-Leap-15.1/images/Leap-15.1.x86_64-libvirt.box \
+              ;; \
+              "opensuse/Tumbleweed.x86_64") \
+                vagrant box add --provider libvirt --name "$BOX" \
+                https://download.opensuse.org/repositories/Virtualization:/Appliances:/Images:/openSUSE-Tumbleweed/openSUSE_Tumbleweed/Tumbleweed.x86_64-libvirt.box \
+              ;; \
+            esac
+
             cd vagrant-ceph
             vagrant up || true
             vagrant provision
