@@ -23,7 +23,7 @@
             name: BOX
             type: user-defined
             values:
-                - 'sub0/leap151'
+                - 'virt-appl/openSUSE-Leap-15.1'
         # needed next to restrict matrix subjobs to conquer other workers
         - axis:
             name: WORKER_LABEL

@@ -1,6 +1,6 @@
 # sesci
 
-Jenkins jobs configs can be found in `jjb/` for jenkins job builder or `jenkins/job-dsl` for Jenkins Job DSL plugin.
+Jenkins jobs configs can be found in `jjb` for jenkins job builder or `jenkins/job-dsl` for Jenkins Job DSL plugin.
 
 
 Copy `jjb/mkck/jenkins_jobs.ini.orig` file to `your-jenkins.ini` and add credentials.
