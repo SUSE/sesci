@@ -49,7 +49,7 @@
                 variable: SECRET_FILE
     builders:
         - shell: "git clone https://github.com/suse/sesci"
-        - shell: "git clone https://github.com/kshtsk/teuthology-deploy"
+        - shell: "git clone https://github.com/suse/teuthology-deploy"
         # do not include-raw the source because jjb requires {} escaped
         # variables if there are used templates
         - shell: |
