@@ -3,6 +3,7 @@ import os
 
 from node import RemoteNode
 from node import LocalNode
+from node import RebootTools
 
 
 class TestStringMethods(unittest.TestCase):
@@ -39,24 +40,26 @@ class TestStringMethods(unittest.TestCase):
         # https://tools.ietf.org/html/rfc5737
         remote = RemoteNode('192.0.2.1',
                             username=os.environ.get('USER'),
-                            identity=os.environ.get('HOME') + '/.ssh/id_rsa')
+                            identity=os.environ.get('HOME') + '/.ssh/id_rsa',
+                            connecttimeout=1,
+                            connectionattempts=1 )
         with self.assertRaises(Exception):
             remote.shell('ls -la ', )
 
-    def test_node_wait(self):
-        local = LocalNode()
+    def test_wait_for_node(self):
+        rtools = RebootTools()
         self.assertTrue(
-            local.wait_for_node(host='127.0.0.1', attempts=2, timeout=5))
+            rtools.wait_for_node(host='127.0.0.1', attempts=2, timeout=5))
         self.assertFalse(
-            local.wait_for_node(host='192.0.2.1', attempts=2, timeout=5))
+            rtools.wait_for_node(host='192.0.2.1', attempts=2, timeout=5))
 
-    def test_node_wait(self):
-        local = LocalNode()
+    def test_wiat_for_port(self):
+        rtools = RebootTools()
         self.assertTrue(
-            local.wait_for_port(host='127.0.0.1', attempts=2, timeout=5))
+            rtools.wait_for_port(host='127.0.0.1', attempts=2, timeout=5))
         #self.assertFalse(
         with self.assertRaises(Exception):
-            local.wait_for_port(host='192.0.2.1', attempts=2, timeout=5)
+            rtools.wait_for_port(host='192.0.2.1', attempts=2, timeout=5)
 
     def test_node_send(self):
         remote = RemoteNode('127.0.0.1',

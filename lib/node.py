@@ -116,6 +116,40 @@ class CommonTools(BasicShell, ToolBox):
         self._shell('ls', *args, **kwargs)
         return self.stdout
 
+    def pwd(self):
+        self.shell('pwd')
+        return self.stdout
+
+    def wait_for_substr(self, *args, **kwargs):
+        # 5 min by def
+        timeout = kwargs.get('timeout', 300)
+        # sleep between runs
+        sleep  = kwargs.get('sleep', 5)
+        substr = kwargs.get('substr', '')
+        cmd = kwargs.get('cmd', '')
+        log.debug("Arguments:", kwargs)
+        print("Waiting for [{}] in output of [{}] the node {}".
+                 format(substr, cmd, self.hostname))
+        found = False
+        starttime = int(time.time())
+        print()
+        while (not found) and (starttime + int(timeout)) > int(time.time()):
+            self.shell(cmd, die=False, quiet=True)
+            if (self.stdout + self.stdout).find(substr) > -1:
+                log.info('[{}] found!'.format(substr))
+                found = True
+            else:
+                time.sleep(sleep)
+        if not found:
+            print("Raising exception on no substr in timeout")
+            print("Last output:", self.stdout)
+            raise Exception("Substring [{}] not found for [{}] in [{}] sec.".
+                            format(substr, cmd, timeout))
+        return True
+    
+
+class RebootTools(CommonTools):
+
     def reboot(self, *args, **kwargs):
         timeout = kwargs.get('timeout', 120)
         self._shell('sudo reboot', *args, **kwargs)
@@ -178,38 +212,6 @@ class CommonTools(BasicShell, ToolBox):
         raise Exception("Cannot connect to [{}]".format(hostname))
 
 
-    def wait_for_substr(self, *args, **kwargs):
-        # 5 min by def
-        timeout = kwargs.get('timeout', 300)
-        # sleep between runs
-        sleep  = kwargs.get('sleep', 5)
-        substr = kwargs.get('substr', '')
-        cmd = kwargs.get('cmd', '')
-        log.debug("Arguments:", kwargs)
-        print("Waiting for [{}] in output of [{}] the node {}".
-                 format(substr, cmd, self.hostname))
-        found = False
-        starttime = int(time.time())
-        print()
-        while (not found) and (starttime + int(timeout)) > int(time.time()):
-            self.shell(cmd, die=False, quiet=True)
-            if (self.stdout + self.stdout).find(substr) > -1:
-                log.info('[{}] found!'.format(substr))
-                found = True
-            else:
-                time.sleep(sleep)
-        if not found:
-            print("Raising exception on no substr in timeout")
-            print("Last output:", self.stdout)
-            raise Exception("Substring [{}] not found for [{}] in [{}] sec.".
-                            format(substr, cmd, timeout))
-        return True
-
-    def pwd(self):
-        self.shell('pwd')
-        return self.stdout
-
-
 class LocalShell(BasicShell):
     def __init__(self):
         self.command = ''
@@ -242,15 +244,21 @@ class LocalShell(BasicShell):
 
 
 class SecureShell(BasicShell):
-    def __init__(self, hostname='localhost', username=None, password=None, identity=None, port=22):
+    def __init__(self, hostname='localhost',
+                    username=None, password=None,
+                    identity=None, port=22,
+                    connecttimeout=10, connectionattempts=5):
         self.hostname = hostname
         self.username = username
         self.password = password
         self.identity = identity
+        self.connecttimeout = connecttimeout
+        self.connectionattempts = connectionattempts
         self.port = port
         self.default_opts = '-q -o StrictHostKeyChecking=no -o ' + \
-                            ' UserKnownHostsFile=/dev/null -o ConnectTimeout=10 ' + \
-                            '-o ConnectionAttempts=5 '
+                            ' UserKnownHostsFile=/dev/null ' + \
+                            '-o ConnectTimeout=%s ' % connecttimeout + \
+                            '-o ConnectionAttempts=%s ' % connectionattempts
         self.scp_opts = ' -p -r '
         self.command = ''
 
