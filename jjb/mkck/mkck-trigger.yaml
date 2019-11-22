@@ -53,14 +53,6 @@
             branch: 'luminous'
             ref: 'luminous'
             repo: 'https://github.com/ceph/ceph.git'
-        - 'leap-ceph-mimic':
-            dist_name: 'leap'
-            dist_ver: '15.0'
-            disabled: false
-            target: b2-60
-            branch: 'mimic'
-            ref: 'mimic'
-            repo: 'https://github.com/ceph/ceph.git'
         - 'leap-ceph-nautilus':
             dist_name: 'leap'
             dist_ver: '15.1'
