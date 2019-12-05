@@ -13,14 +13,15 @@
 - project:
     name: run-make-check-nightly
     dist_ceph:
-        - 'leap-ses5':
-            dist_name: 'leap'
-            dist_ver: '42.3'
-            disabled: false
-            target: b2-60
-            branch: 'ses5'
-            ref: 'ses5'
-            repo: 'https://github.com/suse/ceph.git'
+        # disalbed because leap 42.3 EOL
+        #- 'leap-ses5':
+        #    dist_name: 'leap'
+        #    dist_ver: '42.3'
+        #    disabled: true
+        #    target: b2-60
+        #    branch: 'ses5'
+        #    ref: 'ses5'
+        #    repo: 'https://github.com/suse/ceph.git'
         - 'leap-ses6':
             dist_name: 'leap'
             dist_ver: '15.1'
@@ -45,14 +46,15 @@
             branch: 'master'
             ref: 'master'
             repo: 'https://github.com/ceph/ceph.git'
-        - 'leap-ceph-luminous':
-            dist_name: 'leap'
-            dist_ver: '42.3'
-            disabled: false
-            target: b2-60
-            branch: 'luminous'
-            ref: 'luminous'
-            repo: 'https://github.com/ceph/ceph.git'
+        # Disabled because luminous is EOL
+        #- 'leap-ceph-luminous':
+        #    dist_name: 'leap'
+        #    dist_ver: '42.3'
+        #    disabled: true
+        #    target: b2-60
+        #    branch: 'luminous'
+        #    ref: 'luminous'
+        #    repo: 'https://github.com/ceph/ceph.git'
         - 'leap-ceph-nautilus':
             dist_name: 'leap'
             dist_ver: '15.1'
