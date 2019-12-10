@@ -81,6 +81,7 @@ if spec_path:
             elif default:
                 obj[key] = default
         override_dict(server_spec, 'keyfile', env='SECRET_FILE')
+        override_dict(server_spec, 'image', env='TARGET_IMAGE')
         override_dict(server_spec, 'name', default=target_mask)
         override_dict(server_spec, 'flavor', default=target_flavor)
 
