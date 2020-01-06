@@ -354,14 +354,10 @@ if args.action in ['create']:
     if not image:
         raise Exception("Can't find image %s" % server_spec['image'])
     print("found %s" % image.id)
-    flavor = next(x for x in c.flavors()
-                    if x.name==server_spec['flavor'])
-    flavors = sorted(i.name for i in c.flavors())
-    #for i in flavors:
-    #    print("FLAVOR: %s" % i)
-    print("FLAVORS: %s" % ', '.join(flavors))
-    f = c.find_flavor(server_spec['flavor'])
-    print('Found flavor: %s' % f.name)
+    flavor = conn.get_flavor(server_spec['flavor'])
+    if not flavor:
+        raise Exception("Can't find flavor %s" % server_spec['flavor'])
+    print('Found flavor: %s' % flavor.id)
     keypair = conn.compute.find_keypair(server_spec['keyname'])
     print("Image:   %s" % image.name)
     print("Flavor:  %s" % flavor.name)
