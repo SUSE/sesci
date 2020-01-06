@@ -36,7 +36,6 @@ if args.debug:
 
 home = os.environ.get('HOME')
 target_user   = os.environ.get('TARGET_USER', 'opensuse')
-target_limit  = os.environ.get('TARGET_LIMIT', 24)
 target_image  = os.environ.get('TARGET_IMAGE', 'opensuse-42-3-jeos-pristine')
 target_flavor = os.environ.get('TARGET_FLAVOR', 's1-2') #'b2-30')
 secret_file   = os.environ.get('SECRET_FILE', home + '/.ssh/id_rsa')
