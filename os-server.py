@@ -350,8 +350,7 @@ if args.action in ['create']:
     print("SERVERS: %s" % ", ".join([i.name for i in server_list]))
 
     print("Looking up image %s... " % server_spec['image'],)
-    image  = next((x for x in conn.image.images()
-                    if x.name==server_spec['image']), None)
+    image = conn.get_image(server_spec['image'])
     if not image:
         raise Exception("Can't find image %s" % server_spec['image'])
     print("found %s" % image.id)
