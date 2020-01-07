@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # Create ovh server
+import argparse
 import os
 import os.path
 import yaml
@@ -9,45 +10,32 @@ import logging
 import socket
 import json
 import sys
-import docopt
 import fcntl
 import base64
 
 import openstack
 import traceback
 
-doc = """
-Usage:
-    os-server --action <action> [options]
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-a', '--action', help='create, provision, delete action',
+                        choices=['create', 'delete', 'provision'])
+    parser.add_argument('-s', '--status', help='path to status file (default: %(default)s)',
+                        default='.os_server_status.json')
+    parser.add_argument('-t', '--target', help='overrides target name. (default: %(default)s)',
+                        default=os.environ.get('TARGET_MASK', 'mkck%02d'))
+    parser.add_argument('-f', '--spec-file', help='path to a spec file, optional')
+    parser.add_argument('-d', '--debug', help='debug mode', action='store_true')
+    return parser.parse_args()
 
-Allocate node in openstack, provision it, or delete
+args = parse_args()
 
-Options:
-
-  -a <action>, --action <action>        create, provision, delete action
-  -s <status>, --status <status>        path to status file [default: .os_server_status.json]
-  -t <target>, --target <target>        overrides target name
-  -f <target>, --spec-file <spec-file>  path to a spec file, optional
-  -d, --debug                           debug mode
-"""
-
-args = docopt.docopt(doc, argv=sys.argv[1:])
-
-if args.get('--debug'):
+if args.debug:
     openstack.enable_logging(debug=True)
 
 
-action = args.get('--action')
-
-if action not in ['create', 'delete']:
-    print("ERROR: Wrong action '%s'" % action)
-    raise Exeption("Wrong action '%s'" % action)
-
 home = os.environ.get('HOME')
-status_path   = args.get('--status')
-target_mask   = args.get('--target') or os.environ.get('TARGET_MASK', 'mkck%02d')
 target_user   = os.environ.get('TARGET_USER', 'opensuse')
-target_limit  = os.environ.get('TARGET_LIMIT', 24)
 target_image  = os.environ.get('TARGET_IMAGE', 'opensuse-42-3-jeos-pristine')
 target_flavor = os.environ.get('TARGET_FLAVOR', 's1-2') #'b2-30')
 secret_file   = os.environ.get('SECRET_FILE', home + '/.ssh/id_rsa')
@@ -56,7 +44,7 @@ conn = openstack.connect()
 
 server_spec = {
     'flavor':   target_flavor,
-    'name':     target_mask,
+    'name':     args.target,
     'image':    target_image,
     'username': target_user,
     'userdata': 'openstack/user-data.yaml',
@@ -68,10 +56,9 @@ server_spec = {
     }
 }
 
-spec_path = args.get('--spec-file')
-if spec_path:
-    with open(spec_path, 'r') as f:
-        if spec_path.endswith('.yaml') or spec_path.endswith('.yml'):
+if args.spec_file:
+    with open(args.spec_file, 'r') as f:
+        if args.spec_file.endswith('.yaml') or args.spec_file.endswith('.yml'):
             server_spec = yaml.safe_load(f)
         else:
             server_spec = json.load(f)
@@ -81,7 +68,8 @@ if spec_path:
             elif default:
                 obj[key] = default
         override_dict(server_spec, 'keyfile', env='SECRET_FILE')
-        override_dict(server_spec, 'name', default=target_mask)
+        override_dict(server_spec, 'image', env='TARGET_IMAGE')
+        override_dict(server_spec, 'name', default=args.target)
         override_dict(server_spec, 'flavor', default=target_flavor)
 
 print(json.dumps(server_spec, indent=2))
@@ -102,12 +90,12 @@ def update_server_status(**kwargs):
     for k,v in kwargs.items():
         print('override %s with %s' % (k,v))
         status['server'][k] = v
-    print("Saving status to '%s'" % status_path)
-    with open(status_path, 'w') as f:
+    print("Saving status to '%s'" % args.status)
+    with open(args.status, 'w') as f:
         json.dump(status, f, indent=2)
 
 def set_name(server_id):
-    lockfile = '/tmp/' + target_mask
+    lockfile = '/tmp/' + args.target
     lock_timeout = 5 * 60
     lock_wait = 2
     print("Trying to lock file for process " + str(os.getpid()))
@@ -135,9 +123,9 @@ def set_server_name(server_id):
     existing_servers = [i.name for i in server_list]
     for n in range(99):
         try:
-          target = target_mask % n
+          target = args.target % n
         except:
-          target = target_mask
+          target = args.target
         if not target in existing_servers:
             print("Setting server name to %s" % target)
             #conn.compute.update_server(server_id, name=target)
@@ -161,7 +149,7 @@ def provision_server():
     ip = status['server']['ip']
     provision_host(ip, secret_file)
 
-if action in ['provision']:
+if args.action in ['provision']:
     provision_server()
      
 c = conn.compute
@@ -335,12 +323,12 @@ def create_server(image, flavor, key_name, user_data=None):
     except:
         print("ERROR: Failed to create node")
         traceback.print_exc()
-        if not args.get('--debug'):
+        if not args.debug:
             print("Cleanup...")
             c.delete_server(target.id)
         exit(1)
 
-if action in ['provision']:
+if args.action in ['provision']:
     with open(status_path, 'r') as f:
         status = json.load(f)
         print(status)
@@ -350,32 +338,27 @@ if action in ['provision']:
     provision_host(target_ip, secret_file)
     exit(0)
 
-if action in ['delete']:
-    with open(status_path, 'r') as f:
+if args.action in ['delete']:
+    with open(args.status, 'r') as f:
         status = json.load(f)
         print(status)
     target_id = status['server']['id']
     delete_server(target_id)
     exit(0)
 
-if action in ['create']:
+if args.action in ['create']:
     server_list = c.servers()
     print("SERVERS: %s" % ", ".join([i.name for i in server_list]))
 
     print("Looking up image %s... " % server_spec['image'],)
-    image  = next((x for x in conn.image.images()
-                    if x.name==server_spec['image']), None)
+    image = conn.get_image(server_spec['image'])
     if not image:
         raise Exception("Can't find image %s" % server_spec['image'])
     print("found %s" % image.id)
-    flavor = next(x for x in c.flavors()
-                    if x.name==server_spec['flavor'])
-    flavors = sorted(i.name for i in c.flavors())
-    #for i in flavors:
-    #    print("FLAVOR: %s" % i)
-    print("FLAVORS: %s" % ', '.join(flavors))
-    f = c.find_flavor(server_spec['flavor'])
-    print('Found flavor: %s' % f.name)
+    flavor = conn.get_flavor(server_spec['flavor'])
+    if not flavor:
+        raise Exception("Can't find flavor %s" % server_spec['flavor'])
+    print('Found flavor: %s' % flavor.id)
     keypair = conn.compute.find_keypair(server_spec['keyname'])
     print("Image:   %s" % image.name)
     print("Flavor:  %s" % flavor.name)
