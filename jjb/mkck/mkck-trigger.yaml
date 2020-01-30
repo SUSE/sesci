@@ -1,3 +1,16 @@
+---
+# Begin Macros
+- builder:
+    name: create-sesci-venv
+    builders:
+      - shell: |
+          virtualenv v
+          . v/bin/activate
+          pip install -U pip
+          pip install python-openstackclient openstacksdk docopt PyYaml paramiko
+# End Macros
+
+
 - project:
     name: run-make-check
     dist:
@@ -181,11 +194,7 @@
         - inject:
             properties-file: 'target.properties'
         - shell: "git clone https://github.com/suse/sesci"
-        - shell: |
-            virtualenv v
-            . v/bin/activate
-            pip install -U pip
-            pip install python-openstackclient openstacksdk docopt PyYaml paramiko
+        - create-sesci-venv
         - shell: |
             . v/bin/activate
             STATUS=$PWD/mkck.status
@@ -272,11 +281,7 @@
                 - job-status
     builders:
         - shell: "git clone https://github.com/suse/sesci"
-        - shell: |
-            virtualenv v
-            . v/bin/activate
-            pip install -U pip
-            pip install python-openstackclient openstacksdk docopt PyYaml paramiko
+        - create-sesci-venv
         - shell: |
             . v/bin/activate
             STATUS=$PWD/mkck.status
@@ -509,11 +514,7 @@
         - inject:
             properties-file: 'target.properties'
         - shell: "git clone https://github.com/suse/sesci -b $CI_BRANCH"
-        - shell: |
-            virtualenv v
-            . v/bin/activate
-            pip install -U pip
-            pip install python-openstackclient openstacksdk docopt PyYaml paramiko
+        - create-sesci-venv
         - shell: |
             . v/bin/activate
             STATUS=$PWD/mkck.status
