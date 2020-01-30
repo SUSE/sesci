@@ -8,6 +8,14 @@
           . v/bin/activate
           pip install -U pip
           pip install python-openstackclient openstacksdk docopt PyYaml paramiko
+
+- builder:
+    name: os-server-create
+    builders:
+      - shell: |
+          . v/bin/activate
+          STATUS=$PWD/mkck.status
+          cd sesci && OS_CLOUD=$TARGET_CLOUD python -u os-server.py -a create -f conf/$CONF.yaml -s $STATUS
 # End Macros
 
 
@@ -195,10 +203,7 @@
             properties-file: 'target.properties'
         - shell: "git clone https://github.com/suse/sesci"
         - create-sesci-venv
-        - shell: |
-            . v/bin/activate
-            STATUS=$PWD/mkck.status
-            cd sesci && OS_CLOUD=$TARGET_CLOUD python -u os-server.py -a create -f conf/$CONF.yaml -s $STATUS
+        - os-server-create
         - shell: |
             addr=$(jq -r .server.ip mkck.status)
             name=$(jq -r .server.name mkck.status)
@@ -282,10 +287,7 @@
     builders:
         - shell: "git clone https://github.com/suse/sesci"
         - create-sesci-venv
-        - shell: |
-            . v/bin/activate
-            STATUS=$PWD/mkck.status
-            cd sesci && OS_CLOUD=$TARGET_CLOUD python -u os-server.py -a create -f conf/$CONF.yaml -s $STATUS
+        - os-server-create
         - shell: |
             addr=$(jq -r .server.ip mkck.status)
             name=$(jq -r .server.name mkck.status)
@@ -515,10 +517,7 @@
             properties-file: 'target.properties'
         - shell: "git clone https://github.com/suse/sesci -b $CI_BRANCH"
         - create-sesci-venv
-        - shell: |
-            . v/bin/activate
-            STATUS=$PWD/mkck.status
-            cd sesci && OS_CLOUD=$TARGET_CLOUD python -u os-server.py -a create -f conf/$CONF.yaml -s $STATUS
+        - os-server-create
         - shell: |
             addr=$(jq -r .server.ip mkck.status)
             name=$(jq -r .server.name mkck.status)
