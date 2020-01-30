@@ -16,6 +16,15 @@
           . v/bin/activate
           STATUS=$PWD/mkck.status
           cd sesci && OS_CLOUD=$TARGET_CLOUD python -u os-server.py -a create -f conf/$CONF.yaml -s $STATUS
+
+- builder:
+    name: os-server-delete
+    builders:
+      - shell: |
+          if ! $DESTROY_ENVIRONMENT ; then exit 0 ; fi
+          . v/bin/activate
+          STATUS=$PWD/mkck.status
+          cd sesci && OS_CLOUD=$TARGET_CLOUD python -u os-server.py -a delete -s $STATUS
 # End Macros
 
 
@@ -243,11 +252,7 @@
             filter: 'build/**, src/**/*.log, src/**/*.trs'
             optional: true
             which-build: multijob-build
-        - shell: |
-            if ! $DESTROY_ENVIRONMENT ; then exit 0 ; fi
-            . v/bin/activate
-            STATUS=$PWD/mkck.status
-            cd sesci && OS_CLOUD=$TARGET_CLOUD python -u os-server.py -a delete -s $STATUS
+        - os-server-delete
         - shell: |
             case $CEPH_BRANCH in
             ses3|ses4|jewel)
@@ -315,11 +320,7 @@
             filter: 'build/**, src/**/*.log, src/**/*.trs'
             optional: true
             which-build: multijob-build
-        - shell: |
-            if ! $DESTROY_ENVIRONMENT ; then exit 0 ; fi
-            . v/bin/activate
-            STATUS=$PWD/mkck.status
-            cd sesci && OS_CLOUD=$TARGET_CLOUD python -u os-server.py -a delete -s $STATUS
+        - os-server-delete
         - shell: |
             case $CEPH_BRANCH in
             ses3|ses4|jewel)
@@ -557,11 +558,7 @@
             filter: 'build/**, src/**/*.log, src/**/*.trs'
             optional: true
             which-build: multijob-build
-        - shell: |
-            . v/bin/activate
-            STATUS=$PWD/mkck.status
-            if ! $DESTROY_ENVIRONMENT ; then exit 0 ; fi
-            cd sesci && OS_CLOUD=$TARGET_CLOUD python -u os-server.py -a delete -s $STATUS
+        - os-server-delete
         - shell: |
             case $CEPH_BRANCH in
             ses3|ses4|jewel)
