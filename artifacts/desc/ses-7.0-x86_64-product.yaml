@@ -1,0 +1,20 @@
+- name: 'ses!2'
+  id: Product-Storage-7-Media1
+  delivery: rsync
+  url: /mnt/dist/ibs/SUSE:/SLE-15-SP2:/Update:/Products:/SES7/images/repo/
+  filters: POOL-x86_64 Media1$
+- name: 'internal!2'
+  id: Product-Storage-7-Internal-Media
+  delivery: rsync
+  url: /mnt/dist/ibs/SUSE:/SLE-15-SP2:/Update:/Products:/SES7/images/repo/
+  filters: POOL-Internal-x86_64 Media$
+- name: basesystem
+  delivery: rsync
+  id: SLE-15-SP2-GA-Basesystem-Media1
+  url: /mnt/dist/ibs/SUSE:/SLE-15-SP2:/GA:/TEST/images/repo/
+  filters: Basesystem x86_64 Media1$
+- name: server
+  delivery: rsync
+  id: SLE-15-SP2-GA-Server-Applications-Media1
+  url: /mnt/dist/ibs/SUSE:/SLE-15-SP2:/GA:/TEST/images/repo/
+  filters: Server-Applications x86_64 Media1$

@@ -1,0 +1,15 @@
+- name: update_repo5
+  delivery: snapshot
+  id: SLE-12-SP3:Update
+  url: /mnt/dist/ibs/SUSE:/SLE-12-SP3:/Update/
+  filters: standard
+- name: storage_5_update
+  delivery: snapshot
+  id: Updates-Storage-5
+  url: /mnt/dist/ibs/SUSE/Updates/Storage/5/x86_64/
+  filters: update$
+- name: storage_5_product
+  delivery: snapshot
+  id: Products-Storage-5
+  url: /mnt/dist/ibs/SUSE/Products/Storage/5/x86_64/
+  filters: product$

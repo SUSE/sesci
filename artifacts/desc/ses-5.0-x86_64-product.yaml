@@ -1,0 +1,12 @@
+- name: ceph_repo5
+  delivery: mirror
+  url: /mnt/dist/ibs/SUSE:/SLE-12-SP3:/Update:/Products:/SES5/images/repo/
+  filters: POOL-x86_64 Media1$
+- name: base_repo5
+  delivery: mirror
+  url: /mnt/dist/ibs/SUSE:/SLE-12-SP3:/GA/images/repo/
+  filters: Server-POOL-x86_64 Media1$
+- name: internal_repo5
+  delivery: mirror
+  url: /mnt/dist/ibs/SUSE:/SLE-12-SP3:/Update:/Products:/SES5/images/repo/
+  filters: POOL-Internal-x86_64 Media$

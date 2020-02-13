@@ -1,0 +1,20 @@
+- name: 'ceph_repo5!2'
+  id: Devel-Storage-5-Media1-x86_64
+  delivery: rsync
+  url: /mnt/dist/ibs/Devel:/Storage:/5.0/images/repo/
+  filters: POOL-x86_64 Media1$
+- name: 'internal_repo5!2'
+  id: Devel-Storage-5-Internal-Media-x86_64
+  delivery: rsync
+  url: /mnt/dist/ibs/Devel:/Storage:/5.0/images/repo/
+  filters: POOL-Internal-x86_64 Media$
+- name: base_repo5
+  id: SLE-12-SP3-GA-Server-Media1
+  delivery: rsync
+  url: /mnt/dist/ibs/SUSE:/SLE-12-SP3:/GA/images/repo/
+  filters: Server-POOL-x86_64 Media1$
+- name: sdk_repo5
+  id: SLE-12-SP3-SDK-Media1
+  delivery: rsync
+  url: /mnt/dist/ibs/SUSE:/SLE-12-SP3:/GA/images/repo/
+  filters: SLE-12-SP3-SDK-POOL-x86_64 Media1$
