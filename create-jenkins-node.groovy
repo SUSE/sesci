@@ -36,7 +36,7 @@ if (node) {
 }
 
 node = new DumbSlave(nodeName, nodeName + ' [auto]', '/opt/j', '1', Node.Mode.NORMAL, 'make-check',
-        new SSHLauncher(nodeHost, 22, credName, null, null, null, null, 0, 0, 0 ), new RetentionStrategy.Always(), new LinkedList() )
+        new SSHLauncher(nodeHost, 22, credName ), new RetentionStrategy.Always(), new LinkedList() )
 Jenkins.instance.addNode(node)
 println 'Created node "' + nodeName + '". Connecting...'
 
