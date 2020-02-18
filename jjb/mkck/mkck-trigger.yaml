@@ -380,7 +380,7 @@
 
 - job:
     name: mkck-run
-    workspace: 'ws/mkck'        
+    workspace: 'ws/mkck'
     concurrent: true
     properties:
         - build-discarder:
