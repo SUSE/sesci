@@ -409,35 +409,7 @@
             echo $(hostname -i) $(hostname -f)
             cat /etc/os-release
 
-            case $CEPH_BRANCH in
-            ses3|ses4|jewel)
-                case $DIST in
-                leap42_2)
-                    ulimit -u 10240
-                    ;;
-                *)
-                    ;;
-                esac
-                ./run-make-check.sh
-                ;;
-            ses6)
-                case $DIST in
-                leap42_3)
-                    zypper install -y gcc7 gcc7-c++
-                    export CC=gcc-7
-                    export CXX=/usr/bin/g++-7
-                    ./run-make-check.sh -DWITH_LTTNG=false -DWITH_BABELTRACE=false -DWITH_PYTHON3=ON -DMGR_PYTHON_VERSION=3
-                    ;;
-                *)
-                    ./run-make-check.sh -DWITH_LTTNG=false -DWITH_BABELTRACE=false
-                    ;;
-                esac
-                ;;
-            *)
-                ./run-make-check.sh -DWITH_LTTNG=false -DWITH_BABELTRACE=false
-                ;;
-            esac
-
+            ./run-make-check.sh -DWITH_LTTNG=false -DWITH_BABELTRACE=false
     publishers:
         - archive:
             artifacts: "build/Testing/**,build/**/*.log,src/**/*.trs,src/**/*.log,test-suite.log,/var/lib/systemd/coredump/*.xz"
