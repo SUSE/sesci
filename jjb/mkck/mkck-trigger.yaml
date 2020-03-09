@@ -60,6 +60,14 @@
             branch: 'ses6'
             ref: 'ses6'
             repo: 'https://github.com/suse/ceph.git'
+        - 'leap-ses7':
+            dist_name: 'leap'
+            dist_ver: '15.2'
+            disabled: false
+            target: b2-60
+            branch: 'ses7'
+            ref: 'ses7'
+            repo: 'https://github.com/suse/ceph.git'
         - 'tumbleweed-ceph':
             dist_name: 'tumbleweed'
             dist_ver: 'xxxx'
@@ -116,6 +124,14 @@
             target: b2-60
             branch: 'ses6'
             ref: 'ses6'
+            repo: 'https://github.com/suse/ceph.git'
+        - 'sles-ses7':
+            dist_name: 'sles'
+            dist_ver: '15.2'
+            disabled: false
+            target: b2-60
+            branch: 'ses7'
+            ref: 'ses7'
             repo: 'https://github.com/suse/ceph.git'
     jobs:
         - 'mkck_dist_branch'
