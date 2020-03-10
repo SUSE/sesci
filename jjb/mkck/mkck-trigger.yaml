@@ -25,6 +25,12 @@
           . v/bin/activate
           STATUS=$PWD/mkck.status
           cd sesci && OS_CLOUD=$TARGET_CLOUD python -u os-server.py -a delete -s $STATUS
+
+- builder:
+    name: ctest-to-junit
+    builders:
+      - shell: |
+          python sesci/convert-ctest-to-junit.py
 # End Macros
 
 
@@ -43,15 +49,6 @@
 - project:
     name: run-make-check-nightly
     dist_ceph:
-        # disalbed because leap 42.3 EOL
-        #- 'leap-ses5':
-        #    dist_name: 'leap'
-        #    dist_ver: '42.3'
-        #    disabled: true
-        #    target: b2-60
-        #    branch: 'ses5'
-        #    ref: 'ses5'
-        #    repo: 'https://github.com/suse/ceph.git'
         - 'leap-ses6':
             dist_name: 'leap'
             dist_ver: '15.1'
@@ -88,15 +85,6 @@
             ref: 'master'
             repo: 'https://github.com/ceph/ceph.git'
             ses_ver: '6.0'
-        # Disabled because luminous is EOL
-        #- 'leap-ceph-luminous':
-        #    dist_name: 'leap'
-        #    dist_ver: '42.3'
-        #    disabled: true
-        #    target: b2-60
-        #    branch: 'luminous'
-        #    ref: 'luminous'
-        #    repo: 'https://github.com/ceph/ceph.git'
         - 'leap-ceph-nautilus':
             dist_name: 'leap'
             dist_ver: '15.1'
@@ -278,15 +266,7 @@
             optional: true
             which-build: multijob-build
         - os-server-delete
-        - shell: |
-            case $CEPH_BRANCH in
-            ses3|ses4|jewel)
-                python sesci/convert-trs-to-junit.py src res
-                ;;
-            *)
-                python sesci/convert-ctest-to-junit.py
-                ;;
-            esac
+        - ctest-to-junit
 
     wrappers:
         - workspace-cleanup
@@ -346,15 +326,7 @@
             optional: true
             which-build: multijob-build
         - os-server-delete
-        - shell: |
-            case $CEPH_BRANCH in
-            ses3|ses4|jewel)
-                python sesci/convert-trs-to-junit.py src res
-                ;;
-            *)
-                python sesci/convert-ctest-to-junit.py
-                ;;
-            esac
+        - ctest-to-junit
 
     wrappers:
         - workspace-cleanup
@@ -596,15 +568,7 @@
             optional: true
             which-build: multijob-build
         - os-server-delete
-        - shell: |
-            case $CEPH_BRANCH in
-            ses3|ses4|jewel)
-                python sesci/convert-trs-to-junit.py src res
-                ;;
-            *)
-                python sesci/convert-ctest-to-junit.py
-                ;;
-            esac
+        - ctest-to-junit
 
     wrappers:
         - workspace-cleanup
