@@ -1,6 +1,11 @@
+copy:
+- from:
+  - snippets/clone-git-repo.sh
+  - snippets/run.cmd
+  into: bin
+  mode: '0755'
 flavor: b2-30
-#image: makecheck-sle-15.1-x86_64
-image: minimal-sle-15.2-x86_64
+image: minimal-opensuse-15.2-x86_64
 keyfile: ~/.ssh/sa
 keyname: storage-automation
 name: mkck%02d
@@ -12,4 +17,5 @@ vars:
   dependencies:
   - git
   - java
+  - htop
   - ccache
