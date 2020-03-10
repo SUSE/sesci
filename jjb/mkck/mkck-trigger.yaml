@@ -25,6 +25,19 @@
           . v/bin/activate
           STATUS=$PWD/mkck.status
           cd sesci && OS_CLOUD=$TARGET_CLOUD python -u os-server.py -a delete -s $STATUS
+
+- builder:
+    name: ctest-to-junit
+    builders:
+      - shell: |
+          case $CEPH_BRANCH in
+          ses3|ses4|jewel)
+              python sesci/convert-trs-to-junit.py src res
+              ;;
+          *)
+              python sesci/convert-ctest-to-junit.py
+              ;;
+          esac
 # End Macros
 
 
@@ -260,15 +273,7 @@
             optional: true
             which-build: multijob-build
         - os-server-delete
-        - shell: |
-            case $CEPH_BRANCH in
-            ses3|ses4|jewel)
-                python sesci/convert-trs-to-junit.py src res
-                ;;
-            *)
-                python sesci/convert-ctest-to-junit.py
-                ;;
-            esac
+        - ctest-to-junit
 
     wrappers:
         - workspace-cleanup
@@ -328,15 +333,7 @@
             optional: true
             which-build: multijob-build
         - os-server-delete
-        - shell: |
-            case $CEPH_BRANCH in
-            ses3|ses4|jewel)
-                python sesci/convert-trs-to-junit.py src res
-                ;;
-            *)
-                python sesci/convert-ctest-to-junit.py
-                ;;
-            esac
+        - ctest-to-junit
 
     wrappers:
         - workspace-cleanup
@@ -578,15 +575,7 @@
             optional: true
             which-build: multijob-build
         - os-server-delete
-        - shell: |
-            case $CEPH_BRANCH in
-            ses3|ses4|jewel)
-                python sesci/convert-trs-to-junit.py src res
-                ;;
-            *)
-                python sesci/convert-ctest-to-junit.py
-                ;;
-            esac
+        - ctest-to-junit
 
     wrappers:
         - workspace-cleanup
