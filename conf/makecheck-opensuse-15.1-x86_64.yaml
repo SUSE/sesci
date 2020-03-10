@@ -5,7 +5,7 @@ copy:
   into: bin
   mode: '0755'
 flavor: b2-30
-image: makecheck-opensuse-15.1-x86_64
+image: minimal-opensuse-15.1-x86_64
 keyfile: ~/.ssh/sa
 keyname: storage-automation
 name: mkck%02d
