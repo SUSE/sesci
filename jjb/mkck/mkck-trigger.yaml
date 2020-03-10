@@ -30,14 +30,7 @@
     name: ctest-to-junit
     builders:
       - shell: |
-          case $CEPH_BRANCH in
-          ses3|ses4|jewel)
-              python sesci/convert-trs-to-junit.py src res
-              ;;
-          *)
-              python sesci/convert-ctest-to-junit.py
-              ;;
-          esac
+          python sesci/convert-ctest-to-junit.py
 # End Macros
 
 
