@@ -46,8 +46,9 @@
     jobs:
         - 'mkck_dist'
 
+
 - project:
-    name: run-make-check-nightly
+    name: run-make-check-opensuse-nightly
     dist_ceph:
         - 'leap-ses6':
             dist_name: 'leap'
@@ -103,6 +104,12 @@
             ref: 'master'
             repo: 'https://github.com/ceph/ceph.git'
             ses_ver: '6.0'
+    jobs:
+        - 'mkck_opensuse_branch'
+
+- project:
+    name: run-make-check-sles-nightly
+    dist_ceph:
         - 'sles-ses5':
             dist_name: 'sles'
             dist_ver: '12.3'
@@ -131,7 +138,7 @@
             ses_ver: '7.0'
             repo: 'https://github.com/suse/ceph.git'
     jobs:
-        - 'mkck_dist_branch'
+        - 'mkck_sles_branch'
 
 - job-template:
     id: 'mkck_dist'
@@ -283,6 +290,30 @@
 
 
 - job:
+    name: basic-repos
+    description: "Add basic repositories"
+    wrappers:
+        - workspace-cleanup
+        - timestamps
+        - timeout:
+            timeout: 10
+        - build-name: { name: '#$BUILD_NUMBER openSUSE Leap $VERSION' }
+    properties:
+        - groovy-label:
+            script: 'binding.getVariables().get("TARGET_NAME")'
+    builders:
+      - shell: |
+          if [ -f /etc/os-release ]; then
+            . /etc/os-release
+
+            if [ $ID = "opensuse-leap" ]; then
+              zypper -n ar http://download.opensuse.org/distribution/leap/${VERSION_ID}/repo/oss/ oss
+              zypper -n ar http://download.opensuse.org/update/leap/${VERSION_ID}/oss/ update
+            fi
+          fi
+
+
+- job:
     name: mkck
     node: storage-compute
     project-type: multijob
@@ -428,7 +459,7 @@
 
 
 - job-template:
-    id: 'mkck_dist_branch'
+    id: 'mkck_sles_branch'
     name: 'mkck-{dist_ceph}'
     concurrent: true
     disabled: '{obj:disabled}'
@@ -592,6 +623,141 @@
             repeated-failure: true
             include-test-summary: true
             build-server: 'http://ci.ses.suse.de:8080/'
+
+- job-template:
+    id: 'mkck_opensuse_branch'
+    name: 'mkck-{dist_ceph}'
+    concurrent: true
+    disabled: '{obj:disabled}'
+    project-type: multijob
+    node: storage-compute
+    parameters:
+        - string:
+            name: TARGET_CLOUD
+            default: 'sbg'
+        - string:
+            name: TARGET_FLAVOR
+            default: b2-60
+            description: "OVH flavor"
+        - string:
+            name: TARGET_FILE
+            default: 'mkck_{dist_ceph}.properties'
+        - string:
+            name: DIST
+            default: '{dist_name}'
+        - string:
+            name: CEPH_REF
+            default: '{ref}'
+        - string:
+            name: CEPH_REPO_URL
+            default: '{repo}'
+        - string:
+            name: CEPH_BRANCH
+            default: '{branch}'
+        - string:
+            name: CI_BRANCH
+            default: 'master'
+        - bool:
+            name: DESTROY_ENVIRONMENT
+            default: true
+    properties:
+        - github:
+            url: '{repo}'
+            display-name: ceph
+        - build-discarder:
+            num-to-keep: 100
+        - authorization:
+            anonymous:
+                - job-read
+                - job-status
+                - job-discover
+    triggers:
+        - timed: "15 1 * * 1-5"
+    wrappers:
+        - workspace-cleanup
+        - ansicolor
+    builders:
+        - shell:
+            !include-raw-escape:
+                - snippets/mkck-target-properties.bash
+        - inject:
+            properties-file: 'target.properties'
+        - shell: "git clone https://github.com/suse/sesci -b $CI_BRANCH"
+        - create_sesci_venv
+        - os_server_create
+        - shell: |
+            addr=$(jq -r .server.ip mkck.status)
+            name=$(jq -r .server.name mkck.status)
+            cat > $TARGET_FILE <<EOF
+            TARGET_IP=$addr
+            TARGET_NAME=$name
+            EOF
+        - inject:
+            properties-file: $TARGET_FILE
+
+        - multijob:
+            name: Create jenkins executor
+            condition: ALWAYS
+            projects:
+                - name: jenkins-executor-create
+                  current-parameters: true
+                  abort-all-job: true
+                  property-file: '${{TARGET_FILE}}'
+        - multijob:
+            name: Basic repository setup
+            condition: SUCCESSFUL
+            projects:
+                - name: basic-repos
+                  current-parameters: true
+                  abort-all-job: true
+                  property-file: '${{TARGET_FILE}}'
+        - multijob:
+            name: Run make check
+            condition: ALWAYS
+            projects:
+                - name: mkck-run
+                  current-parameters: true
+                  abort-all-job: true
+                  property-file: '${{TARGET_FILE}}'
+        - multijob:
+            name: Delete jenkins executor
+            condition: ALWAYS
+            projects:
+                - name: jenkins-executor-delete
+                  current-parameters: true
+                  abort-all-job: true
+                  property-file: '${{TARGET_FILE}}'
+        - copyartifact:
+            project: mkck-run
+            filter: 'build/**, src/**/*.log, src/**/*.trs'
+            optional: true
+            which-build: multijob-build
+        - os_server_delete
+        - ctest_to_junit
+
+    wrappers:
+        - workspace-cleanup
+        - build-name: { name: '#$BUILD_NUMBER $DIST $CEPH_BRANCH' }
+        - credentials-binding:
+            - file:
+                credential-id: 'storage-automation-secret-file'
+                variable: SECRET_FILE
+    publishers:
+        - junit:
+            results: 'res/make-check.xml'
+            allow-empty-results: true
+            junit-attachments: true
+        - rocket:
+            channel: '#ceph-build'
+            failure: true
+            #success: true
+            unstable: true
+            #not-built: true
+            back-to-normal: true
+            repeated-failure: true
+            include-test-summary: true
+            build-server: 'http://ci.ses.suse.de:8080/'
+
 
 - project:
     name: jenkins-executor
