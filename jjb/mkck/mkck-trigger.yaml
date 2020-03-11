@@ -1,7 +1,7 @@
 ---
 # Begin Macros
 - builder:
-    name: create-sesci-venv
+    name: create_sesci_venv
     builders:
       - shell: |
           virtualenv v
@@ -10,7 +10,7 @@
           pip install python-openstackclient openstacksdk docopt PyYaml paramiko
 
 - builder:
-    name: os-server-create
+    name: os_server_create
     builders:
       - shell: |
           . v/bin/activate
@@ -18,7 +18,7 @@
           cd sesci && OS_CLOUD=$TARGET_CLOUD python -u os-server.py -a create -f conf/$CONF.yaml -s $STATUS
 
 - builder:
-    name: os-server-delete
+    name: os_server_delete
     builders:
       - shell: |
           if ! $DESTROY_ENVIRONMENT ; then exit 0 ; fi
@@ -27,7 +27,7 @@
           cd sesci && OS_CLOUD=$TARGET_CLOUD python -u os-server.py -a delete -s $STATUS
 
 - builder:
-    name: ctest-to-junit
+    name: ctest_to_junit
     builders:
       - shell: |
           python sesci/convert-ctest-to-junit.py
@@ -224,8 +224,8 @@
         - inject:
             properties-file: 'target.properties'
         - shell: "git clone https://github.com/suse/sesci"
-        - create-sesci-venv
-        - os-server-create
+        - create_sesci_venv
+        - os_server_create
         - shell: |
             addr=$(jq -r .server.ip mkck.status)
             name=$(jq -r .server.name mkck.status)
@@ -265,8 +265,8 @@
             filter: 'build/**, src/**/*.log, src/**/*.trs'
             optional: true
             which-build: multijob-build
-        - os-server-delete
-        - ctest-to-junit
+        - os_server_delete
+        - ctest_to_junit
 
     wrappers:
         - workspace-cleanup
@@ -296,8 +296,8 @@
                 - job-status
     builders:
         - shell: "git clone https://github.com/suse/sesci"
-        - create-sesci-venv
-        - os-server-create
+        - create_sesci_venv
+        - os_server_create
         - shell: |
             addr=$(jq -r .server.ip mkck.status)
             name=$(jq -r .server.name mkck.status)
@@ -325,8 +325,8 @@
             filter: 'build/**, src/**/*.log, src/**/*.trs'
             optional: true
             which-build: multijob-build
-        - os-server-delete
-        - ctest-to-junit
+        - os_server_delete
+        - ctest_to_junit
 
     wrappers:
         - workspace-cleanup
@@ -486,7 +486,7 @@
         - inject:
             properties-file: 'target.properties'
         - shell: "git clone https://github.com/suse/sesci -b $CI_BRANCH"
-        - create-sesci-venv
+        - create_sesci_venv
         - multijob:
             name: Deliver artifacts
             #condition: ALWAYS
@@ -518,7 +518,7 @@
             for i in artifacts*.yaml ; do
                 cat $i
             done
-        - os-server-create
+        - os_server_create
         - shell: |
             addr=$(jq -r .server.ip mkck.status)
             name=$(jq -r .server.name mkck.status)
@@ -567,8 +567,8 @@
             filter: 'build/**, src/**/*.log, src/**/*.trs'
             optional: true
             which-build: multijob-build
-        - os-server-delete
-        - ctest-to-junit
+        - os_server_delete
+        - ctest_to_junit
 
     wrappers:
         - workspace-cleanup
