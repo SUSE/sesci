@@ -202,7 +202,7 @@
                 - ses4
                 - ses5
                 - ses6
-                - jewel
+                - ses7
             auth-id: 'susebot'
             status-add-test-results: true
             status-context: "sesci/mkck-{dist}"
