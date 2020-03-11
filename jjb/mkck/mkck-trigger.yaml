@@ -524,7 +524,7 @@
             project: storage-deliver-mkck-artifact
             parameter-filters: 'DIST_CEPH={dist_ceph}'
             filter: 'artifacts*.yaml'
-            optional: false
+            optional: true
             which-build: 'multijob-build'
         - copyartifact:
             project: storage-deliver-update-repos
