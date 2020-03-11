@@ -374,6 +374,28 @@
             name: DESTROY_ENVIRONMENT
             default: true
 
+- job:
+    name: basic-repos
+    description: "Add basic repositories"
+    wrappers:
+        - workspace-cleanup
+        - timestamps
+        - timeout:
+            timeout: 10
+        - build-name: { name: '#$BUILD_NUMBER openSUSE Leap $VERSION' }
+    properties:
+        - groovy-label:
+            script: 'binding.getVariables().get("TARGET_NAME")'
+    builders:
+      - shell: |
+          if [ -f /etc/os-release ]; then
+            . /etc/os-release
+
+            if [ $ID = "opensuse-leap" ]; then
+              zypper -n ar http://download.opensuse.org/distribution/leap/${VERSION_ID}/repo/oss/ oss
+              zypper -n ar http://download.opensuse.org/update/leap/${VERSION_ID}/oss/ update
+            fi
+          fi
 
 - job:
     name: mkck-run
@@ -546,6 +568,13 @@
                   current-parameters: true
                   abort-all-job: true
                   property-file: '${{TARGET_FILE}}'
+        - multijob:
+            name: Basic repository setup
+            condition: SUCCESSFUL
+            projects:
+                - name: basic-repos
+                  current-parameters: true
+                  abort-all-job: true
         - multijob:
             name: Run make check
             condition: ALWAYS
