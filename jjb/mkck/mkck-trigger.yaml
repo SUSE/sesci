@@ -97,7 +97,7 @@
             - name: basic-repos
               current-parameters: true
               abort-all-job: true
-              property-file: '${{TARGET_FILE}}'
+              property-file: '${TARGET_FILE}'
 
 - builder:
     name: enable_repos_tumbleweed
@@ -603,7 +603,6 @@
             EOF
         - inject:
             properties-file: $TARGET_FILE
-        - enable_repos_{dist_name}
 
         - multijob:
             name: Create jenkins executor
@@ -613,6 +612,7 @@
                   current-parameters: true
                   abort-all-job: true
                   property-file: '${{TARGET_FILE}}'
+        - enable_repos_{dist_name}
         - multijob:
             name: Run make check
             condition: ALWAYS
