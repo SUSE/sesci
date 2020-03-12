@@ -31,6 +31,78 @@
     builders:
       - shell: |
           python sesci/convert-ctest-to-junit.py
+
+- builder:
+    name: deliver_artifacts_sles
+    builders:
+      - multijob:
+          name: Deliver artifacts
+          #condition: ALWAYS
+          condition: SUCCESSFUL
+          projects:
+            - name: storage-deliver-mkck-artifact
+              current-parameters: true
+              abort-all-job: true
+              predefined-parameters: |
+                DIST_CEPH={dist_ceph}
+                SITE=ovh.net
+      - copyartifact:
+          project: storage-deliver-mkck-artifact
+          parameter-filters: 'DIST_CEPH={dist_ceph}'
+          filter: 'artifacts*.yaml'
+          optional: false
+          which-build: 'multijob-build'
+      - copyartifact:
+          project: storage-deliver-update-repos
+          parameter-filters: 'SES_VER={ses_ver},SITE=ovh.net'
+          filter: 'artifacts*.yaml'
+          optional: true
+          #target: ''
+          which-build: 'last-successful'
+      - shell: |
+          . v/bin/activate
+          . sesci/common/util
+          for i in artifacts*.yaml ; do
+            cat $i
+          done
+
+- builder:
+    name: deliver_artifacts_leap
+    builders: []
+
+- builder:
+    name: deliver_artifacts_tumbleweed
+    builders: []
+
+- builder:
+    name: enable_repos_sles
+    builders:
+      - shell: |
+          . v/bin/activate
+          . sesci/common/util
+          for i in artifacts*.yaml ; do
+            # now jq black magic
+            cat $i | yj | \
+              jq -r ' .artifacts as $a | $a | keys[] | . as $k | "zypper -n addrepo --refresh --no-gpgcheck " + (if (split("!") | length) > 1 then " -p " + split("!")[1] + " " else "" end) + $a[$k].url + " " + split("!")[0] + " || true"' | \
+              ssh root@$TARGET_IP
+          done
+
+- builder:
+    name: enable_repos_leap
+    builders:
+      - multijob:
+          name: Basic repository setup
+          condition: SUCCESSFUL
+          projects:
+            - name: basic-repos
+              current-parameters: true
+              abort-all-job: true
+              property-file: '${{TARGET_FILE}}'
+
+- builder:
+    name: enable_repos_tumbleweed
+    builders: []
+
 # End Macros
 
 
@@ -283,6 +355,37 @@
 
 
 - job:
+    name: basic-repos
+    description: "Add basic repositories"
+    wrappers:
+        - workspace-cleanup
+        - timestamps
+        - timeout:
+            timeout: 10
+        - build-name: { name: '#$BUILD_NUMBER openSUSE Leap $VERSION' }
+    properties:
+        - groovy-label:
+            script: 'binding.getVariables().get("TARGET_NAME")'
+    builders:
+      - shell: |
+          if [ -f /etc/os-release ]; then
+            . /etc/os-release
+
+            case $ID in
+            "opensuse-leap")
+              zypper -n ar http://download.opensuse.org/distribution/leap/${VERSION_ID}/repo/oss/ oss
+              zypper -n ar http://download.opensuse.org/update/leap/${VERSION_ID}/oss/ update
+              ;;
+            *)
+            echo "No repository setup for $ID"
+            ;;
+            esac
+          else
+            echo "No /etc/os-release found"
+          fi
+
+
+- job:
     name: mkck
     node: storage-compute
     project-type: multijob
@@ -487,37 +590,9 @@
             properties-file: 'target.properties'
         - shell: "git clone https://github.com/suse/sesci -b $CI_BRANCH"
         - create_sesci_venv
-        - multijob:
-            name: Deliver artifacts
-            #condition: ALWAYS
-            condition: SUCCESSFUL
-            projects:
-                - name: storage-deliver-mkck-artifact
-                  current-parameters: true
-                  abort-all-job: true
-                  predefined-parameters: |
-                    DIST_CEPH={dist_ceph}
-                    SITE=ovh.net
-        - copyartifact:
-            project: storage-deliver-mkck-artifact
-            parameter-filters: 'DIST_CEPH={dist_ceph}'
-            filter: 'artifacts*.yaml'
-            optional: false
-            which-build: 'multijob-build'
-        - copyartifact:
-            project: storage-deliver-update-repos
-            parameter-filters: 'SES_VER={ses_ver},SITE=ovh.net'
-            filter: 'artifacts*.yaml'
-            optional: true
-            #target: ''
-            which-build: 'last-successful'
-
-        - shell: |
-            . v/bin/activate
-            . sesci/common/util
-            for i in artifacts*.yaml ; do
-                cat $i
-            done
+        - deliver_artifacts_{dist_name}:
+            dist_ceph: '{dist_ceph}'
+            ses_ver: '{ses_ver}'
         - os_server_create
         - shell: |
             addr=$(jq -r .server.ip mkck.status)
@@ -528,15 +603,7 @@
             EOF
         - inject:
             properties-file: $TARGET_FILE
-        - shell: |
-            . v/bin/activate
-            . sesci/common/util
-            for i in artifacts*.yaml ; do
-                # now jq black magic
-                cat $i | yj | \
-                    jq -r ' .artifacts as $a | $a | keys[] | . as $k | "zypper -n addrepo --refresh --no-gpgcheck " + (if (split("!") | length) > 1 then " -p " + split("!")[1] + " " else "" end) + $a[$k].url + " " + split("!")[0] + " || true"' | \
-                        ssh root@$TARGET_IP
-            done
+        - enable_repos_{dist_name}
 
         - multijob:
             name: Create jenkins executor
