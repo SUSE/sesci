@@ -316,6 +316,7 @@
                   current-parameters: true
                   abort-all-job: true
                   property-file: '${{TARGET_FILE}}'
+        - enable_repos_{dist}
         - multijob:
             name: Run make check
             condition: ALWAYS
