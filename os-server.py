@@ -228,7 +228,10 @@ def provision_node(client):
     target_addr = status['server']['ip']
     command_list = [
       'sudo zypper --no-gpg-checks ref 2>&1',
-      'sudo zypper install -y %s 2>&1' % ' '.join(server_spec['vars']['dependencies']),
+    ]
+    if server_spec.get('vars') and server_spec['vars'].get('dependencies'):
+        command_list.append('sudo zypper install -y %s 2>&1' % ' '.join(server_spec['vars']['dependencies']))
+    command_list += [
       'echo "' + target_addr + '\t' + target_fqdn + '" | sudo tee -a /etc/hosts',
       'sudo hostname ' + target_fqdn,
       'cat /etc/os-release',
