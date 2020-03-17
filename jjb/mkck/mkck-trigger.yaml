@@ -659,7 +659,7 @@
             back-to-normal: true
             repeated-failure: true
             include-test-summary: true
-            build-server: 'http://ci.ses.suse.de:8080/'
+            build-server: 'https://storage-ci.suse.de/'
 
 - project:
     name: jenkins-executor
