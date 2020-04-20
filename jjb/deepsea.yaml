@@ -169,7 +169,15 @@
         - string:
             name: TEUTH_BRANCH
             default: "master"
-            description: Teuthology branch'
+            description: Teuthology branch
+        - string:
+            name: TEUTH_MACHINE_TYPE
+            default: "ecp"
+            description: Teuthology machine type
+        - string:
+            name: SESCI
+            default: "master"
+            description: Branch name for ses-ci tools
     properties:
         - github:
             url: 'https://github.com/suse/deepsea/'
@@ -195,7 +203,7 @@
                 credential-id: 'storage-automation-secret-file'
                 variable: SECRET_FILE
     builders:
-        - shell: "git clone https://github.com/suse/sesci"
+        - shell: "git clone https://github.com/suse/sesci -b $SESCI"
         # do not include-raw the source because jjb requires {} escaped
         # variables if there are used templates
         - copyartifact:
