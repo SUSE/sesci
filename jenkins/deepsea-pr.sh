@@ -8,6 +8,9 @@ source $SOURCEPATH/common/teuthology
 
 # Job specific variables
 TEUTH_NAME=${TEUTH_NAME:-"ci"}
+TEUTH_HOST=${TEUTH_HOST:-"teuth-ses.prv.suse.net"}
+TEUTH_ARCHIVE_PATH="/home/worker/archive"
+TEUTH_ARCHIVE_USER=worker
 TEUTH_BRANCH=${TEUTH_BRANCH:-"master"}
 
 CEPH_BRANCH=${CEPH_BRANCH:-"ses6"}
@@ -25,7 +28,10 @@ SUITE_BRANCH=${SUITE_BRANCH:-"ses6"}
 
 TEUTH_PATH=${TEUH_PATH:-"$HOME/teuthology"}
 TEUTH_SUITE=${SUITE:-"deepsea:basic:health-ok"}
-TEUTH_EXTRA=${TEUTH_FILTER:-"--filter sle"}
+
+TEUTH_FILTER=${TEUTH_FILTER:-"--filter sle"}
+TEUTH_KERNEL=${TEUTH_KERNEL:-"--kernel none"}
+TEUTH_MACHINE_TYPE=${TEUTH_MACHINE_TYPE:-"ovh"}
 
 CEPH_REPO=${CEPH_REPO:-"http://github.com/SUSE/ceph"}
 TEUTH_REPO=${TEUTH_REPO:-"http://github.com/SUSE/teuthology"}
@@ -49,70 +55,79 @@ echo DeepSea repo: $DEEPSEAREPOURL
 echo Home directory: $HOME
 source $TEUTH_PATH/v/bin/activate
 
-function print_artifacts() {
-    local yaml=$1
-    python -c "import sys, yaml ; ars = yaml.load(sys.stdin)['artifacts']
-print(' '.join(ars.keys()))" < $yaml
-}
-
-function teuth_test_repos() {
+function teuth_append_artifacts_to_overrides_install_repos() {
     local yaml=${1}
     shift
-    local artifacts=${@:-"$(print_artifacts $yaml)"}
-    for i in $artifacts ; do
-        python -c "import sys, yaml
-ars=yaml.load(sys.stdin)['artifacts']
-print('--test-repo %s:%s' % ('$i', ars['$i']['url']))" \
-< $yaml
-    done
+    python $SOURCEPATH/snippets/append-artifacts.py $yaml $@
+    cat $yaml
 }
 
-test -f artifacts-$CEPH_BRANCH.yaml && {
-    echo Found artifact file artifacts-$CEPH_BRANCH.yaml
-    TEST_REPO=$(teuth_test_repos artifacts-$CEPH_BRANCH.yaml)
-} || {
-    if [[ "x$ARTIFACTS" != "x" ]] ; then
-        echo "$ARTIFACTS" > artifacts.yaml
-        TEST_REPO=$(teuth_test_repos artifacts.yaml)
-    fi
-}
-if [[ "x$DEEPSEA_REPO" != "x" ]] ; then
-    TEST_REPO="$TEST_REPO --test-repo deepsea!1:$DEEPSEA_REPO"
-fi
+TEUTH_OVERRIDES=overrides-$JOB_NAME-$BUILD_NUMBER.yaml
 
-
-cat <<EOF > $PWD/deepsea-overrides.yaml
+tee $PWD/deepsea-overrides.yaml << EOF
 overrides:
-    install:
-        ceph:
-            packages:
-                deb: []
-                rpm: []
-    deepsea:
-        install: package
-        repo: ''
+  install:
+    ceph:
+        packages:
+            deb: []
+            rpm: []
+  deepsea:
+    install: package
+    repo: ''
+  ceph:
+    conf:
+      global:
+        osd heartbeat grace: 100
+        # this line to address issue #1017
+        mon lease: 15
+        mon lease ack timeout: 25
+  s3tests:
+    idle_timeout: 1200
+  ceph-fuse:
+    client.0:
+       mount_wait: 60
+       mount_timeout: 120
+archive-on-error: true
 
 EOF
 
-teuthology-openstack -v \
-    --name ${TEUTH_NAME} \
-    --key-filename $SECRET_FILE \
-    --teuthology-git-url ${TEUTH_REPO} \
-    --teuthology-branch ${TEUTH_BRANCH} \
+cp deepsea-overrides.yaml $TEUTH_OVERRIDES
+
+test -f artifacts-$CEPH_BRANCH.yaml && {
+    echo Found artifact file artifacts-$CEPH_BRANCH.yaml
+    teuth_append_artifacts_to_overrides_install_repos $TEUTH_OVERRIDES artifacts-$CEPH_BRANCH.yaml
+} || {
+    if [[ "x$ARTIFACTS" != "x" ]] ; then
+        echo "$ARTIFACTS" > artifacts.yaml
+        teuth_append_artifacts_to_overrides_install_repos $TEUTH_OVERRIDES artifacts.yaml
+    fi
+}
+if [[ "x$DEEPSEA_REPO" != "x" ]] ; then
+    cat <<EOF > $PWD/artifacts-deepsea-repo.yaml
+artifacts:
+    deepsea!1:
+        url: "$DEEPSEA_REPO"
+EOF
+    teuth_append_artifacts_to_overrides_install_repos $TEUTH_OVERRIDES artifacts-deepsea-repo.yaml
+fi
+
+
+scp -i $SECRET_FILE -o StrictHostKeyChecking=no $TEUTH_OVERRIDES runner@$TEUTH_HOST:
+ssh -i $SECRET_FILE -o StrictHostKeyChecking=no runner@$TEUTH_HOST "
+[[ -f .profile ]]           && source .profile
+[[ -f .bashrc_teuthology ]] && source .bashrc_teuthology
+teuthology-suite -v \
+    --machine-type $TEUTH_MACHINE_TYPE \
     --suite-repo ${SUITE_REPO} \
     --suite-branch ${SUITE_BRANCH} \
     --ceph-repo ${CEPH_REPO} \
     --ceph ${CEPH_BRANCH} \
     --suite ${TEUTH_SUITE} \
-    $TEST_REPO \
-    $TEUTH_EXTRA \
-    $PWD/deepsea-overrides.yaml \
-    --wait 2>&1 | tee $TEUTH_LOG
+    $TEUTH_FILTER \
+    $TEUTH_KERNEL \
+    \$PWD/${TEUTH_OVERRIDES##*/} \
+    --wait 2>&1" | tee $TEUTH_LOG
 
-#    --test-repo ses5:http://storage-ci.suse.de/artifacts/13efbdd685728106cb7ca9ec29a967236c402aafbd23efdb98e998df8474f98a/SUSE-Enterprise-Storage-5-POOL-x86_64-Build0609 \
-#    --test-repo ses5-internal:http://storage-ci.suse.de/artifacts/941df0216e4adc9eeed1d607bc20bce6dc854255ac346c79301ed2a8de787e98/SUSE-Enterprise-Storage-5-POOL-Internal-x86_64-Build0609 \
-    
-    # verify if RC is accurate
 
 fails=$(grep -sc 'teuthology.suite:fail' $TEUTH_LOG)
 deads=$(grep -sc 'teuthology.suite:dead' $TEUTH_LOG)
@@ -122,8 +137,9 @@ alljobs=$(grep 'Job scheduled with name' $TEUTH_LOG | \
           perl -n -e'/ID ([0-9]+)/ && CORE::say $1')
 jobname=$(grep 'Job scheduled with name' $TEUTH_LOG | head -1 | \
           perl -n -e'/name ([^ ]+)/ && CORE::say $1')
-teuth=$(grep -m1 'ssh access' $TEUTH_LOG | \
-        perl -n -e'/ubuntu@([^ ]+) #/ && CORE::say $1')
+#teuth=$(grep -m1 'ssh access' $TEUTH_LOG | \
+#        perl -n -e'/ubuntu@([^ ]+) #/ && CORE::say $1')
+teuth=$TEUTH_HOST
 
 runname=$jobname
 runurl=http://$teuth:8081/$runname
@@ -264,7 +280,7 @@ EOF
     exit 3
 else
     mkdir -p logs/$jobname
-    scp -r -i $SECRET_FILE -o StrictHostKeyChecking=no ubuntu@$teuth:/usr/share/nginx/html/$jobname/* logs/$jobname || true
+    scp -r -i $SECRET_FILE -o StrictHostKeyChecking=no $TEUTH_ARCHIVE_USER@$teuth:$TEUTH_ARCHIVE_PATH/$jobname/* logs/$jobname || true
     HTML_REPORT=teuthology-${TEUTH_SUITE//\//\:}
     make_github_report logs/$jobname logs/report.txt
     make_teuthology_html logs/$jobname logs/$HTML_REPORT
