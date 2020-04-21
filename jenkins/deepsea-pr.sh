@@ -55,24 +55,6 @@ echo DeepSea repo: $DEEPSEAREPOURL
 echo Home directory: $HOME
 source $TEUTH_PATH/v/bin/activate
 
-function print_artifacts() {
-    local yaml=$1
-    python -c "import sys, yaml ; ars = yaml.safe_load(sys.stdin)['artifacts']
-print(' '.join(ars.keys()))" < $yaml
-}
-
-function teuth_test_repos() {
-    local yaml=${1}
-    shift
-    local artifacts=${@:-"$(print_artifacts $yaml)"}
-    for i in $artifacts ; do
-        python -c "import sys, yaml
-ars=yaml.safe_load(sys.stdin)['artifacts']
-print('--test-repo %s:%s' % ('$i', ars['$i']['url']))" \
-< $yaml
-    done
-}
-
 function teuth_append_artifacts_to_overrides_install_repos() {
     local yaml=${1}
     shift
@@ -134,17 +116,14 @@ cp deepsea-overrides.yaml $TEUTH_OVERRIDES
 
 test -f artifacts-$CEPH_BRANCH.yaml && {
     echo Found artifact file artifacts-$CEPH_BRANCH.yaml
-    TEST_REPO=$(teuth_test_repos artifacts-$CEPH_BRANCH.yaml)
     teuth_append_artifacts_to_overrides_install_repos $TEUTH_OVERRIDES artifacts-$CEPH_BRANCH.yaml
 } || {
     if [[ "x$ARTIFACTS" != "x" ]] ; then
         echo "$ARTIFACTS" > artifacts.yaml
-        TEST_REPO=$(teuth_test_repos artifacts.yaml)
         teuth_append_artifacts_to_overrides_install_repos $TEUTH_OVERRIDES artifacts.yaml
     fi
 }
 if [[ "x$DEEPSEA_REPO" != "x" ]] ; then
-    TEST_REPO="$TEST_REPO --test-repo deepsea!1:$DEEPSEA_REPO"
     cat <<EOF > $PWD/artifacts-deepsea-repo.yaml
 artifacts:
     deepsea!1:
