@@ -62,6 +62,24 @@ function teuth_append_artifacts_to_overrides_install_repos() {
     cat $yaml
 }
 
+function artifacts_to_repos() {
+    python $SOURCEPATH/snippets/artifacts-to-repos.py $@
+}
+
+# Copy yaml data from source yaml to destination yaml by key path.
+# Print result to standard output.
+#
+# Argument
+# $1    file path to destination yaml data
+# $2    ":" separated key sequence, location where to copy data
+#       in the destination yaml
+# $3    file path to source yaml data
+# $4    (optional) ":" separated key sequence, location where from
+#       the source yaml to copy data, root if ignored.
+function _copy_yaml() {
+    python $SOURCEPATH/snippets/copy_yaml.py $@
+}
+
 TEUTH_OVERRIDES=overrides-$JOB_NAME-$BUILD_NUMBER.yaml
 
 tee $PWD/deepsea-overrides.yaml << EOF
@@ -91,15 +109,22 @@ archive-on-error: true
 
 EOF
 
-cp deepsea-overrides.yaml $TEUTH_OVERRIDES
+export TEUTH_REPO_YAML=deepsea-teuthology-repos.yaml
+
+for r in teuth-repos-*.yaml ; do
+   test -f $r && {
+       echo Found repo file $r
+   }
+   cat $r >> $TEUTH_REPO_YAML
+done
 
 test -f artifacts-$CEPH_BRANCH.yaml && {
     echo Found artifact file artifacts-$CEPH_BRANCH.yaml
-    teuth_append_artifacts_to_overrides_install_repos $TEUTH_OVERRIDES artifacts-$CEPH_BRANCH.yaml
+    artifacts_to_repos artifacts-$CEPH_BRANCH.yaml >> $TEUTH_REPO_YAML
 } || {
     if [[ "x$ARTIFACTS" != "x" ]] ; then
         echo "$ARTIFACTS" > artifacts.yaml
-        teuth_append_artifacts_to_overrides_install_repos $TEUTH_OVERRIDES artifacts.yaml
+        artifacts_to_repos artifacts.yaml >> $TEUTH_REPO_YAML
     fi
 }
 if [[ "x$DEEPSEA_REPO" != "x" ]] ; then
@@ -108,8 +133,12 @@ artifacts:
     deepsea!1:
         url: "$DEEPSEA_REPO"
 EOF
-    teuth_append_artifacts_to_overrides_install_repos $TEUTH_OVERRIDES artifacts-deepsea-repo.yaml
+    artifacts_to_repos artifacts-deepsea-repo.yaml >> $TEUTH_REPO_YAML
 fi
+
+
+_copy_yaml $PWD/deepsea-overrides.yaml overrides:install:repos \
+       $TEUTH_REPO_YAML | tee $TEUTH_OVERRIDES
 
 
 scp -i $SECRET_FILE -o StrictHostKeyChecking=no $TEUTH_OVERRIDES runner@$TEUTH_HOST:
