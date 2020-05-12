@@ -209,7 +209,7 @@
         - copyartifact:
             project: publish-artifacts
             parameter-filters: 'CEPH_BRANCH=$CEPH_BRANCH'
-            filter: 'artifacts*.yaml'
+            filter: 'artifacts*.yaml,teuth-repo*.yaml'
             optional: true
             #target: ''
             which-build: 'last-successful'
@@ -368,9 +368,9 @@
             default: "ses6"
             description: "Examples: ses6, ses5, ses4"
         - text:
-            name: ARTIFACTS
+            name: TEUTH_REPOS
             default: ""
-            description: Artifacts yaml file
+            description: Teuthology test repos in yaml format
     properties:
         - build-discarder:
             num-to-keep: 20
@@ -381,8 +381,8 @@
         - build-name: { name: '#$BUILD_NUMBER $CEPH_BRANCH' }
     builders:
         - shell: |
-            echo "$ARTIFACTS" >> artifacts-$CEPH_BRANCH.yaml
+            echo "$TEUTH_REPOS" >> teuth-repos-$CEPH_BRANCH.yaml
     publishers:
         - archive:
-            artifacts: "logs/**,*.log,*.yaml,artifacts*.yaml"
+            artifacts: "logs/**,*.log,*.yaml,teuth-repo*.yaml"
             allow-empty: true
