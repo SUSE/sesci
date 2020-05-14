@@ -360,6 +360,10 @@
             junit-attachments: true
 - job:
     name: 'publish-artifacts'
+    description: |
+      This job does provide a artifacts file for the
+      different SES versions. It can be used by other jobs to
+      get a artifacts file via the Jenkins "copyartifacts" directive.
     concurrent: true
     node: storage-compute
     parameters:
