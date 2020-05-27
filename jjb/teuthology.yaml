@@ -84,6 +84,7 @@
             branches:
                 - '$GIT_REF'
             basedir: 'teuthology'
+            credentials-id: 'susebot'
     wrappers:
         - workspace-cleanup
         - ansicolor
@@ -176,6 +177,7 @@
             branches:
                 - '$GIT_REF'
             basedir: 'teuthology'
+            credentials-id: 'susebot'
     wrappers:
         - workspace-cleanup
         - ansicolor
