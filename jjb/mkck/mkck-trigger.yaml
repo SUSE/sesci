@@ -270,8 +270,8 @@
             #cron: 'H/5 * * * *'
             cron: 'H/2 * * * *'
             #build-desc-template: "Ceph Pull Request"
-            trigger-phrase: 'ok to test'
-            #only-trigger-phrase: false
+            trigger-phrase: '.*@susebot\W+run(\W+{dist})?\W+(mkck|make-check|make\W*check)(\W+{dist})?.*'
+            only-trigger-phrase: true
             permit-all: true
             allow-whitelist-orgs-as-admins: true
             #auto-close-on-faile: false
