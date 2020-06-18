@@ -46,6 +46,10 @@
               predefined-parameters: |
                 DIST_CEPH={dist_ceph}
                 SITE=ovh.net
+
+- builder:
+    name: copy_artifacts_sles
+    builders:
       - copyartifact:
           project: storage-deliver-mkck-artifact
           parameter-filters: 'DIST_CEPH={dist_ceph}'
@@ -71,7 +75,15 @@
     builders: []
 
 - builder:
+    name: copy_artifacts_leap
+    builders: []
+
+- builder:
     name: deliver_artifacts_tumbleweed
+    builders: []
+
+- builder:
+    name: copy_artifacts_tumbleweed
     builders: []
 
 - builder:
@@ -110,7 +122,7 @@
     name: run-make-check
     dist:
         - 'sles':
-            disabled: true
+            disabled: false
             target: b2-60
         - 'leap':
             disabled: false
@@ -219,6 +231,9 @@
             name: DIST
             default: '{dist}'
         - string:
+            name: DIST_NAME
+            default: '{dist}'
+        - string:
             name: CEPH_REF
             default: '$sha1'
         - string:
@@ -288,6 +303,74 @@
             properties-file: 'target.properties'
         - shell: "git clone https://github.com/suse/sesci"
         - create_sesci_venv
+        - deliver_artifacts_{dist}:
+            dist_ceph: '{dist}-$CEPH_BRANCH'
+        # because parameter-filters of copyartifact plugin
+        # does not use token-macro plugin and correspondingly
+        # cannot expand variables we use conditionals here
+        - conditional-step:
+            condition-kind: strings-match
+            condition-string1: 'sles-ses5'
+            condition-string2: '$DIST_NAME-$CEPH_BRANCH'
+            steps:
+              - copyartifact:
+                  project: storage-deliver-mkck-artifact
+                  parameter-filters: 'DIST_CEPH=sles-ses5'
+                  filter: 'artifacts*.yaml'
+                  optional: false
+                  which-build: 'multijob-build'
+              - copyartifact:
+                  project: storage-deliver-update-repos
+                  parameter-filters: 'SES_VER=5.0,SITE=ovh.net'
+                  filter: 'artifacts*.yaml'
+                  optional: true
+                  which-build: 'last-successful'
+        - conditional-step:
+            condition-kind: strings-match
+            condition-string1: 'sles-ses6'
+            condition-string2: '$DIST_NAME-$CEPH_BRANCH'
+            steps:
+              - copyartifact:
+                  project: storage-deliver-mkck-artifact
+                  parameter-filters: 'DIST_CEPH=sles-ses6'
+                  filter: 'artifacts*.yaml'
+                  optional: false
+                  which-build: 'multijob-build'
+              - copyartifact:
+                  project: storage-deliver-update-repos
+                  parameter-filters: 'SES_VER=6.0,SITE=ovh.net'
+                  filter: 'artifacts*.yaml'
+                  optional: true
+                  which-build: 'last-successful'
+        - conditional-step:
+            condition-kind: strings-match
+            condition-string1: 'sles-ses7'
+            condition-string2: '$DIST_NAME-$CEPH_BRANCH'
+            steps:
+              - copyartifact:
+                  project: storage-deliver-mkck-artifact
+                  parameter-filters: 'DIST_CEPH=sles-ses7'
+                  filter: 'artifacts*.yaml'
+                  optional: false
+                  which-build: 'multijob-build'
+              - copyartifact:
+                  project: storage-deliver-update-repos
+                  parameter-filters: 'SES_VER=7.0,SITE=ovh.net'
+                  filter: 'artifacts*.yaml'
+                  optional: true
+                  #target: ''
+                  which-build: 'last-successful'
+        - conditional-step:
+            condition-kind: strings-match
+            condition-string1: 'sles'
+            condition-string2: '$DIST_NAME'
+            steps:
+              - shell: |
+                  . v/bin/activate
+                  . sesci/common/util
+                  for i in artifacts*.yaml ; do
+                    cat $i
+                  done
         - os_server_create
         - shell: |
             addr=$(jq -r .server.ip mkck.status)
@@ -584,6 +667,9 @@
         - shell: "git clone https://github.com/suse/sesci -b $CI_BRANCH"
         - create_sesci_venv
         - deliver_artifacts_{dist_name}:
+            dist_ceph: '{dist_ceph}'
+            ses_ver: '{ses_ver}'
+        - copy_artifacts_{dist_name}:
             dist_ceph: '{dist_ceph}'
             ses_ver: '{ses_ver}'
         - os_server_create
