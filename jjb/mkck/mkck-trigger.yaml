@@ -500,6 +500,7 @@
         - shell: |
             echo $(hostname -i) $(hostname -f)
             cat /etc/os-release
+            zypper lr -upEP
 
             ./run-make-check.sh -DWITH_LTTNG=false -DWITH_BABELTRACE=false
     publishers:
