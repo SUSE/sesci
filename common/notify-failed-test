@@ -1,0 +1,51 @@
+#!/bin/bash
+
+export COMMON=${COMMON:-$(cd $(dirname $BASH_SOURCE); echo $PWD)}
+export SESCI=${SESCI:-$(cd $(dirname $BASH_SOURCE)/..; echo $PWD)}
+
+source $COMMON/util
+
+export JUNIT=${JUNIT:-"res/make-check.xml"}
+# space separated
+export NOTIFY_FAILED_TEST_CHANNELS=${NOTIFY_FAILED_TEST_CHANNELS:-""}
+# newline separated
+export NOTIFY_FAILED_TEST_LIST=${NOTIFY_FAILED_TEST_LIST:-""}
+
+export FAILED_LIST=${FAILED_LIST:-""}
+
+if [ -z "$FAILED_LIST" ] ; then
+    echo "No failed test detected"
+    exit 1
+fi
+echo "Following tests were found among failed: $FAILED_LIST"
+echo "Test environment will not be destroyed"
+
+if [ ! -z "$STATUS" ] ; then
+    export SERVER_NAME=${SERVER_NAME:-"$(cat $STATUS | yj | jq -r .server.name)"}
+    export SERVER_ADDR=${SERVER_ADDR:-"$(cat $STATUS | yj | jq -r .server.ip)"}
+else
+    export SERVER_NAME=${SERVER_NAME:-"unknown-hostname"}
+    export SERVER_ADDR=${SERVER_ADDR:-"1.2.3.4"}
+fi
+
+tee message.txt << EOF
+The jenkins job $JOB_NAME build $BUILD_ID is failed. Following tests found among failed:
+
+$(for i in $FAILED_LIST ; do echo "[$i]($BUILD_URL/testReport/%28root%29/make-check/$i/)" ; done)
+
+The make check node '$SERVER_NAME' can be reached by ip '$SERVER_ADDR':
+
+\`\`\`
+ssh root@$SERVER_ADDR
+\`\`\`
+
+The node can be destroyed by the command:
+
+\`\`\`
+openstack --os-cloud '$TARGET_CLOUD' server delete '$SERVER_NAME'
+\`\`\`
+EOF
+
+if [ ! -z "$NOTIFY_FAILED_TEST_CHANNELS" ] ; then
+    python $SESCI/snippets/rocket.py $NOTIFY_FAILED_TEST_CHANNELS < message.txt
+fi

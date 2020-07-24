@@ -1,0 +1,116 @@
+# DESCRIPTION:
+#
+#   Check if among failed test present the ones from the checklist and return newline separate list of found test
+#
+# USAGE:
+#
+#   . check-junit-failed-tests
+#   match_list = check_junit_failed_tests <path-to-junit-xml> "<newline-separated-checklist>"
+#
+#   if [ -z $match_list ] ; then
+#      echo OK
+#   else
+#      echo NOT OK
+#   fi
+
+function check_junit_failed_tests() {
+  local junit_xml=${1:-"res/make-check.xml"}
+  local checklist=${2:-""}
+  local checklist_file=$(mktemp checklist-XXXX)
+  # cleanup checklist from whitespaces, and results new line separated list
+  local clean_checklist=$(echo "$checklist" | grep -vE '^\s*$' | tee $checklist_file)
+  echo "Following test should be checked for failures: [${clean_checklist//$'\n'/ }]" > /dev/stderr
+  local failed_test=$(xmlstarlet sel -t -v "testsuite/testcase[count(failure) > 0]/@name" $junit_xml || true )
+  echo "Failed test: [$failed_test]" > /dev/stderr
+  echo "$failed_test" | grep -Ff $checklist_file
+  rm $checklist_file
+}
+
+function test_expected() {
+  local testname="$1"
+  local expected="$2"
+  local funcname="$3"
+  shift 3
+  echo ===== Test $testname: [$funcname "$@"] =====
+  actual=$($funcname "$@")
+  echo "-- Expected: [$expected]"
+  echo "-- Actual: [$actual]"
+  [ "$expected" == "$actual" ] || {
+	echo FAIL: Does not match
+	exit 1
+  }
+  echo PASS
+}
+
+function selftest-monitor-test-failure() {
+  export xml_file_0=$(mktemp results-xml-XXXX)
+
+cat > $xml_file_0 << EOF
+<?xml version="1.0" ?>
+<testsuite name="make-check">
+  <testcase classname="make-check" name="run-tox-mgr-insights" time="6.21">
+    <system-out>[[ATTACHMENT|res/output/run-tox-mgr-insights/run-tox-mgr-insights-out.txt]]</system-out>
+    <failure/>
+  </testcase>
+  <testcase classname="make-check" name="run-tox-mgr-orchestrator_cli" time="7.41">
+    <system-out>[[ATTACHMENT|res/output/run-tox-mgr-orchestrator_cli/run-tox-mgr-orchestrator_cli-out.txt]]</system-out>
+  </testcase>
+  <testcase classname="make-check" name="run-tox-mgr-ansible" time="7.72">
+    <system-out>[[ATTACHMENT|res/output/run-tox-mgr-ansible/run-tox-mgr-ansible-out.txt]]</system-out>
+  </testcase>
+  <testcase classname="make-check" name="unittest_addrs" time="0.30">
+    <system-out>[[ATTACHMENT|res/output/unittest_addrs/unittest_addrs-out.txt]]</system-out>
+  </testcase>
+  <testcase classname="make-check" name="unittest_encoding" time="0.61">
+    <system-out>[[ATTACHMENT|res/output/unittest_encoding/unittest_encoding-out.txt]]</system-out>
+  </testcase>
+  <testcase classname="make-check" name="unittest_rbd_mirror" time="97.79">
+    <system-out>[[ATTACHMENT|res/output/unittest_rbd_mirror/unittest_rbd_mirror-out.txt]]</system-out>
+  </testcase>
+  <testcase classname="make-check" name="safe-to-destroy.sh" time="152.65">
+    <system-out>[[ATTACHMENT|res/output/safe-to-destroy.sh/safe-to-destroy.sh-out.txt]]</system-out>
+  </testcase>
+  <testcase classname="make-check" name="mgr-dashboard-frontend-unittests" time="580.60">
+    <system-out>[[ATTACHMENT|res/output/mgr-dashboard-frontend-unittests/mgr-dashboard-frontend-unittests-out.txt]]</system-out>
+  </testcase>
+  <testcase classname="make-check" name="run-rbd-unit-tests.sh" time="1133.90">
+    <system-out>[[ATTACHMENT|res/output/run-rbd-unit-tests.sh/run-rbd-unit-tests.sh-out.txt]]</system-out>
+    <failure/>
+  </testcase>
+  <testcase classname="make-check" name="unittest_rgw_dmclock_scheduler" time="3600.03">
+    <system-out>[[ATTACHMENT|res/output/unittest_rgw_dmclock_scheduler/unittest_rgw_dmclock_scheduler-out.txt]]</system-out>
+    <failure/>
+  </testcase>
+</testsuite>
+
+EOF
+
+  check_list_0="
+# failing test 1
+unittest_rgw_dmclock_scheduler
+# failing test 2
+run-rbd-unit-tests.sh
+
+# missing test
+non-existing-test
+
+# passing test 1
+unittest_rgw_dmclock_scheduler
+
+  "
+
+  test_expected "0" "run-rbd-unit-tests.sh"$'\n'"unittest_rgw_dmclock_scheduler" check_junit_failed_tests $xml_file_0 "$check_list_0"
+  test_expected "1" "" check_junit_failed_tests $xml_file_0 ""
+  test_expected "2" "" check_junit_failed_tests $xml_file_0 "blabla"
+  test_expected "3" "" check_junit_failed_tests missing_file "blabla"
+  test_expected "4" "" check_junit_failed_tests $xml_file_0 "non-existing-test"$'\n'"passed-test"
+  # example
+  match_list=$(check_junit_failed_tests $xml_file_0 "non-existing-test"$'\n'"passed-test")
+  if [ -z "$match_list" ] ; then
+    echo OK
+  else
+    echo NOT OK
+  fi
+  rm $xml_file_0
+}
+
