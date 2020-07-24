@@ -7,7 +7,7 @@
           virtualenv v
           . v/bin/activate
           pip install -U pip
-          pip install python-openstackclient openstacksdk docopt PyYaml paramiko
+          pip install python-openstackclient openstacksdk docopt PyYaml paramiko rocket-python
 
 - builder:
     name: os_server_create
@@ -21,9 +21,13 @@
     name: os_server_delete
     builders:
       - shell: |
-          if ! $DESTROY_ENVIRONMENT ; then exit 0 ; fi
+          #!/bin/bash
           . v/bin/activate
-          STATUS=$PWD/mkck.status
+          . sesci/common/check-junit-failed-tests
+          export FAILED_LIST=$(check_junit_failed_tests res/make-check.xml "$NOTIFY_FAILED_TEST_LIST")
+          export STATUS=$PWD/mkck.status
+          bash sesci/common/notify-failed-test && exit 0
+          if ! $DESTROY_ENVIRONMENT ; then exit 0 ; fi
           cd sesci && OS_CLOUD=$TARGET_CLOUD python -u os-server.py -a delete -s $STATUS
 
 - builder:
@@ -31,6 +35,7 @@
     builders:
       - shell: |
           python sesci/convert-ctest-to-junit.py
+
 
 - builder:
     name: deliver_artifacts_sles
@@ -642,6 +647,21 @@
         - bool:
             name: DESTROY_ENVIRONMENT
             default: true
+        - text:
+            name: NOTIFY_FAILED_TEST_LIST
+            default: |
+                unittest_rgw_dmclock_scheduler
+            description: |
+                Newline separated test check list:<br/>
+                <em>
+                unittest_rgw_dmclock_scheduler<br/>
+                some-test-that-can-be-missing<br/>
+                some-test-that-usually-pass<br/>
+                </em>
+        - string:
+            name: NOTIFY_FAILED_TEST_CHANNELS
+            default: '@dkondratenko @kshatskyy'
+            description: 'Space separated list of channels, for example: <em>@username channelname1 channelname2</em>'
     properties:
         - github:
             url: '{repo}'
@@ -713,8 +733,8 @@
             filter: 'build/**, src/**/*.log, src/**/*.trs'
             optional: true
             which-build: multijob-build
-        - os_server_delete
         - ctest_to_junit
+        - os_server_delete
 
     wrappers:
         - workspace-cleanup
