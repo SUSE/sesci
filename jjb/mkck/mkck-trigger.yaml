@@ -659,7 +659,7 @@
                 </em>
         - string:
             name: NOTIFY_FAILED_TEST_CHANNELS
-            default: '@dkondratenko @kshatskyy'
+            default: '@dkondratenko @kshatskyy @tbechtold @smithfarm ses-ci'
             description: 'Space separated list of channels, for example: <em>@username channelname1 channelname2</em>'
     properties:
         - github:
