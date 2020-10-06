@@ -650,7 +650,6 @@
         - text:
             name: NOTIFY_FAILED_TEST_LIST
             default: |
-                unittest_rgw_dmclock_scheduler
             description: |
                 Newline separated test check list:<br/>
                 <em>
