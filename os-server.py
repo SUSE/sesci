@@ -130,7 +130,7 @@ def set_server_name(server_id):
             print("Setting server name to %s" % target)
             #conn.compute.update_server(server_id, name=target)
             #s = conn.update_server(server_id, name=target)
-            tries=5
+            tries=20
             while tries > 0:
                 conn.compute.update_server(server_id, name=target)
                 time.sleep(10) # wait count to 10
@@ -141,6 +141,8 @@ def set_server_name(server_id):
                     print("Server name is '%s', should be '%s'" %(s.name, target))
                 tries -= 1
                 print("Left %s tries to rename the server" % tries)
+            else:
+                raise SystemExit("Cannot set name to '%s' for server '%s'" % (target, server_id))
             return target
     print("ERROR: Can't allocate name")
     print("TODO: Add wait loop for name allocation")
@@ -282,20 +284,21 @@ def create_server(image, flavor, key_name, user_data=None):
         key_name=key_name,
         userdata=user_data,
     )
+    target_id = target.id
     print("Created target: %s" % target.id)
     update_server_status(id=target.id)
     print(target)
-    # for some big nodes sometimes rename does not happen
-    # and some pause is required for doing this
-    grace_wait = 5
-    print("Graceful wait %s sec before rename..." % grace_wait)
-    time.sleep(grace_wait)
-    set_name(target.id)
 
     try:
+        # for some big nodes sometimes rename does not happen
+        # and some pause is required for doing this
+        grace_wait = 5
+        print("Graceful wait %s sec before rename..." % grace_wait)
+        time.sleep(grace_wait)
+        set_name(target.id)
+
         timeout = 8 * 60
         wait = 10
-        target_id = target.id
         start_time = time.time()
         while target.status != 'ACTIVE':
           print("STATUS:%s" % target.status)
