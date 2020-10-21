@@ -116,16 +116,30 @@ def set_name(server_id):
                             time.sleep(lock_wait)
                     else:
                             raise SystemExit('Unable to obtain file lock: %s' % lockfile)
-    
+
+def make_server_name(t, n):
+    """
+    Returns name based on the template and numeric index.
+
+    The template can contain one placeholder for the index.
+    If template does not contain any placeholder,
+    then treat template as a bare name, and return it.
+
+    :param t: an str with name template, for example: node%00d
+    :param n: an int value with numeric index.
+    """
+    try:
+      target = t % n
+    except:
+      target = t
+    return target
+
 def set_server_name(server_id):
     print("Update name for server %s" % server_id)
     server_list = conn.compute.servers()
     existing_servers = [i.name for i in server_list]
     for n in range(99):
-        try:
-          target = args.target % n
-        except:
-          target = args.target
+        target = make_server_name(args.target, n)
         if not target in existing_servers:
             print("Setting server name to %s" % target)
             #conn.compute.update_server(server_id, name=target)
@@ -180,7 +194,7 @@ def host_client(hostname, identity):
             print("Connected to the host " + hostname)
             break
         except (paramiko.ssh_exception.NoValidConnectionsError, socket.error) as e:
-            print("Exeption occured: " + str(e))
+            print("Exception occured: " + str(e))
             if timeout < (time.time() - start_time):
                 print("ERROR: Timeout occured")
                 raise e
@@ -277,8 +291,17 @@ def create_server(image, flavor, key_name, user_data=None):
     #    key_name=key_name,
     #    user_data=user_data,
     #)
+
+    # if the target is not kind a template, just use it as server name
+    rename_server = (args.target != make_server_name(args.target, 0))
+    if rename_server:
+        target_name = status['server']['name']
+    else:
+        target_name = args.target
+    update_server_status(name=target_name)
+
     target = conn.create_server(
-        name=status['server']['name'],
+        name=target_name,
         image=image.id,
         flavor=flavor.id,
         key_name=key_name,
@@ -290,12 +313,13 @@ def create_server(image, flavor, key_name, user_data=None):
     print(target)
 
     try:
-        # for some big nodes sometimes rename does not happen
-        # and some pause is required for doing this
-        grace_wait = 5
-        print("Graceful wait %s sec before rename..." % grace_wait)
-        time.sleep(grace_wait)
-        set_name(target.id)
+        if rename_server:
+            # for some big nodes sometimes rename does not happen
+            # and a pause is required
+            grace_wait = 5
+            print("Graceful wait %s sec before rename..." % grace_wait)
+            time.sleep(grace_wait)
+            set_name(target.id)
 
         timeout = 8 * 60
         wait = 10
