@@ -16,6 +16,6 @@ RUN echo %_topdir $HOME/rpmbuild | tee $HOME/.rpmmacros
 RUN pwd && ls -la && cd DeepSea \
     && sudo zypper --non-interactive --gpg-auto-import-keys refresh \
     && sudo zypper --non-interactive install --no-recommends \
-           $(rpmspec --requires -q deepsea.spec.in 2>/dev/null)
+           $(rpmspec --buildrequires -q deepsea.spec.in 2>/dev/null)
 RUN cd DeepSea && make $target || true
 RUN cd DeepSea && mkdir logs && cp junit*.xml logs
