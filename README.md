@@ -17,3 +17,8 @@ Deleting jobs correspondingly:
 ```
 jenkins-jobs --conf storage-ci.ini delete --path jjb/mkck-trigger.yaml [name of job]
 ```
+
+Notice: if jenkins is using https, make sure to add certificate, for example:
+```
+cat /usr/share/pki/trust/anchors/SUSE_Trust_Root.crt.pem >> v/lib/python*/site-packages/certifi/cacert.pem
+```
