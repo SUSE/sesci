@@ -673,7 +673,7 @@
                 - job-status
                 - job-discover
     triggers:
-        - timed: "15 1 * * 1-5"
+        - timed: "15 1 * * 1,4"
     wrappers:
         - workspace-cleanup
         - ansicolor
