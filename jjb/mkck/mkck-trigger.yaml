@@ -228,7 +228,21 @@
         - string:
             name: TARGET_FLAVOR
             default: b2-60
-            description: "OVH flavor"
+            description: |
+              OVH flavor (RAM, Disk, VCPUs): b2-60 (60000, 400g, 16), b2-30 (30000, 200g, 8), b2-15 (15000, 100g, 4);
+              ECP flavor (RAM, Disk, VCPUs): m8.xxlarge (32768, 40g/20g, 8), m1.xlarge (16384, 160g, 8)
+        - string:
+            name: TARGET_NETWORK
+            default: ''
+            description: |
+              OVH leave empty,
+              ECP use 'sesci'
+        - string:
+            name: TARGET_FLOATING
+            default: ''
+            description: |
+              OVH leave empty,
+              ECP use 'floating'
         - string:
             name: TARGET_FILE
             default: 'mkck_{dist}.properties'
@@ -546,8 +560,22 @@
             default: 'sbg'
         - string:
             name: TARGET_FLAVOR
-            #default: hg-15-ssd
-            default: b2-30
+            default: b2-60
+            description: |
+              OVH flavor (RAM, Disk, VCPUs): b2-60 (60000, 400g, 16), b2-30 (30000, 200g, 8), b2-15 (15000, 100g, 4);
+              ECP flavor (RAM, Disk, VCPUs): m8.xxlarge (32768, 40g/20g, 8), m1.xlarge (16384, 160g, 8)
+        - string:
+            name: TARGET_NETWORK
+            default: ''
+            description: |
+              OVH leave empty,
+              ECP use 'sesci'
+        - string:
+            name: TARGET_FLOATING
+            default: ''
+            description: |
+              OVH leave empty,
+              ECP use 'floating'
         - string:
             name: TARGET_IMAGE
         - string:
@@ -625,7 +653,24 @@
         - string:
             name: TARGET_FLAVOR
             default: b2-60
-            description: "OVH flavor"
+            description: |
+              Target flavor:<br/>
+              OVH flavor (RAM, Disk, VCPUs):&nbsp;b2-60 (60000, 400g, 16),
+              b2-30 (30000, 200g, 8), b2-15 (15000, 100g, 4);<br/>
+              ECP flavor (RAM, Disk, VCPUs):&nbsp;m8.xxlarge (32768, 40g/20g, 8),
+              m1.xlarge (16384, 160g, 8)<br/>
+        - string:
+            name: TARGET_NETWORK
+            default: ''
+            description: |
+              OVH leave empty,
+              ECP use 'sesci'
+        - string:
+            name: TARGET_FLOATING
+            default: ''
+            description: |
+              OVH leave empty,
+              ECP use 'floating'
         - string:
             name: TARGET_FILE
             default: 'mkck_{dist_ceph}.properties'
@@ -659,7 +704,7 @@
                 </em>
         - string:
             name: NOTIFY_FAILED_TEST_CHANNELS
-            default: '@dkondratenko @kshatskyy @tbechtold @smithfarm ses-ci'
+            default: '@kshatskyy ceph-build'
             description: 'Space separated list of channels, for example: <em>@username channelname1 channelname2</em>'
     properties:
         - github:
