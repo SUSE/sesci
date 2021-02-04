@@ -39,6 +39,8 @@ target_user   = os.environ.get('TARGET_USER', 'opensuse')
 target_image  = os.environ.get('TARGET_IMAGE', 'opensuse-42-3-jeos-pristine')
 target_flavor = os.environ.get('TARGET_FLAVOR', 's1-2') #'b2-30')
 secret_file   = os.environ.get('SECRET_FILE', home + '/.ssh/id_rsa')
+target_network  = os.environ.get('TARGET_NETWORK', None)
+target_floating = os.environ.get('TARGET_FLOATING', None)
 
 conn = openstack.connect()
 
@@ -300,13 +302,18 @@ def create_server(image, flavor, key_name, user_data=None):
         target_name = args.target
     update_server_status(name=target_name)
 
-    target = conn.create_server(
+    params  = dict(
         name=target_name,
         image=image.id,
         flavor=flavor.id,
         key_name=key_name,
         userdata=user_data,
     )
+
+    if target_network:
+        params['network'] = target_network
+
+    target = conn.create_server(**params)
     target_id = target.id
     print("Created target: %s" % target.id)
     update_server_status(id=target.id)
@@ -348,6 +355,17 @@ def create_server(image, flavor, key_name, user_data=None):
         ipv4=[x['addr'] for i, nets in target.addresses.items()
             for x in nets if x['version'] == 4][0]
         print(ipv4)
+        if target_floating:
+            faddr = conn.create_floating_ip(
+                    network=target_floating,
+                    server=target,
+                    fixed_address=ipv4,
+                    wait=True,
+                    )
+            ipv4 = faddr['floating_ip_address']
+            fip_id = faddr['id']
+            update_server_status(fip_id=fip_id)
+
         update_server_status(ip=ipv4, name=target.name)
         provision_server()
     except:
@@ -355,6 +373,9 @@ def create_server(image, flavor, key_name, user_data=None):
         traceback.print_exc()
         if not args.debug:
             print("Cleanup...")
+            if target_floating:
+                if fip_id:
+                    conn.delete_floating_ip(fip_id)
             c.delete_server(target.id)
         exit(1)
 
@@ -373,7 +394,10 @@ if args.action in ['delete']:
         status = json.load(f)
         print(status)
     target_id = status['server']['id']
+    fip_id = status['server'].get('fip_id')
     delete_server(target_id)
+    if fip_id:
+        conn.delete_floating_ip(fip_id)
     exit(0)
 
 if args.action in ['create']:
