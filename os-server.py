@@ -319,6 +319,7 @@ def create_server(image, flavor, key_name, user_data=None):
     update_server_status(id=target.id)
     print(target)
 
+    fip_id = None
     try:
         if rename_server:
             # for some big nodes sometimes rename does not happen
