@@ -176,6 +176,9 @@
             export LOGS=$PWD/logs
             RESULT=$(cat $LOGS/result)
             if $DESTROY_ENVIRONMENT ; then
+                cd teuthology-deploy
+                virtualenv v
+                . v/bin/activate
                 ./deploy-teuthology --debug --name $TEUTH_NAME --cloud {cloud} --cleanup
             fi
             exit $RESULT
