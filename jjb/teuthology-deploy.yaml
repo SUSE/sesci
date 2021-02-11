@@ -175,9 +175,9 @@
         - shell: |
             export LOGS=$PWD/logs
             RESULT=$(cat $LOGS/result)
+            export TERRAFORM_STATE=$LOGS/$TEUTH_NAME.tfstate
             if $DESTROY_ENVIRONMENT ; then
                 cd teuthology-deploy
-                virtualenv v
                 . v/bin/activate
                 ./deploy-teuthology --debug --name $TEUTH_NAME --cloud {cloud} --cleanup
             fi
