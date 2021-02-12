@@ -53,10 +53,6 @@
         # do not include-raw the source because jjb requires {} escaped
         # variables if there are used templates
         - shell: |
-            export SESCI=$PWD/sesci
-            export LOGS=$PWD/logs
-            . $SESCI/common/teuthology
-
             export LOGPROCVENV=$PWD/logproc-env
             virtualenv -p python3 $LOGPROCVENV
             (
@@ -64,6 +60,11 @@
                 pip install docopt jinja2 pyyaml
                 deactivate
             )
+        - shell: |
+            export SESCI=$PWD/sesci
+            export LOGS=$PWD/logs
+            . $SESCI/common/teuthology
+
             set -ex
             cd teuthology-deploy
             virtualenv v
@@ -77,7 +78,7 @@
             TEUTH_SUITE_LOG=$LOGS/teuthology-suite.log
             TEUTH_DEPLOY_LOG=$LOGS/teuthology-deploy.log
             TEUTH_CLEANUP_LOG=$LOGS/teuthology-cleanup.log
-            export TEUTH_ARCHIVE=/home/worker/archive
+
             export TEUTH_IDENTITY=$SECRET_FILE
             export TERRAFORM_STATE=$LOGS/$TEUTH_NAME.tfstate
             ./deploy-teuthology --debug --name $TEUTH_NAME --cloud {cloud} --rebuild --ns --workers 8 --targets 50 --ref $TEUTH_BRANCH || RESULT=$?
@@ -88,52 +89,100 @@
                 #    sed -E 's/.* (.*\@[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+) \#.*/\1/')
                 #ssh runner@teuth-$EUTH_NAME "source .profile ; teuthology-suite -s smoke --ceph nautilus -D 7.4 -d centos -v -m ovh -w --limit 1"
                 TEUTH_SUITE=smoke
+                CEPH_BRANCH=octopus
                 ssh -i $SECRET_FILE runner@$TEUTH_HOST "
                 [[ -f .profile ]]           && source .profile
                 [[ -f .bashrc_teuthology ]] && source .bashrc_teuthology
-                teuthology-suite -v \
-                    --machine-type {cloud} \
-                    --ceph nautilus \
-                    --suite $TEUTH_SUITE \
-                    -D 7.4 \
-                    -d centos \
-                    --limit 1 \
+                teuthology-suite -v --machine-type {cloud} \
+                    --ceph $CEPH_BRANCH --suite $TEUTH_SUITE \
+                    -d centos -D 7.6 \
+                    --filter-out ubuntu,rhel,7.7,rados_bench,kclient_workunit_suites_dbench,cfuse_workunit_suites_iozone,_s3tests \
+                    --limit 2 \
+                    --seed 0 \
                     --newest 100 \
-                    --wait \
                     " 2>&1 | tee $TEUTH_SUITE_LOG
-                runname=$(grep 'Job scheduled with name' $TEUTH_SUITE_LOG | head -1 | \
-                          perl -n -e'/name ([^ ]+)/ && CORE::say $1')
-                pulpito=$(grep 'Test results' $TEUTH_SUITE_LOG | \
-                          sed -E 's/.* viewable at ([^\w]*)$/\1/g')
-                failed=$(grep -sc 'teuthology.suite:fail' $TEUTH_SUITE_LOG)
-                passed=$(grep -sc 'teuthology.suite:pass' $TEUTH_SUITE_LOG)
-                dead=$(grep -sc 'teuthology.suite:dead' $TEUTH_SUITE_LOG)
 
-                runpath=$LOGS/run
-                mkdir -p $runpath
-                scp -r -i $SECRET_FILE worker@$TEUTH_HOST:$TEUTH_ARCHIVE/$runname/* $runpath
 
-                alljobs=( $(find $runpath -mindepth 1 -maxdepth 1 -type d) )
-                total=${{#alljobs[@]}}
-
-                make_teuthology_junit $runpath $LOGS/junit-report.xml $TEUTH_SUITE "teuthology"
-                (
-                  export LC_ALL=en_US.UTF-8
-                  source $LOGPROCVENV/bin/activate
-                  make_teuthology_report "$runname" "$runpath" "$pulpito"
-                )
-
-                echo TOTAL: $total
-                echo PASS: $passed
-                echo FAIL: $failed
-                echo DEAD: $dead
-                echo JOBS: ${{alljobs[@]##*/}}
             ) || RESULT=$?
             fi
+            echo $RESULT > $LOGS/result
+        - description-setter:
+            regexp: 'Test results viewable at ([^\s]*)'
+            description: |
+                <a href="\1" title="Go to Pulpito Run Page">Pulpito</a>
+        - shell: |
+            export LOGPROCVENV=$PWD/logproc-env
+            TEUTH_SUITE=smoke
+            export SESCI=$PWD/sesci
+            export LOGS=$PWD/logs
+            RESULT=$(cat $LOGS/result)
+            . $SESCI/common/teuthology
+            TEUTH_SUITE_LOG=$LOGS/teuthology-suite.log
+            TEUTH_WAIT_LOG=$LOGS/teuthology-wait.log
+            export TERRAFORM_STATE=$LOGS/$TEUTH_NAME.tfstate
+            export TEUTH_HOST=$(terraform output -state=$TERRAFORM_STATE ip)
+            export TEUTH_ARCHIVE=/home/worker/archive
+            runname=$(grep 'Job scheduled with name' $TEUTH_SUITE_LOG | head -1 | \
+                      perl -n -e'/name ([^ ]+)/ && CORE::say $1')
+            if [[ -n "$runname" ]] ; then
+            (
+              pulpito=$(grep 'Test results' $TEUTH_SUITE_LOG | \
+                        sed -E 's/.* viewable at ([^\w]*)$/\1/g')
+
+              ssh -i $SECRET_FILE runner@$TEUTH_HOST "
+              [[ -f .profile ]]           && source .profile
+              [[ -f .bashrc_teuthology ]] && source .bashrc_teuthology
+              teuthology-wait -v --run $runname 2>&1" | tee $TEUTH_WAIT_LOG
+
+              failed=$(grep -sc 'teuthology.suite:fail' $TEUTH_WAIT_LOG)
+              passed=$(grep -sc 'teuthology.suite:pass' $TEUTH_WAIT_LOG)
+              dead=$(grep -sc 'teuthology.suite:dead' $TEUTH_WAIT_LOG)
+
+              runpath=$LOGS/run
+              mkdir -p $runpath
+              scp -r -i $SECRET_FILE worker@$TEUTH_HOST:$TEUTH_ARCHIVE/$runname/* $runpath
+
+              alljobs=( $(ls $runpath | grep -E '^[[:digit:]]+$') )
+              total=${{#alljobs[@]}}
+
+              make_teuthology_junit $runpath $LOGS/junit-report.xml $TEUTH_SUITE "teuthology"
+              (
+                export LC_ALL=en_US.UTF-8
+                source $LOGPROCVENV/bin/activate
+                make_teuthology_report "$runname" "$runpath" "$pulpito"
+              )
+
+              echo TOTAL: $total
+              echo PASS: $passed
+              echo FAIL: $failed
+              echo DEAD: $dead
+              echo JOBS: ${{alljobs[@]##*/}}
+              if [ $((fails + deads)) -gt 0 ] ; then
+                  echo "ERROR: There are failed jobs"
+                  exit 1
+              fi
+              if [ $((fails + deads + passed)) -eq 0 ] ; then
+                  echo "ERROR: Neither jobs passed, nor failed"
+                  exit 2
+              fi
+            ) || RESULT=$?
+            else
+              echo "ERROR: No run scheduled" > /dev/stderr
+            fi
+
+            echo $RESULT > $LOGS/result
+
+        - shell: |
+            export LOGS=$PWD/logs
+            RESULT=$(cat $LOGS/result)
+            export TERRAFORM_STATE=$LOGS/$TEUTH_NAME.tfstate
             if $DESTROY_ENVIRONMENT ; then
+                cd teuthology-deploy
+                . v/bin/activate
                 ./deploy-teuthology --debug --name $TEUTH_NAME --cloud {cloud} --cleanup
             fi
             exit $RESULT
+
 
     publishers:
         - description-setter:
@@ -141,14 +190,12 @@
             description:
                 <a href="/job/$JOB_NAME/$BUILD_NUMBER/testReport" title="Go to Test Results">Test Results</a> &bull;
                 <a href="/job/$JOB_NAME/$BUILD_NUMBER/artifact" title="Go to Jenkins build artifacts">Build Artifacts</a> &bull;
-                <a href="/job/$JOB_NAME/$BUILD_NUMBER/artifact/logs/run/index.html" title="Go to Teuthology Run Report">Run Report</a> &bull;
-                <a href="\1" title="Go to Pulpito Run Page">Pulpito</a>
+                <a href="/job/$JOB_NAME/$BUILD_NUMBER/artifact/logs/run/index.html" title="Go to Teuthology Run Report">Run Report</a>
             regexp-for-failed: 'Test results viewable at ([^\s]*)'
             description-for-failed:
                 <a href="/job/$JOB_NAME/$BUILD_NUMBER/testReport" title="Go to Test Results">Test Results</a> &bull;
                 <a href="/job/$JOB_NAME/$BUILD_NUMBER/artifact" title="Go to Jenkins build artifacts">Build Artifacts</a> &bull;
-                <a href="/job/$JOB_NAME/$BUILD_NUMBER/artifact/logs/run/index.html" title="Go to Teuthology Run Report">Run Report</a> &bull;
-                <a href="\1" title="Go to Pulpito Run Page">Pulpito</a>
+                <a href="/job/$JOB_NAME/$BUILD_NUMBER/artifact/logs/run/index.html" title="Go to Teuthology Run Report">Run Report</a>
         - archive:
             artifacts: "logs/**,*.log,*.yaml,**/junit*.xml"
             allow-empty: true
