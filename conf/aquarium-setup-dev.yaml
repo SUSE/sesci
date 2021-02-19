@@ -1,0 +1,33 @@
+copy:
+- from:
+  - snippets/clone-git-repo.sh
+  - snippets/run.cmd
+  into: bin
+  mode: '0755'
+
+exec:
+- git clone https://github.com/aquarist-labs/aquarium
+- name: building image
+  command: |
+    cd aquarium
+    ./tools/setup-dev.sh 2>&1
+
+flavor: b2-30
+#image: opensuse-15-2-jeos-pristine
+#image: minimal-opensuse-15.2-x86_64
+#image: openSUSE-Leap-15.2-JeOS.x86_64-15.2-OpenStack-Cloud-Build31.215
+image: openSUSE-Leap-15.2-JeOS.x86_64-15.2-OpenStack-Cloud-Build31.348
+keyfile: ~/.ssh/sa
+keyname: storage-automation
+name: aqua-%02d
+networks:
+- Ext-Net
+userdata: openstack/user-data.yaml
+username: opensuse
+vars:
+  dependencies:
+  - git
+  - java
+  - htop
+  - ccache
+  - npm
