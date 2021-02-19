@@ -18,8 +18,8 @@ import traceback
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-a', '--action', help='create, provision, delete action',
-                        choices=['create', 'delete', 'provision'])
+    parser.add_argument('-a', '--action', help='run, create/delete actions',
+                        choices=['create', 'delete', 'provision', 'run'])
     parser.add_argument('-s', '--status', help='path to status file (default: %(default)s)',
                         default='.os_server_status.json')
     parser.add_argument('-t', '--target', help='overrides target name. (default: %(default)s)',
@@ -295,7 +295,7 @@ def copy_files(client, copy_spec):
                         if x in i:
                             sftp.chmod(dest, int(i[x], 8))
 
-def create_server(image, flavor, key_name, user_data=None):
+def _create_server(image, flavor, key_name, user_data=None):
     print("Creating target using flavor %s" % flavor)
     print("Image=%s" % image.name)
     print("Data:\n%s" % user_data)
@@ -406,7 +406,7 @@ if args.action in ['provision']:
     provision_host(target_ip, secret_file)
     exit(0)
 
-if args.action in ['delete']:
+def do_delete():
     with open(args.status, 'r') as f:
         status = json.load(f)
         print(status)
@@ -415,9 +415,8 @@ if args.action in ['delete']:
     delete_server(target_id)
     if fip_id:
         conn.delete_floating_ip(fip_id)
-    exit(0)
 
-if args.action in ['create']:
+def do_create():
     server_list = c.servers()
     print("SERVERS: %s" % ", ".join([i.name for i in server_list]))
 
@@ -443,6 +442,17 @@ if args.action in ['create']:
                 path = base + '/' + path
         with open(path, 'r') as f:
             userdata=f.read()
-    create_server(image, flavor, keypair.name, userdata)
-    exit(0)
+    _create_server(image, flavor, keypair.name, userdata)
 
+if args.action in ['delete']:
+    do_delete()
+
+if args.action in ['create']:
+    do_create()
+
+if args.action in ['run']:
+    do_create()
+    if not args.keep_nodes:
+        do_delete()
+
+exit(0)
