@@ -23,9 +23,10 @@ def parse_args():
     parser.add_argument('-s', '--status', help='path to status file (default: %(default)s)',
                         default='.os_server_status.json')
     parser.add_argument('-t', '--target', help='overrides target name. (default: %(default)s)',
-                        default=os.environ.get('TARGET_MASK', 'mkck%02d'))
+                        default=os.environ.get('TARGET_MASK', '')) # mkck%02d
     parser.add_argument('-f', '--spec-file', help='path to a spec file, optional')
     parser.add_argument('-d', '--debug', help='debug mode', action='store_true')
+    parser.add_argument('-k', '--keep-nodes', help='do not cleanup resource', action='store_true')
     return parser.parse_args()
 
 args = parse_args()
@@ -37,7 +38,7 @@ if args.debug:
 home = os.environ.get('HOME')
 target_user   = os.environ.get('TARGET_USER', 'opensuse')
 target_image  = os.environ.get('TARGET_IMAGE', 'opensuse-42-3-jeos-pristine')
-target_flavor = os.environ.get('TARGET_FLAVOR', 's1-2') #'b2-30')
+target_flavor = os.environ.get('TARGET_FLAVOR', '') #'s1-2', 'b2-30')
 secret_file   = os.environ.get('SECRET_FILE', home + '/.ssh/id_rsa')
 target_network  = os.environ.get('TARGET_NETWORK', None)
 target_floating = os.environ.get('TARGET_FLOATING', None)
@@ -46,7 +47,7 @@ conn = openstack.connect()
 
 server_spec = {
     'flavor':   target_flavor,
-    'name':     args.target,
+    'name':     args.target or 'target%02d',
     'image':    target_image,
     'username': target_user,
     'userdata': 'openstack/user-data.yaml',
@@ -97,7 +98,7 @@ def update_server_status(**kwargs):
         json.dump(status, f, indent=2)
 
 def set_name(server_id):
-    lockfile = '/tmp/' + args.target
+    lockfile = '/tmp/' + server_spec['name']
     lock_timeout = 5 * 60
     lock_wait = 2
     print("Trying to lock file for process " + str(os.getpid()))
@@ -141,7 +142,7 @@ def set_server_name(server_id):
     server_list = conn.compute.servers()
     existing_servers = [i.name for i in server_list]
     for n in range(99):
-        target = make_server_name(args.target, n)
+        target = make_server_name(server_spec['name'], n)
         if not target in existing_servers:
             print("Setting server name to %s" % target)
             #conn.compute.update_server(server_id, name=target)
@@ -228,14 +229,27 @@ def provision_host(hostname, identity):
     provision_node(client)
 
 def client_run(client, command_list):
-    for command in command_list:
-      print("+ " + command)
+    for c in command_list:
+      name = None
+      if isinstance(c, str):
+          command = c
+      if isinstance(c, dict):
+          command = c.get('command')
+          name = c.get('name', None)
+      if name:
+          print(f"=== {name}")
+      for i in command.split('\n'):
+          print("+ " + i)
       stdin, stdout, stderr = client.exec_command(command)
       while True:
         l = stdout.readline()
         if not l:
           break
         print(">>> " + l.rstrip())
+      exit_code = stdout.channel.recv_exit_status()
+      if exit_code:
+          raise Exception(f"Received exit code {exit_code} while running command: {command}")
+      print(f"||| exit code: {exit_code}")
 
 def host_run(host, command_list):
     cli = host_client(host, secret_file)
@@ -244,11 +258,12 @@ def host_run(host, command_list):
 def provision_node(client):
     target_fqdn = status['server']['name'] + ".suse.de"
     target_addr = status['server']['ip']
-    command_list = [
-      'sudo zypper --no-gpg-checks ref 2>&1',
-    ]
+    command_list = []
     if server_spec.get('vars') and server_spec['vars'].get('dependencies'):
-        command_list.append('sudo zypper install -y %s 2>&1' % ' '.join(server_spec['vars']['dependencies']))
+        command_list += [
+            'sudo zypper --no-gpg-checks ref 2>&1',
+            'sudo zypper install -y %s 2>&1' % ' '.join(server_spec['vars']['dependencies']),
+        ]
     command_list += [
       'echo "' + target_addr + '\t' + target_fqdn + '" | sudo tee -a /etc/hosts',
       'sudo hostname ' + target_fqdn,
@@ -295,11 +310,12 @@ def create_server(image, flavor, key_name, user_data=None):
     #)
 
     # if the target is not kind a template, just use it as server name
-    rename_server = (args.target != make_server_name(args.target, 0))
+    target_mask = server_spec['name']
+    rename_server = (target_mask != make_server_name(target_mask, 0))
     if rename_server:
         target_name = status['server']['name']
     else:
-        target_name = args.target
+        target_name = target_mask
     update_server_status(name=target_name)
 
     params  = dict(
@@ -372,7 +388,7 @@ def create_server(image, flavor, key_name, user_data=None):
     except:
         print("ERROR: Failed to create node")
         traceback.print_exc()
-        if not args.debug:
+        if not args.debug and not args.keep_nodes:
             print("Cleanup...")
             if target_floating:
                 if fip_id:
