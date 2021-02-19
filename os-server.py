@@ -12,6 +12,7 @@ import json
 import sys
 import fcntl
 import base64
+import jinja2
 
 import openstack
 import traceback
@@ -228,13 +229,16 @@ def provision_host(hostname, identity):
                 time.sleep(wait)
     provision_node(client)
 
+def render_command(command, env=os.environ):
+    return jinja2.Template(command).render(env)
+
 def client_run(client, command_list):
     for c in command_list:
       name = None
       if isinstance(c, str):
-          command = c
+          command = render_command(c)
       if isinstance(c, dict):
-          command = c.get('command')
+          command = render_command(c.get('command'))
           name = c.get('name', None)
       if name:
           print(f"=== {name}")
