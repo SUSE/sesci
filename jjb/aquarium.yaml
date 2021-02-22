@@ -1,0 +1,60 @@
+#jenkins-jobs --conf storage-ci.suse.de.ini update jjb/aquarium.yaml 
+- project:
+    name: aquarium
+    test:
+      - 'build-image':
+          openstack_flavor: b2-7
+          openstack_cloud: sbg
+          github_poll: 'H/2 * * * *'
+          github_phrase: '.*jenkins\W+(run|test)\W+build[_-]?image'
+          conf: 'aquarium-build-image.yaml'
+      - 'setup-dev':
+          openstack_flavor: b2-7
+          openstack_cloud: sbg
+          github_poll: 'H/2 * * * *'
+          github_phrase: '.*jenkins\W+(run|test)\W+setup[_-]?dev'
+          conf: 'aquarium-setup-dev.yaml'
+
+    jobs:
+        - 'aquarium_pull_request'
+
+- job-template:
+    id: aquarium_pull_request
+    name: 'aquarium-{test}'
+    node: storage-compute
+    properties:
+      - github:
+          url: 'https://github.com/aquarist-labs/aquarium'
+          display-name: aquarium
+      - build-discarder:
+          num-to-keep: 100
+      - authorization:
+          anonymous:
+            - job-read
+            - job-status
+            - job-discover
+        
+    wrappers:
+      - workspace-cleanup
+      - ansicolor
+    triggers:
+      - github-pull-request:
+          org-list: ['aquarist-labs']
+          cron: '{github_poll}'
+          trigger-phrase: '{github_phrase}'
+          only-trigger-phrase: true
+          #permit-all: true
+          allow-whitelist-orgs-as-admins: true
+          white-list-target-branches:
+            - main
+          auth-id: 'susebot'
+          status-add-test-results: true
+          status-context: 'jenkins/{test}'
+          triggered-status: '{test} is triggered'
+          started-status: '{test} is started'
+    builders:
+      - shell: |
+          export CI=$HOME/sesci
+          . $CI/v/bin/activate
+          OS_CLOUD={openstack_cloud} python -u $CI/os-server.py -a run -f $CI/conf/{conf} -t $JOB_BASE_NAME-$BUILD_NUMBER
+

@@ -6,7 +6,9 @@ copy:
   mode: '0755'
 
 exec:
-- git clone https://github.com/aquarist-labs/aquarium
+- name: checkout pull request sha1
+  command: |
+    clone-git-repo.sh aquarium https://github.com/aquarist-labs/aquarium {{ sha1 or 'main' }} 2>&1
 - name: building image
   command: |
     cd aquarium

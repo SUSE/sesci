@@ -1,4 +1,6 @@
 #!/bin/bash -ex
+# jenkins style sha1 pull request checkout
+
 REPO_PATH=${1:-"."}
 REPO_URL=${2:-"https://github.com/suse/ceph"}
 REPO_BRANCH=${3:-"master"}
@@ -20,7 +22,7 @@ if [[ "$REPO_BRANCH" =~ $isPR ]] ; then
     git fetch --tags --progress $REPO_URL +refs/pull/*:refs/remotes/origin/pr/*
     rev=$(git rev-parse refs/remotes/$REPO_BRANCH^{commit})
 
-    git config core.sparsecheckout
+    git config core.sparseCheckout true
     git checkout -f $rev
 else
     git checkout $REPO_BRANCH
