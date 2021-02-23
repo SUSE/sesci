@@ -9,6 +9,7 @@ import paramiko
 import logging
 import socket
 import json
+import signal
 import sys
 import fcntl
 import base64
@@ -448,8 +449,17 @@ def do_create():
             userdata=f.read()
     _create_server(image, flavor, keypair.name, userdata)
 
+def handle_signal(signum, frame):
+    print("Handling signal", signum)
+    # Instead of calling do_delete() we raise SystemExit exception so
+    # corresponding catch can do cleanup for us if required
+    raise(SystemExit)
+
 if args.action in ['delete']:
     do_delete()
+
+signal.signal(signal.SIGINT, handle_signal)
+signal.signal(signal.SIGTERM, handle_signal)
 
 if args.action in ['create']:
     do_create()

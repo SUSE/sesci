@@ -14,7 +14,7 @@ exec:
     cd aquarium
     ./tools/setup-dev.sh 2>&1
 
-flavor: b2-30
+flavor: b2-7
 #image: opensuse-15-2-jeos-pristine
 #image: minimal-opensuse-15.2-x86_64
 #image: openSUSE-Leap-15.2-JeOS.x86_64-15.2-OpenStack-Cloud-Build31.215
