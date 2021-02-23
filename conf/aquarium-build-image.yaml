@@ -22,7 +22,14 @@ exec:
     cd aquarium
     ./tools/build-image.sh 2>&1
 
-flavor: b2-30
+# OVH flavor (RAM, Disk, VCPUs):
+#      b2-60 (60000, 400g, 16)
+#      b2-30 (30000, 200g, 8)
+#      b2-15 (15000, 100g, 4)
+#      b2-7  (7000,  50g,  2)
+#      s1-2  (2000,  10g,  1)
+#      s1-8  (8000,  40g,  2)
+flavor: b2-7
 image: openSUSE-Leap-15.2-JeOS.x86_64-15.2-OpenStack-Cloud-Build31.348
 keyfile: ~/.ssh/sa
 keyname: storage-automation
