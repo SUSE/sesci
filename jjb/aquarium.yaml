@@ -22,6 +22,7 @@
     id: aquarium_pull_request
     name: 'aquarium-{test}'
     node: storage-compute
+    concurrent: true
     properties:
       - github:
           url: 'https://github.com/aquarist-labs/aquarium'
@@ -52,9 +53,16 @@
           status-context: 'jenkins/{test}'
           triggered-status: '{test} is triggered'
           started-status: '{test} is started'
+          cancel-builds-on-update: true
+    parameters:
+      - string:
+          name: BRANCH
+          description: |
+            Examples: main, origin/pr/123/merge
     builders:
       - shell: |
           export CI=$HOME/sesci
           . $CI/v/bin/activate
+          export sha1=${{BRANCH:-"$sha1"}}
           OS_CLOUD={openstack_cloud} python -u $CI/os-server.py -a run -f $CI/conf/{conf} -t $JOB_BASE_NAME-$BUILD_NUMBER
 
