@@ -16,7 +16,7 @@ exec:
     clone-git-repo.sh aquarium https://github.com/aquarist-labs/aquarium {{ sha1 or 'main' }} 2>&1
 - name: install dependencies
   command: |
-    sudo zypper in -y python3-kiwi 2>&1
+    sudo zypper in -y python3-kiwi btrfsprogs 2>&1
 - name: building image
   command: |
     cd aquarium

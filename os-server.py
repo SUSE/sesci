@@ -228,16 +228,23 @@ def provision_host(hostname, identity):
             else:
                 print("Waiting " + str(wait) + " seconds...")
                 time.sleep(wait)
-    provision_node(client)
+    provision_node(client, hostname=hostname)
 
 def render_command(command, env=os.environ):
     return jinja2.Template(command).render(env)
 
-def client_run(client, command_list):
+def client_run(client, command_list, hostname=None, env=[]):
     for c in command_list:
       name = None
       if isinstance(c, str):
-          command = render_command(c)
+          if c == 'reboot':
+              name = 'rebooting node'
+              command = 'sudo reboot &'
+          elif c == 'wait_host':
+              client = host_client(hostname, secret_file)
+              continue
+          else:
+              command = render_command(c)
       if isinstance(c, dict):
           command = render_command(c.get('command'))
           name = c.get('name', None)
@@ -258,9 +265,9 @@ def client_run(client, command_list):
 
 def host_run(host, command_list):
     cli = host_client(host, secret_file)
-    client_run(cli, command_list)
+    client_run(cli, command_list, hostname=host)
 
-def provision_node(client):
+def provision_node(client, hostname=None):
     target_fqdn = status['server']['name'] + ".suse.de"
     target_addr = status['server']['ip']
     command_list = []
@@ -277,9 +284,9 @@ def provision_node(client):
     if 'copy' in server_spec:
         print("Copying file to host...")
         copy_files(client, server_spec['copy'])
-    client_run(client, command_list)
+    client_run(client, command_list, hostname=hostname)
     if 'exec' in server_spec:
-        client_run(client, server_spec['exec'])
+        client_run(client, server_spec['exec'], hostname=hostname)
 
 def copy_files(client, copy_spec):
     if copy_spec:

@@ -6,6 +6,12 @@ copy:
   mode: '0755'
 
 exec:
+- name: install dependencies
+  command: |
+    for i in {1..5} ; do ping -q -c1 download.opensuse.org && break ; sleep 3 ; done
+    sudo zypper --no-gpg-checks ref 2>&1
+    sudo zypper install -y git 2>&1
+
 - name: checkout pull request sha1
   command: |
     clone-git-repo.sh aquarium https://github.com/aquarist-labs/aquarium {{ sha1 or 'main' }} 2>&1
@@ -26,10 +32,3 @@ networks:
 - Ext-Net
 userdata: openstack/user-data.yaml
 username: opensuse
-vars:
-  dependencies:
-  - git
-  - java
-  - htop
-  - ccache
-  - npm
