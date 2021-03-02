@@ -165,15 +165,6 @@
             ref: 'master'
             repo: 'https://github.com/ceph/ceph.git'
             ses_ver: '7.0'
-        - 'leap-ceph-nautilus':
-            dist_name: 'leap'
-            dist_ver: '15.1'
-            disabled: false
-            target: b2-60
-            branch: 'nautilus'
-            ref: 'nautilus'
-            repo: 'https://github.com/ceph/ceph.git'
-            ses_ver: '5.0'
         - 'leap-ceph-octopus':
             dist_name: 'leap'
             dist_ver: '15.2'
@@ -183,15 +174,6 @@
             ref: 'octopus'
             repo: 'https://github.com/ceph/ceph.git'
             ses_ver: '7.0'
-        - 'sles-ses5':
-            dist_name: 'sles'
-            dist_ver: '12.3'
-            disabled: false
-            target: b2-60
-            branch: 'ses5'
-            ref: 'ses5'
-            repo: 'https://github.com/suse/ceph.git'
-            ses_ver: '5.0'
         - 'sles-ses6':
             dist_name: 'sles'
             dist_ver: '15.1'
