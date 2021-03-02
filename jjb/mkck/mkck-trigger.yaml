@@ -7,7 +7,7 @@
           virtualenv v
           . v/bin/activate
           pip install -U pip
-          pip install python-openstackclient openstacksdk docopt PyYaml paramiko rocket-python
+          pip install python-openstackclient openstacksdk docopt PyYaml paramiko rocket-python Jinja2
 
 - builder:
     name: os_server_create
