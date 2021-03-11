@@ -1,15 +1,19 @@
 #jenkins-jobs --conf storage-ci.suse.de.ini update deepsea-teuthology.yaml 
 - project:
     name: teuthology-deploy
-    cloud:
-        - 'ovh'
-        - 'ecp'
+    provider:
+        - 'ovh':
+                cloud: 'gra'
+                mtype: 'gra'
+        - 'ecp':
+                cloud: 'ecp'
+                mtype: 'ecp'
     jobs:
         - 'teuthology_deploy'
 
 - job-template:
     id: 'teuthology_deploy'
-    name: 'teuthology-deploy-{cloud}'
+    name: 'teuthology-deploy-{provider}'
     concurrent: true
     project-type: multijob
     node: storage-compute
@@ -39,10 +43,10 @@
         # - build-name: { name: '#$BUILD_NUMBER $chainlevel-$ses_version' }
         - credentials-binding:
             - file:
-                credential-id: 'teuthology-deploy-libcloud-{cloud}-yaml'
+                credential-id: 'teuthology-deploy-libcloud-{provider}-yaml'
                 variable: LIBCLOUD_YAML
             - file:
-                credential-id: 'teuthology-deploy-github-pull-request-opensuse-{cloud}-config'
+                credential-id: 'teuthology-deploy-github-pull-request-opensuse-{provider}-config'
                 variable: TEUTH_CONF
             - file:
                 credential-id: 'storage-automation-secret-file'
@@ -71,7 +75,7 @@
             . v/bin/activate
             pip install ansible==2.8.4 python-openstackclient
             git clone https://github.com/suse/ceph-cm-ansible -b suse
-            cp openstack/userdata-{cloud}.yaml.orig openstack/userdata-{cloud}.yaml
+            cp openstack/userdata-{provider}.yaml.orig openstack/userdata-{provider}.yaml
             export LOGIN_USER=opensuse
             RESULT=0
             mkdir -p $LOGS
@@ -93,7 +97,7 @@
                 ssh -i $SECRET_FILE runner@$TEUTH_HOST "
                 [[ -f .profile ]]           && source .profile
                 [[ -f .bashrc_teuthology ]] && source .bashrc_teuthology
-                teuthology-suite -v --machine-type {cloud} \
+                teuthology-suite -v --machine-type {mtype} \
                     --ceph $CEPH_BRANCH --suite $TEUTH_SUITE \
                     -d centos -D 7.6 \
                     --filter-out ubuntu,rhel,7.7,rados_bench,kclient_workunit_suites_dbench,cfuse_workunit_suites_iozone,_s3tests \
