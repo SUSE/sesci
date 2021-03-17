@@ -50,7 +50,7 @@
               abort-all-job: true
               predefined-parameters: |
                 DIST_CEPH={dist_ceph}
-                SITE=ovh.net
+                SITE={site}
 
 - builder:
     name: copy_artifacts_sles
@@ -63,7 +63,7 @@
           which-build: 'multijob-build'
       - copyartifact:
           project: storage-deliver-update-repos
-          parameter-filters: 'SES_VER={ses_ver},SITE=ovh.net'
+          parameter-filters: 'SES_VER={ses_ver},SITE={site}'
           filter: 'artifacts*.yaml'
           optional: true
           #target: ''
@@ -125,6 +125,11 @@
 
 - project:
     name: run-make-check
+    cloud: &site
+      #site: 'ovh.net'
+      #site: 'nue.suse.net'
+      site: 'prv.suse.net'
+    <<: *site
     dist:
         - 'sles':
             disabled: false
@@ -137,6 +142,7 @@
 
 - project:
     name: run-make-check-nightly
+    <<: *site
     dist_ceph:
         - 'leap-ses6':
             dist_name: 'leap'
@@ -320,6 +326,7 @@
         - create_sesci_venv
         - deliver_artifacts_{dist}:
             dist_ceph: '{dist}-$CEPH_BRANCH'
+            site: '{site}'
         # because parameter-filters of copyartifact plugin
         # does not use token-macro plugin and correspondingly
         # cannot expand variables we use conditionals here
@@ -336,7 +343,7 @@
                   which-build: 'multijob-build'
               - copyartifact:
                   project: storage-deliver-update-repos
-                  parameter-filters: 'SES_VER=5.0,SITE=ovh.net'
+                  parameter-filters: 'SES_VER=5.0,SITE={site}'
                   filter: 'artifacts*.yaml'
                   optional: true
                   which-build: 'last-successful'
@@ -353,7 +360,7 @@
                   which-build: 'multijob-build'
               - copyartifact:
                   project: storage-deliver-update-repos
-                  parameter-filters: 'SES_VER=6.0,SITE=ovh.net'
+                  parameter-filters: 'SES_VER=6.0,SITE={site}'
                   filter: 'artifacts*.yaml'
                   optional: true
                   which-build: 'last-successful'
@@ -370,7 +377,7 @@
                   which-build: 'multijob-build'
               - copyartifact:
                   project: storage-deliver-update-repos
-                  parameter-filters: 'SES_VER=7.0,SITE=ovh.net'
+                  parameter-filters: 'SES_VER=7.0,SITE={site}'
                   filter: 'artifacts*.yaml'
                   optional: true
                   #target: ''
@@ -692,9 +699,11 @@
         - deliver_artifacts_{dist_name}:
             dist_ceph: '{dist_ceph}'
             ses_ver: '{ses_ver}'
+            site: '{site}'
         - copy_artifacts_{dist_name}:
             dist_ceph: '{dist_ceph}'
             ses_ver: '{ses_ver}'
+            site: '{site}'
         - os_server_create
         - shell: |
             addr=$(jq -r .server.ip mkck.status)
