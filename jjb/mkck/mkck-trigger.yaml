@@ -50,7 +50,7 @@
               abort-all-job: true
               predefined-parameters: |
                 DIST_CEPH={dist_ceph}
-                SITE=ovh.net
+                SITE={site}
 
 - builder:
     name: copy_artifacts_sles
@@ -63,7 +63,7 @@
           which-build: 'multijob-build'
       - copyartifact:
           project: storage-deliver-update-repos
-          parameter-filters: 'SES_VER={ses_ver},SITE=ovh.net'
+          parameter-filters: 'SES_VER={ses_ver},SITE={site}'
           filter: 'artifacts*.yaml'
           optional: true
           #target: ''
@@ -125,6 +125,11 @@
 
 - project:
     name: run-make-check
+    cloud: &site
+      #site: 'ovh.net'
+      #site: 'nue.suse.net'
+      site: 'prv.suse.net'
+    <<: *site
     dist:
         - 'sles':
             disabled: false
@@ -137,6 +142,7 @@
 
 - project:
     name: run-make-check-nightly
+    <<: *site
     dist_ceph:
         - 'leap-ses6':
             dist_name: 'leap'
@@ -165,6 +171,15 @@
             ref: 'master'
             repo: 'https://github.com/ceph/ceph.git'
             ses_ver: '7.0'
+        - 'leap-ceph-nautilus':
+            dist_name: 'leap'
+            dist_ver: '15.1'
+            disabled: false
+            target: b2-60
+            branch: 'nautilus'
+            ref: 'nautilus'
+            repo: 'https://github.com/ceph/ceph.git'
+            ses_ver: '6.0'
         - 'leap-ceph-octopus':
             dist_name: 'leap'
             dist_ver: '15.2'
@@ -203,29 +218,30 @@
     project-type: multijob
     node: storage-compute
     parameters:
-        - string:
+        - string: &target_cloud
             name: TARGET_CLOUD
-            default: 'sbg'
+            default: 'ecp'
             description: |
-              OVH: sbg, gra, de
-              ECP: ecp
+              OVH: gra, waw, de, uk;
+              ECP: ecp;
               ECN: nbg
-        - string:
+        - string: &target_flavor
             name: TARGET_FLAVOR
-            default: b2-60
+            default: m64.xxlarge
             description: |
-              OVH flavor (RAM, Disk, VCPUs): b2-60 (60000, 400g, 16), b2-30 (30000, 200g, 8), b2-15 (15000, 100g, 4);
-              ECP flavor (RAM, Disk, VCPUs): m8.xxlarge (32768, 40g/20g, 8), m1.xlarge (16384, 160g, 8);
-              ECN flavor (RAM, Disk, VCPUs): m64.xxlarge (65536, 160g, 12), m1.xlarge (16384, 160g, 8), m1.large (8192, 80g, 4);
-        - string:
+              Target flavor for cloud (RAM, Disk, VCPUs):<br/>
+              OVH: b2-60 (60000, 400g, 16), b2-30 (30000, 200g, 8), b2-15 (15000, 100g, 4);<br/>
+              ECP: m64.xxlarge (65536, 160g, 16), m1.xlarge (16384, 160g, 8);<br/>
+              ECN: m64.xxlarge (65536, 160g, 12), m1.xlarge (16384, 160g, 8), m1.large (8192, 80g, 4);<br/>
+        - string: &target_network
             name: TARGET_NETWORK
-            default: ''
+            default: 'sesci'
             description: |
               OVH leave empty,
               ECP use 'sesci'
-        - string:
+        - string: &target_floating
             name: TARGET_FLOATING
-            default: ''
+            default: 'floating'
             description: |
               OVH leave empty,
               ECP use 'floating'
@@ -310,6 +326,7 @@
         - create_sesci_venv
         - deliver_artifacts_{dist}:
             dist_ceph: '{dist}-$CEPH_BRANCH'
+            site: '{site}'
         # because parameter-filters of copyartifact plugin
         # does not use token-macro plugin and correspondingly
         # cannot expand variables we use conditionals here
@@ -326,7 +343,7 @@
                   which-build: 'multijob-build'
               - copyartifact:
                   project: storage-deliver-update-repos
-                  parameter-filters: 'SES_VER=5.0,SITE=ovh.net'
+                  parameter-filters: 'SES_VER=5.0,SITE={site}'
                   filter: 'artifacts*.yaml'
                   optional: true
                   which-build: 'last-successful'
@@ -343,7 +360,7 @@
                   which-build: 'multijob-build'
               - copyartifact:
                   project: storage-deliver-update-repos
-                  parameter-filters: 'SES_VER=6.0,SITE=ovh.net'
+                  parameter-filters: 'SES_VER=6.0,SITE={site}'
                   filter: 'artifacts*.yaml'
                   optional: true
                   which-build: 'last-successful'
@@ -360,7 +377,7 @@
                   which-build: 'multijob-build'
               - copyartifact:
                   project: storage-deliver-update-repos
-                  parameter-filters: 'SES_VER=7.0,SITE=ovh.net'
+                  parameter-filters: 'SES_VER=7.0,SITE={site}'
                   filter: 'artifacts*.yaml'
                   optional: true
                   #target: ''
@@ -541,28 +558,10 @@
         - string:
             name: TARGET_FILE
             default: mkck.properties
-        - string:
-            name: TARGET_CLOUD
-            default: 'sbg'
-        - string:
-            name: TARGET_FLAVOR
-            default: b2-60
-            description: |
-              OVH flavor (RAM, Disk, VCPUs): b2-60 (60000, 400g, 16), b2-30 (30000, 200g, 8), b2-15 (15000, 100g, 4);
-              ECP flavor (RAM, Disk, VCPUs): m8.xxlarge (32768, 40g/20g, 8), m1.xlarge (16384, 160g, 8);
-              ECN flavor (RAM, Disk, VCPUs): m64.xxlarge (65536, 160g, 12), m1.xlarge (16384, 160g, 8), m1.large (8192, 80g, 4);
-        - string:
-            name: TARGET_NETWORK
-            default: ''
-            description: |
-              OVH leave empty,
-              ECP use 'sesci'
-        - string:
-            name: TARGET_FLOATING
-            default: ''
-            description: |
-              OVH leave empty,
-              ECP use 'floating'
+        - string: *target_cloud
+        - string: *target_flavor
+        - string: *target_network
+        - string: *target_floating
         - string:
             name: TARGET_IMAGE
         - string:
@@ -634,29 +633,10 @@
     project-type: multijob
     node: storage-compute
     parameters:
-        - string:
-            name: TARGET_CLOUD
-            default: 'sbg'
-        - string:
-            name: TARGET_FLAVOR
-            default: b2-60
-            description: |
-              Target flavor:<br/>
-              OVH flavor (RAM, Disk, VCPUs): b2-60 (60000, 400g, 16), b2-30 (30000, 200g, 8), b2-15 (15000, 100g, 4);<br/>
-              ECP flavor (RAM, Disk, VCPUs): m8.xxlarge (32768, 40g/20g, 8), m1.xlarge (16384, 160g, 8);<br/>
-              ECN flavor (RAM, Disk, VCPUs): m64.xxlarge (65536, 160g, 12), m1.xlarge (16384, 160g, 8), m1.large (8192, 80g, 4);<br/>
-        - string:
-            name: TARGET_NETWORK
-            default: ''
-            description: |
-              OVH leave empty,
-              ECP use 'sesci'
-        - string:
-            name: TARGET_FLOATING
-            default: ''
-            description: |
-              OVH leave empty,
-              ECP use 'floating'
+        - string: *target_cloud
+        - string: *target_flavor
+        - string: *target_network
+        - string: *target_floating
         - string:
             name: TARGET_FILE
             default: 'mkck_{dist_ceph}.properties'
@@ -719,9 +699,11 @@
         - deliver_artifacts_{dist_name}:
             dist_ceph: '{dist_ceph}'
             ses_ver: '{ses_ver}'
+            site: '{site}'
         - copy_artifacts_{dist_name}:
             dist_ceph: '{dist_ceph}'
             ses_ver: '{ses_ver}'
+            site: '{site}'
         - os_server_create
         - shell: |
             addr=$(jq -r .server.ip mkck.status)
