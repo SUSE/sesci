@@ -214,27 +214,27 @@
     parameters:
         - string:
             name: TARGET_CLOUD
-            default: 'sbg'
+            default: 'ecp'
             description: |
               OVH: sbg, gra, de
               ECP: ecp
               ECN: nbg
         - string:
             name: TARGET_FLAVOR
-            default: b2-60
+            default: m8.xxlarge
             description: |
               OVH flavor (RAM, Disk, VCPUs): b2-60 (60000, 400g, 16), b2-30 (30000, 200g, 8), b2-15 (15000, 100g, 4);
               ECP flavor (RAM, Disk, VCPUs): m8.xxlarge (32768, 40g/20g, 8), m1.xlarge (16384, 160g, 8);
               ECN flavor (RAM, Disk, VCPUs): m64.xxlarge (65536, 160g, 12), m1.xlarge (16384, 160g, 8), m1.large (8192, 80g, 4);
         - string:
             name: TARGET_NETWORK
-            default: ''
+            default: 'sesci'
             description: |
               OVH leave empty,
               ECP use 'sesci'
         - string:
             name: TARGET_FLOATING
-            default: ''
+            default: 'floating'
             description: |
               OVH leave empty,
               ECP use 'floating'
@@ -552,23 +552,23 @@
             default: mkck.properties
         - string:
             name: TARGET_CLOUD
-            default: 'sbg'
+            default: 'ecp'
         - string:
             name: TARGET_FLAVOR
-            default: b2-60
+            default: m8.xxlarge
             description: |
               OVH flavor (RAM, Disk, VCPUs): b2-60 (60000, 400g, 16), b2-30 (30000, 200g, 8), b2-15 (15000, 100g, 4);
               ECP flavor (RAM, Disk, VCPUs): m8.xxlarge (32768, 40g/20g, 8), m1.xlarge (16384, 160g, 8);
               ECN flavor (RAM, Disk, VCPUs): m64.xxlarge (65536, 160g, 12), m1.xlarge (16384, 160g, 8), m1.large (8192, 80g, 4);
         - string:
             name: TARGET_NETWORK
-            default: ''
+            default: 'sesci'
             description: |
               OVH leave empty,
               ECP use 'sesci'
         - string:
             name: TARGET_FLOATING
-            default: ''
+            default: 'floating'
             description: |
               OVH leave empty,
               ECP use 'floating'
@@ -645,10 +645,10 @@
     parameters:
         - string:
             name: TARGET_CLOUD
-            default: 'sbg'
+            default: 'ecp'
         - string:
             name: TARGET_FLAVOR
-            default: b2-60
+            default: m8.xxlarge
             description: |
               Target flavor:<br/>
               OVH flavor (RAM, Disk, VCPUs): b2-60 (60000, 400g, 16), b2-30 (30000, 200g, 8), b2-15 (15000, 100g, 4);<br/>
@@ -656,13 +656,13 @@
               ECN flavor (RAM, Disk, VCPUs): m64.xxlarge (65536, 160g, 12), m1.xlarge (16384, 160g, 8), m1.large (8192, 80g, 4);<br/>
         - string:
             name: TARGET_NETWORK
-            default: ''
+            default: 'sesci'
             description: |
               OVH leave empty,
               ECP use 'sesci'
         - string:
             name: TARGET_FLOATING
-            default: ''
+            default: 'floating'
             description: |
               OVH leave empty,
               ECP use 'floating'
