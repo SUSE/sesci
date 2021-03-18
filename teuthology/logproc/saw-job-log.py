@@ -5,7 +5,7 @@ import re
 import json
 import os
 import shutil
-
+import logging
 import jinja2
 
 doc = """
@@ -19,13 +19,24 @@ Options:
   -j <job>, --job <job>                 job name
   -d <desc>, --desc <desc>              job description
   -a <path>, --archive <path>           relative path to job archive
+  -p, --partial                         ranged index html
+  -v, --verbose                         verbose logging
 """
 
 args = docopt.docopt(doc, argv=sys.argv[1:])
 
-print(args)
+if args.get('--verbose'):
+    logging.basicConfig(level=logging.DEBUG)
+else:
+    logging.basicConfig(level=logging.INFO)
+logging.debug(f'Command line arguments: {args}')
 input_path=args.get('<path>')
-output_path=args.get('--output') or "saw-job-log.output.html"
+if args.get('--partial'):
+   output_path=input_path + '.html'
+   job_archive='.'
+else:
+   output_path=args.get('--output') or "saw-job-log.output.html"
+   job_archive=args.get('--archive') or ""
 templates_name = output_path[max(output_path.rfind('/'),0):output_path.rfind('.')] + '.tmp'
 
 #templates_dir=os.path.dirname(os.path.abspath(__file__)) + 'saw-job-log-jinja2-templates/logs'
@@ -36,8 +47,11 @@ templates_dir=templates_root_dir + '/logs'
 if not os.path.isdir(templates_dir):
     os.makedirs(templates_dir)
 
-shutil.copyfile(os.path.dirname(os.path.abspath(__file__)) + '/jinja2/saw-job-log.jinja2', templates_root_dir + '/saw-job-log.jinja2')
-def saw_log(line, number, obj):
+if args.get('--partial'):
+    shutil.copyfile(os.path.dirname(os.path.abspath(__file__)) + '/jinja2/saw-job-index.jinja2', templates_root_dir + '/saw-job-log.jinja2')
+else:
+    shutil.copyfile(os.path.dirname(os.path.abspath(__file__)) + '/jinja2/saw-job-log.jinja2', templates_root_dir + '/saw-job-log.jinja2')
+def saw_log(line, number, obj, byte_offset=0, byte_size=0):
     if 'teuthology.run_tasks:' in line and 'Running task' in line:
             obj.set_running()
             m = re.match(r".*Running task (?P<task>[\w.-]+)\.\.\..*", line)
@@ -53,18 +67,19 @@ def saw_log(line, number, obj):
                 'cleanup_log': open(cleanup_log, 'w'),
                 'running_log_name': running_log[running_log.rfind('/'):],
                 'cleanup_log_name': cleanup_log[cleanup_log.rfind('/'):],
-                'running': {'start': number, 'end': number},
-                'cleanup': {'start': None, 'end': None},
+                'running': {'start': number, 'end': number, 'start_offset': byte_offset, 'end_offset': byte_offset + byte_size},
+                'cleanup': {'start': None, 'end': None, 'start_offset': None, 'end_offset': None},
             }]
             obj.stack.append(task)
-            print(obj.stack)
+            logging.debug(f'stack: {obj.stack}')
             if len(obj.stack)>0:
-                print(obj.stack[-1])
+                logging.debug(f'* {obj.stack[-1]}')
             obj.task_index = len(obj.stack)-1
     elif 'teuthology.run_tasks:' in line and 'Unwinding manager' in line:
             if obj.cleanup_task:
                 print("===============> Found the end of task '%s' cleanup on line %s" % (obj.tasks[obj.cleanup_task]['name'], number - 1))
                 obj.tasks[obj.cleanup_task]['cleanup']['end'] = number-1
+                obj.tasks[obj.cleanup_task]['cleanup']['end_offset'] = byte_offset
             obj.set_cleanup()
             m = re.match(r".*Unwinding manager (?P<task>[\w.-]+).*", line)
             task = m.group('task')
@@ -84,12 +99,14 @@ def saw_log(line, number, obj):
                 obj.stack=obj.stack[:pos]
             print("======> Found task '%s' cleanup start at %s line" % (obj.tasks[pos]['name'], number))
             obj.tasks[pos]['cleanup']['start'] = number
+            obj.tasks[pos]['cleanup']['start_offset'] = byte_offset
             obj.cleanup_task = pos
             print("STACK: %s" % ' -> '.join(obj.stack))
     elif 'teuthology.run:Summary' in line:
         #task = obj.tasks[obj.cleanup_task]
-        #print("DEBUG: cleanup task %s finished in the end" % task['name'])
+        #logging.debug(f"cleanup task {task['name']} finished in the end")
         #obj.tasks[obj.cleanup_task]['cleanup']['end'] = number
+        #obj.tasks[obj.cleanup_task]['cleanup']['end_offset'] = byte_offset + byte_size
 
         obj.set_finish()
     else:
@@ -102,15 +119,17 @@ def saw_log(line, number, obj):
             if obj.is_running():
                 task = obj.tasks[task_index]
                 task['running']['end'] = number
+                task['running']['end_offset'] = byte_offset + byte_size
                 task['running_log'].write(line)
             if obj.is_cleanup():
                 task = obj.tasks[obj.cleanup_task]
                 task['cleanup']['end'] = number
+                task['cleanup']['end_offset'] = byte_offset
                 task['cleanup_log'].write(line)
             if obj.is_finish():
                 print(line, end='')
-                
-                
+
+
 class Log:
     tasks = []
     stack = []
@@ -132,23 +151,26 @@ class Log:
     def set_finish(self):
         self.scope = 'finish'
 
-with open(input_path) as f:
+with open(input_path, 'rb') as f:
     x=0
+    _offset=0
     obj = Log()
     for i in f.readlines():
-        #print(x, i, end='')
-        saw_log(i, x, obj)
+        _size = len(i)
+        saw_log(i.decode(), x, obj, byte_offset=_offset, byte_size=_size)
         x += 1
-                
-        #print("%i %s" % (x, i))
+        _offset += _size
     for task in obj.tasks:
         task['running_log'].flush()
         task['cleanup_log'].flush()
 
-    print(json.dumps([{'name': i['name'], 
-                       'running': i['running'], 
-                       'cleanup': i['cleanup']} for i in obj.tasks], indent='  '))
-    print(obj.stack)
+    json_dump = json.dumps([{'name': i['name'],
+                       'running': i['running'],
+                       'cleanup': i['cleanup']} for i in obj.tasks], indent='  ')
+    logging.debug(f"Dump: {json_dump}")
+    logging.info(f"Stack: {obj.stack}")
+with open(os.path.dirname(input_path) + '/teuthology.log.json', 'w+') as f:
+    f.write(json_dump)
 
 # logs teuthology log directory
 # it contains subdirectories corresponding to jobs
@@ -175,10 +197,10 @@ r = t.generate(
         run_name=args.get('--run') or "^",
         job_log=os.path.relpath(os.path.abspath(input_path), start=os.path.abspath(os.path.dirname(output_path))),
         job_name=args.get('--job') or "",
-        job_archive=args.get('--archive') or "",
+        job_archive=job_archive,
         job_description=args.get('--desc') or "",
         )
-print("Saving report to %s" % output_path)
+logging.info(f"Saving report to {output_path}")
 with open(output_path, 'w') as o:
     for i in r:
         o.write(i)
@@ -188,5 +210,5 @@ install_index = task_names.index(True)
 
 task_trace = (i['name'] for i in obj.tasks[install_index:])
 
-print("Steps: %s" % " > ".join(task_trace) + (' [passed]' if obj.result else ' [failed]'))
+logging.info("Steps: %s" % " > ".join(task_trace) + (' [passed]' if obj.result else ' [failed]'))
 
