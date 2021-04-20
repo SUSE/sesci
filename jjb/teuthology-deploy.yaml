@@ -94,10 +94,10 @@
                 #ssh runner@teuth-$EUTH_NAME "source .profile ; teuthology-suite -s smoke --ceph nautilus -D 7.4 -d centos -v -m ovh -w --limit 1"
                 TEUTH_SUITE=smoke
                 CEPH_BRANCH=octopus
+                set -o pipefail
                 ssh -i $SECRET_FILE runner@$TEUTH_HOST "
                 [[ -f .profile ]]           && source .profile
                 [[ -f .bashrc_teuthology ]] && source .bashrc_teuthology
-                set -o pipefail
                 teuthology-suite -v --machine-type {mtype} \
                     --ceph $CEPH_BRANCH --suite $TEUTH_SUITE \
                     -d centos -D 7.6 \
@@ -134,10 +134,10 @@
               pulpito=$(grep 'Test results' $TEUTH_SUITE_LOG | \
                         sed -E 's/.* viewable at ([^\w]*)$/\1/g')
 
+              set -o pipefail
               ssh -i $SECRET_FILE runner@$TEUTH_HOST "
               [[ -f .profile ]]           && source .profile
               [[ -f .bashrc_teuthology ]] && source .bashrc_teuthology
-              set -o pipefail
               teuthology-wait -v --run $runname 2>&1" | tee $TEUTH_WAIT_LOG
 
               failed=$(grep -sc 'teuthology.suite:fail' $TEUTH_WAIT_LOG)
