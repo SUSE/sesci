@@ -97,6 +97,7 @@
                 ssh -i $SECRET_FILE runner@$TEUTH_HOST "
                 [[ -f .profile ]]           && source .profile
                 [[ -f .bashrc_teuthology ]] && source .bashrc_teuthology
+                set -o pipefail
                 teuthology-suite -v --machine-type {mtype} \
                     --ceph $CEPH_BRANCH --suite $TEUTH_SUITE \
                     -d centos -D 7.6 \
@@ -136,6 +137,7 @@
               ssh -i $SECRET_FILE runner@$TEUTH_HOST "
               [[ -f .profile ]]           && source .profile
               [[ -f .bashrc_teuthology ]] && source .bashrc_teuthology
+              set -o pipefail
               teuthology-wait -v --run $runname 2>&1" | tee $TEUTH_WAIT_LOG
 
               failed=$(grep -sc 'teuthology.suite:fail' $TEUTH_WAIT_LOG)
