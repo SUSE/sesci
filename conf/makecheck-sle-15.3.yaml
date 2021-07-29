@@ -1,0 +1,8 @@
+flavor: b2-30
+image: minimal-sle-15.3-x86_64
+keyfile: ~/.ssh/sa
+keyname: storage-automation
+name: mkck%02d
+networks:
+- Ext-Net
+username: root

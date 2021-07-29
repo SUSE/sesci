@@ -162,6 +162,15 @@
             ref: 'ses7'
             repo: 'https://github.com/suse/ceph.git'
             ses_ver: '7.0'
+        - 'leap-ses7p':
+            dist_name: 'leap'
+            dist_ver: '15.3'
+            disabled: false
+            target: b2-60
+            branch: 'ses7p'
+            ref: 'ses7p'
+            repo: 'https://github.com/suse/ceph.git'
+            ses_ver: '7.0'
         - 'leap-ceph-master':
             dist_name: 'leap'
             dist_ver: '15.2'
@@ -189,6 +198,15 @@
             ref: 'octopus'
             repo: 'https://github.com/ceph/ceph.git'
             ses_ver: '7.0'
+        - 'leap-ceph-pacific':
+            dist_name: 'leap'
+            dist_ver: '15.2'
+            disabled: false
+            target: b2-60
+            branch: 'pacific'
+            ref: 'pacific'
+            repo: 'https://github.com/ceph/ceph.git'
+            ses_ver: '7p'
         - 'sles-ses6':
             dist_name: 'sles'
             dist_ver: '15.1'
@@ -206,6 +224,15 @@
             branch: 'ses7'
             ref: 'ses7'
             ses_ver: '7.0'
+            repo: 'https://github.com/suse/ceph.git'
+        - 'sles-ses7p':
+            dist_name: 'sles'
+            dist_ver: '15.3'
+            disabled: false
+            target: b2-60
+            branch: 'ses7p'
+            ref: 'ses7p'
+            ses_ver: '7p'
             repo: 'https://github.com/suse/ceph.git'
     jobs:
         - 'mkck_dist_branch'
