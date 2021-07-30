@@ -631,6 +631,11 @@
             cat /etc/os-release
             zypper lr -upEP
 
+            zypper --non-interactive ref
+            zypper --non-interactive up
+
+            #./install-deps.sh
+
             ./run-make-check.sh -DWITH_LTTNG=false -DWITH_BABELTRACE=false
     publishers:
         - archive:
