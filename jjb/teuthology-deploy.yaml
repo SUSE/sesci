@@ -53,7 +53,7 @@
                 variable: SECRET_FILE
     builders:
         - shell: "git clone https://github.com/suse/sesci"
-        - shell: "git clone https://github.com/suse/teuthology-deploy"
+        - shell: "git clone https://github.com/kshtsk/teuthology -b wip-deploy"
         # do not include-raw the source because jjb requires {} escaped
         # variables if there are used templates
         - shell: |
@@ -70,12 +70,15 @@
             . $SESCI/common/teuthology
 
             set -ex
-            cd teuthology-deploy
-            virtualenv v
-            . v/bin/activate
-            pip install ansible==2.8.4 python-openstackclient
-            git clone https://github.com/suse/ceph-cm-ansible -b suse
-            cp openstack/userdata-{provider}.yaml.orig openstack/userdata-{provider}.yaml
+            cd teuthology
+            ./bootstrap
+            source virtualenv/bin/activate
+            #virtualenv v
+            #. v/bin/activate
+            #pip install ansible==2.8.4 python-openstackclient
+            git clone https://github.com/ceph/ceph-cm-ansible -b master
+
+            #cp openstack/userdata-{provider}.yaml.orig openstack/userdata-{provider}.yaml
             export LOGIN_USER=opensuse
             RESULT=0
             mkdir -p $LOGS
@@ -83,15 +86,16 @@
             TEUTH_DEPLOY_LOG=$LOGS/teuthology-deploy.log
             TEUTH_CLEANUP_LOG=$LOGS/teuthology-cleanup.log
 
+            export OS_IMAGE=openSUSE-Leap-15.3-JeOS.x86_64-15.3-OpenStack-Cloud-Build9.258
             export TEUTH_IDENTITY=$SECRET_FILE
-            export TERRAFORM_STATE=$LOGS/$TEUTH_NAME.tfstate
-            ./deploy-teuthology --debug --name $TEUTH_NAME --cloud {cloud} --rebuild --ns --workers 8 --targets 50 --ref $TEUTH_BRANCH || RESULT=$?
+            #export TERRAFORM_STATE=$LOGS/$TEUTH_NAME.tfstate
+            teuthology-deploy --clean --name $TEUTH_NAME || true
+            teuthology-deploy -N --os-cloud {cloud} --os-image $OS_IMAGE --os-keypair storage-automation -i $SECRET_FILE -u $LOGIN_USER --name $TEUTH_NAME --ceph-cm-ansible $PWD/ceph-cm-ansible --teuthology-repo https://github.com/ceph/teuthology@$TEUTH_BRANCH -L $LIBCLOUD_YAML --workers 8 --target 50 -v || $RESULT=$?
+            #./deploy-teuthology --debug --name $TEUTH_NAME --cloud {cloud} --rebuild --ns --workers 8 --targets 50 --ref $TEUTH_BRANCH || RESULT=$?
             if (( RESULT==0 )) ; then
             (
-                export TEUTH_HOST=$(terraform output -state=$TERRAFORM_STATE ip)
-                #export TEUTH_HOST=$(grep 'teuthology admin: ssh -i' $TEUTH_DEPLOY_LOG | \
-                #    sed -E 's/.* (.*\@[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+) \#.*/\1/')
-                #ssh runner@teuth-$EUTH_NAME "source .profile ; teuthology-suite -s smoke --ceph nautilus -D 7.4 -d centos -v -m ovh -w --limit 1"
+                #export TEUTH_HOST=$(terraform output -state=$TERRAFORM_STATE ip)
+                export TEUTH_HOST=$(jq -r ".access_address" ~/.teuthology/deploy/$TEUTH_NAME/meta.json)
                 TEUTH_SUITE=smoke
                 CEPH_BRANCH=octopus
                 set -o pipefail
@@ -124,8 +128,17 @@
             . $SESCI/common/teuthology
             TEUTH_SUITE_LOG=$LOGS/teuthology-suite.log
             TEUTH_WAIT_LOG=$LOGS/teuthology-wait.log
-            export TERRAFORM_STATE=$LOGS/$TEUTH_NAME.tfstate
-            export TEUTH_HOST=$(terraform output -state=$TERRAFORM_STATE ip)
+            #export TERRAFORM_STATE=$LOGS/$TEUTH_NAME.tfstate
+            #export TEUTH_HOST=$(terraform output -state=$TERRAFORM_STATE ip)
+            function cleanup() {{
+              if $DESTROY_ENVIRONMENT ; then
+                cd teuthology
+                source virtualenv/bin/activate
+                teuthology-deploy --clean -n $TEUTH_NAME
+              fi
+            }}
+            trap cleanup EXIT
+            export TEUTH_HOST=$(jq -r ".access_address" ~/.teuthology/deploy/$TEUTH_NAME/meta.json)
             export TEUTH_ARCHIVE=/home/worker/archive
             runname=$(grep 'Job scheduled with name' $TEUTH_SUITE_LOG | head -1 | \
                       perl -n -e'/name ([^ ]+)/ && CORE::say $1')
@@ -177,16 +190,6 @@
             fi
 
             echo $RESULT > $LOGS/result
-
-        - shell: |
-            export LOGS=$PWD/logs
-            RESULT=$(cat $LOGS/result)
-            export TERRAFORM_STATE=$LOGS/$TEUTH_NAME.tfstate
-            if $DESTROY_ENVIRONMENT ; then
-                cd teuthology-deploy
-                . v/bin/activate
-                ./deploy-teuthology --debug --name $TEUTH_NAME --cloud {cloud} --cleanup
-            fi
             exit $RESULT
 
 
