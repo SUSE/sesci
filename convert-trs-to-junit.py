@@ -47,7 +47,7 @@ for root, dirs, files in os.walk(TargetPath):
                         }
 
                         with open(p, "r") as x:
-                                d = yaml.load(x)
+                                d = yaml.safe_load(x)
                                 t["result"] = d [':test-result']
                                 if d[':test-result'] == 'FAIL':
                                         failed +=1
