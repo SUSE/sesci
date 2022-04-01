@@ -20,7 +20,7 @@ if (len(sys.argv) > 2):
 try:
         os.stat(TargetPath)
 except:
-        print "Log file [" + TargetPath + "] does not exists. Nothing to do"
+        print("Log file [" + TargetPath + "] does not exists. Nothing to do")
         sys.exit(0)
 
 amount = 0
@@ -32,7 +32,7 @@ for root, dirs, files in os.walk(TargetPath):
         for f in files:
                 if f.endswith(".trs"):
                         p = root + "/" + f
-                        #print p
+                        #print(p)
                         amount += 1
                         prefix = root[len(TargetPath) + 1:]
                         output_prefix = "" if OutputDirPath == None else OutputDirPath + "/output/"
@@ -66,8 +66,8 @@ for t in result:
                         os.stat(basedir)
                 except:
                         os.makedirs(basedir)
-                print "Copy: " + t['log']
-                print "  to: " + t['output']
+                print("Copy: " + t['log'])
+                print("  to: " + t['output'])
                 shutil.copyfile(t['log'], t['output'])
         c  = SubElement(subtop, 'testcase', {
                 'name': t['test'],
@@ -84,9 +84,9 @@ from xml.dom import minidom
 
 r = minidom.parseString(ElementTree.tostring(top, 'utf-8'))
 if OutputDirPath == None:
-        print r.toprettyxml(indent="  ")
+        print(r.toprettyxml(indent="  "))
 else:
         with open(OutputDirPath + "/" + test_class + ".xml", 'w') as xml:
                 xml.write(r.toprettyxml(indent="  "))
-        print str(amount) + " (total) = " + str(passed) + " (passed) + " + str(failed) + " (failed)"
+        print(str(amount) + " (total) = " + str(passed) + " (passed) + " + str(failed) + " (failed)")
 
