@@ -143,7 +143,7 @@ class Artifact():
             logging.warning("URL %s was not able to detect an id" % repo_url)
             return Artifact.fname(repo_url.rstrip('/'))
 
-    def __init__(self, name, source, delivery = None, aid = None):
+    def __init__(self, name, source, delivery = None, aid = None, exclude = None):
         """
            delivery
                 delivery_address: 
@@ -153,6 +153,7 @@ class Artifact():
         self.s_ref = source
         self.delivery = delivery
         self.aid = aid
+        self.exclude = exclude
 
         if (delivery):
             self.delivery_address = delivery['delivery_address']
@@ -300,9 +301,17 @@ class Artifact():
             r_dir = r_url['path']
             d_dir = os.path.dirname(r_dir)
             logging.debug('Syncing dir %s to %s' % (s_file, r_dir))
-            res = os.system('rsync -avz --delete '
-                '--rsync-path "mkdir -p %s && rsync" %s/ %s 1>/dev/stderr' % \
-                    (d_dir, s_file, url['addr'] + ":"+ r_dir))
+            #exclude_list = self.exclude or ['aarch64*/', 's390*/', 'ppc64*/', 'src/', 'i586/', 'i686/']
+            exclude_list = self.exclude
+            excludes = ''
+            if exclude_list:
+                excludes = "".join(f'--exclude "{i}" ' for i in exclude_list)
+            dest = url['addr'] + ':' + r_dir
+            cmd = f'rsync -avz --delete {excludes} ' + \
+                  f'--rsync-path "mkdir -p {d_dir} && rsync" ' + \
+                  f'{s_file}/ {dest} 1>/dev/stderr'
+            logging.debug(f'Using command: {cmd}')
+            res = os.system(cmd)
             if res:
                 raise Exception('Snapshotting failed due to rsync exit code: %s' % res)
             logging.info('Snapshot to %s' % self.d_snap)
@@ -334,7 +343,9 @@ class Artifact():
         delivery = delivery_map[d] if (d != 'direct' and 
             delivery_map and d in delivery_map.keys()) \
                  else None
-        return Artifact(desc['name'], url, delivery, aid=desc.get('id', None))
+        return Artifact(desc['name'], url, delivery,
+                        aid=desc.get('id', None),
+                        exclude=desc.get('exclude', None))
         
     @staticmethod
     def resolve_url(url, filters):
