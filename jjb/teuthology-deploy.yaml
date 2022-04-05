@@ -96,7 +96,8 @@
             (
                 #export TEUTH_HOST=$(terraform output -state=$TERRAFORM_STATE ip)
                 export TEUTH_HOST=$(jq -r ".access_address" ~/.teuthology/deploy/$TEUTH_NAME/meta.json)
-                TEUTH_SUITE=smoke
+                #TEUTH_SUITE=smoke
+                TEUTH_SUITE="fs:basic_functional"
                 CEPH_BRANCH=octopus
                 set -o pipefail
                 ssh -i $SECRET_FILE runner@$TEUTH_HOST "
@@ -104,8 +105,8 @@
                 [[ -f .bashrc_teuthology ]] && source .bashrc_teuthology
                 teuthology-suite -v --machine-type {mtype} \
                     --ceph $CEPH_BRANCH --suite $TEUTH_SUITE \
-                    -d centos -D 7.6 \
-                    --filter-out ubuntu,rhel,7.7,rados_bench,kclient_workunit_suites_dbench,cfuse_workunit_suites_iozone,_s3tests \
+                    -d centos -D 8.stream \
+                    --filter-out ubuntu,rhel,volumes \
                     --limit 2 \
                     --seed 0 \
                     --newest 100 \
@@ -121,7 +122,6 @@
                 <a href="\1" title="Go to Pulpito Run Page">Pulpito</a>
         - shell: |
             export LOGPROCVENV=$PWD/logproc-env
-            TEUTH_SUITE=smoke
             export SESCI=$PWD/sesci
             export LOGS=$PWD/logs
             RESULT=$(cat $LOGS/result)
