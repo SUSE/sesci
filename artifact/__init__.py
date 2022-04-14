@@ -145,7 +145,17 @@ class Artifact():
 
     def __init__(self, name, source, delivery = None, aid = None, exclude = None):
         """
-           delivery
+           Constructs artifact object.
+
+           :param name:      str, artifact name
+           :param source:    str, artifact source url
+           :param delivery:  dict, delivery config, defaults empty
+           :param aid:       str, artifact id, defaults empty
+           :param exclude:   list of str, file or directory masks to exclude for rsync,
+                             for example: ['aarch64*/', 's390*/', 'ppc64*/', 'src/'],
+                             defaults empty
+           
+           The delivery config dictionary should include following records:
                 delivery_address: 
                 access_address:
         """
@@ -301,7 +311,6 @@ class Artifact():
             r_dir = r_url['path']
             d_dir = os.path.dirname(r_dir)
             logging.debug('Syncing dir %s to %s' % (s_file, r_dir))
-            #exclude_list = self.exclude or ['aarch64*/', 's390*/', 'ppc64*/', 'src/', 'i586/', 'i686/']
             exclude_list = self.exclude
             excludes = ''
             if exclude_list:
