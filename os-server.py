@@ -369,12 +369,12 @@ def _create_server(image, flavor, key_name, user_data=None):
                 raise Exception("Server creation unexpectedly failed with message: %s" % x['fault']['message'])
             else:
                 raise Exception("Unknown failure while creating server: %s" % x)
-          if timeout > (time.time() - start_time):
-            print('Server [' + target.name + '] is not active. waiting ' + str(wait) + ' seconds...')
-            time.sleep(wait)
-          else:
-            print("ERROR: Timeout occured, was not possible to make server active")
-            break
+          if timeout < (time.time() - start_time):
+            raise Exception("%s seconds timeout occured, could not wait "
+                            "till server became active" % timeout)
+
+          print('Server [' + target.name + '] is not active. waiting ' + str(wait) + ' seconds...')
+          time.sleep(wait)
           target=c.get_server(target_id)
 
         for i,v in target.addresses.items():
